@@ -68,7 +68,6 @@ import {
   Youtube,
   Linkedin,
   Globe,
-  Headphones,
   Mic,
   Camera,
   PenTool,
@@ -82,7 +81,6 @@ import {
   LineChart,
   TrendingDown,
   Zap,
-  Flash,
   Sparkles,
   Flame,
   Sun,
@@ -117,28 +115,23 @@ import {
   Puzzle,
   Target as TargetIcon,
   Crosshair,
-  Bullseye,
-  Scope,
   MousePointer,
-  TouchPadOff,
+  Touchpad,
   Fingerprint,
   Eye,
   EyeOff,
-  Ear,
-  Nose,
-  Mouth,
-  Brain,
+  Headphones,
   Lightbulb,
-  Idea,
-  Bulb,
+  Lightbulb as Idea,
+  Lightbulb as Bulb,
   Lamp,
   Candle,
-  Fire,
+  Flame as Fire,
   Snowflake,
   Leaf,
   Flower,
-  Tree,
-  Seedling,
+  Trees as Tree,
+  Sprout as Seedling,
   Sprout,
   Cactus,
   Cherry,
@@ -2396,6 +2389,186 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
         return (
           <div className="mb-4">
             <NetflixIntroElementPreview element={element} />
+          </div>
+        );
+
+      case 'pricing_plans':
+        return (
+          <div className="mb-6 w-full">
+            <div className="max-w-5xl mx-auto">
+              {/* Título Principal */}
+              {element.mainTitle && (
+                <h2 
+                  className="text-2xl font-bold text-center mb-8" 
+                  style={{ 
+                    color: element.titleColor || '#1f2937',
+                    fontSize: element.titleSize === 'xs' ? '0.75rem' : 
+                             element.titleSize === 'sm' ? '0.875rem' :
+                             element.titleSize === 'lg' ? '1.5rem' :
+                             element.titleSize === 'xl' ? '1.875rem' : '1.5rem',
+                    fontWeight: element.titleWeight || 'bold',
+                    textAlign: element.titleAlign || 'center'
+                  }}
+                >
+                  {element.mainTitle}
+                </h2>
+              )}
+
+              {/* Subtítulo */}
+              {element.subtitle && (
+                <p 
+                  className="text-center mb-8"
+                  style={{ 
+                    color: element.subtitleColor || '#6b7280',
+                    fontSize: element.subtitleSize === 'xs' ? '0.75rem' : 
+                             element.subtitleSize === 'sm' ? '0.875rem' :
+                             element.subtitleSize === 'lg' ? '1.25rem' :
+                             element.subtitleSize === 'xl' ? '1.5rem' : '1rem',
+                    textAlign: element.subtitleAlign || 'center'
+                  }}
+                >
+                  {element.subtitle}
+                </p>
+              )}
+
+              {/* Grade de Planos */}
+              <div className={`grid gap-6 ${element.columns === 2 ? 'grid-cols-1 md:grid-cols-2' : 
+                                           element.columns === 3 ? 'grid-cols-1 md:grid-cols-3' : 
+                                           element.columns === 4 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 
+                                           'grid-cols-1 md:grid-cols-3'}`}>
+                {element.plans?.map((plan: any, planIndex: number) => (
+                  <div 
+                    key={planIndex}
+                    className="relative border-2 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300"
+                    style={{ 
+                      backgroundColor: element.cardBackground || '#ffffff',
+                      borderColor: plan.isPopular ? (element.popularBorderColor || '#3b82f6') : (element.cardBorderColor || '#e5e7eb')
+                    }}
+                  >
+                    {/* Badge Popular */}
+                    {plan.isPopular && (
+                      <div 
+                        className="absolute -top-3 left-1/2 transform -translate-x-1/2 px-4 py-1 rounded-full text-sm font-medium"
+                        style={{ 
+                          backgroundColor: element.popularBadgeColor || '#3b82f6',
+                          color: element.popularBadgeTextColor || '#ffffff'
+                        }}
+                      >
+                        {element.popularBadgeText || '🔥 MAIS POPULAR'}
+                      </div>
+                    )}
+
+                    {/* Nome do Plano */}
+                    <h3 
+                      className="text-xl font-bold mb-2"
+                      style={{ 
+                        color: element.planNameColor || '#1f2937',
+                        textAlign: element.planNameAlign || 'center'
+                      }}
+                    >
+                      {plan.name || `Plano ${planIndex + 1}`}
+                    </h3>
+
+                    {/* Preço */}
+                    <div className="mb-4 text-center">
+                      {plan.originalPrice && (
+                        <div 
+                          className="text-sm line-through mb-1"
+                          style={{ color: element.originalPriceColor || '#9ca3af' }}
+                        >
+                          {element.currencySymbol || 'R$'}{plan.originalPrice}
+                        </div>
+                      )}
+                      <div 
+                        className="text-3xl font-bold"
+                        style={{ color: element.priceColor || '#059669' }}
+                      >
+                        {element.currencySymbol || 'R$'}{plan.price || '0'}
+                        {plan.period && (
+                          <span 
+                            className="text-base font-normal ml-1"
+                            style={{ color: element.periodColor || '#6b7280' }}
+                          >
+                            /{plan.period}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Descrição */}
+                    {plan.description && (
+                      <p 
+                        className="text-sm mb-4 text-center"
+                        style={{ color: element.descriptionColor || '#6b7280' }}
+                      >
+                        {plan.description}
+                      </p>
+                    )}
+
+                    {/* Features */}
+                    {plan.features && plan.features.length > 0 && (
+                      <ul className="space-y-2 mb-6">
+                        {plan.features.map((feature: string, featureIndex: number) => (
+                          <li key={featureIndex} className="flex items-start gap-2">
+                            <CheckCircle 
+                              className="w-5 h-5 mt-0.5 flex-shrink-0"
+                              style={{ color: element.checkColor || '#10b981' }}
+                            />
+                            <span 
+                              className="text-sm"
+                              style={{ color: element.featureColor || '#374151' }}
+                            >
+                              {feature}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    {/* Botão CTA */}
+                    <button
+                      className="w-full py-3 px-4 rounded-xl font-semibold transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                      style={{ 
+                        backgroundColor: plan.isPopular ? 
+                          (element.popularButtonColor || '#3b82f6') : 
+                          (element.buttonColor || '#059669'),
+                        color: element.buttonTextColor || '#ffffff',
+                        border: `2px solid ${plan.isPopular ? 
+                          (element.popularButtonColor || '#3b82f6') : 
+                          (element.buttonColor || '#059669')}`
+                      }}
+                    >
+                      {plan.buttonText || element.buttonText || 'Escolher Plano'}
+                    </button>
+
+                    {/* Texto Adicional */}
+                    {plan.additionalText && (
+                      <p 
+                        className="text-xs text-center mt-3"
+                        style={{ color: element.additionalTextColor || '#9ca3af' }}
+                      >
+                        {plan.additionalText}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Texto Inferior */}
+              {element.bottomText && (
+                <p 
+                  className="text-center mt-8"
+                  style={{ 
+                    color: element.bottomTextColor || '#6b7280',
+                    fontSize: element.bottomTextSize === 'xs' ? '0.75rem' : 
+                             element.bottomTextSize === 'sm' ? '0.875rem' :
+                             element.bottomTextSize === 'lg' ? '1.25rem' : '0.875rem'
+                  }}
+                >
+                  {element.bottomText}
+                </p>
+              )}
+            </div>
           </div>
         );
 

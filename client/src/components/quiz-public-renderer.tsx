@@ -2666,6 +2666,166 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
           </div>
         );
 
+      case 'pricing_plans':
+        const [selectedPlan, setSelectedPlan] = useState<string>("");
+        const plansData = properties.plansData || [];
+        
+        const handlePlanAction = (plan: any) => {
+          if (properties.autoRedirect) {
+            // Redirecionamento automático
+            if (plan.url) {
+              window.open(plan.url, '_blank');
+            }
+          } else {
+            // Seleção manual com botão
+            setSelectedPlan(plan.id);
+          }
+        };
+        
+        const handlePlanButton = () => {
+          const selectedPlanData = plansData.find((p: any) => p.id === selectedPlan);
+          if (selectedPlanData && selectedPlanData.url) {
+            window.open(selectedPlanData.url, '_blank');
+          }
+        };
+        
+        return (
+          <div key={id} className="w-full bg-transparent p-6">
+            {/* Título e Descrição */}
+            {properties.pricingTitle && (
+              <h2 
+                className="text-3xl font-bold text-center mb-4" 
+                style={{ color: properties.titleColor || '#1f2937' }}
+              >
+                {properties.pricingTitle}
+              </h2>
+            )}
+            
+            {properties.pricingDescription && (
+              <p 
+                className="text-center mb-8 text-lg"
+                style={{ color: properties.descriptionColor || '#6b7280' }}
+              >
+                {properties.pricingDescription}
+              </p>
+            )}
+            
+            {/* Grid de Planos */}
+            <div className={`grid gap-6 ${plansData.length === 1 ? 'grid-cols-1 max-w-md mx-auto' : plansData.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
+              {plansData.map((plan: any, index: number) => (
+                <div
+                  key={plan.id || index}
+                  className={`relative border rounded-lg p-6 transition-all duration-300 cursor-pointer hover:shadow-lg ${
+                    plan.highlighted ? 'scale-105 ring-2 ring-purple-500' : ''
+                  } ${
+                    !properties.autoRedirect && selectedPlan === plan.id ? 'ring-2 ring-blue-500' : ''
+                  }`}
+                  style={{
+                    backgroundColor: plan.backgroundColor || '#ffffff',
+                    borderColor: plan.borderColor || '#e5e7eb',
+                    color: plan.textColor || '#1f2937'
+                  }}
+                  onClick={() => handlePlanAction(plan)}
+                >
+                  {/* Badge de Promoção */}
+                  {plan.promotion && (
+                    <div 
+                      className="absolute -top-3 left-1/2 transform -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold text-white"
+                      style={{ backgroundColor: properties.promotionBgColor || '#10b981' }}
+                    >
+                      {plan.promotion}
+                    </div>
+                  )}
+                  
+                  {/* Checkbox para seleção (apenas se não for auto-redirect) */}
+                  {!properties.autoRedirect && (
+                    <div className="absolute top-4 right-4">
+                      <div className={`w-5 h-5 rounded-full border-2 ${
+                        selectedPlan === plan.id 
+                          ? 'bg-blue-500 border-blue-500' 
+                          : 'border-gray-300'
+                      }`}>
+                        {selectedPlan === plan.id && (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <CheckCircle className="w-3 h-3 text-white" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Nome do Plano */}
+                  <h3 className="text-xl font-bold mb-2 text-center">
+                    {plan.name}
+                  </h3>
+                  
+                  {/* Preços */}
+                  <div className="text-center mb-4">
+                    {plan.originalPrice && (
+                      <div 
+                        className="text-sm line-through opacity-60"
+                        style={{ color: plan.textColor || '#6b7280' }}
+                      >
+                        De {plan.originalPrice}
+                      </div>
+                    )}
+                    <div className="text-3xl font-bold">
+                      {plan.price}
+                    </div>
+                  </div>
+                  
+                  {/* Descrição */}
+                  {plan.description && (
+                    <p 
+                      className="text-center text-sm mb-4 opacity-80"
+                      style={{ color: plan.textColor || '#6b7280' }}
+                    >
+                      {plan.description}
+                    </p>
+                  )}
+                  
+                  {/* Indicador de destaque */}
+                  {plan.highlighted && (
+                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
+                      <Star className="w-3 h-3 text-white" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            
+            {/* Botão de Ação (apenas se não for auto-redirect) */}
+            {!properties.autoRedirect && (
+              <div className="flex justify-center mt-8">
+                <Button
+                  onClick={handlePlanButton}
+                  disabled={!selectedPlan}
+                  className="px-8 py-3 text-lg font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor: selectedPlan ? (properties.buttonBgColor || '#10b981') : '#9ca3af',
+                    color: properties.buttonTextColor || '#ffffff'
+                  }}
+                >
+                  {properties.buttonIcon && (
+                    <span className="mr-2">{properties.buttonIcon}</span>
+                  )}
+                  {properties.buttonText || 'Escolher Plano'}
+                </Button>
+              </div>
+            )}
+            
+            {/* Mensagem de instrução */}
+            {plansData.length > 0 && (
+              <p className="text-center text-sm text-gray-500 mt-4">
+                {properties.autoRedirect 
+                  ? "Clique no plano desejado para ser redirecionado"
+                  : "Selecione um plano e clique no botão abaixo"
+                }
+              </p>
+            )}
+          </div>
+        );
+
       case 'progress_bar':
         return (
           <div key={id} className="mb-4">

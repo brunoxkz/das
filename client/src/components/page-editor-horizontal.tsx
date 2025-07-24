@@ -3994,102 +3994,118 @@ const gameElementCategories = [
       case "pricing_plans":
         const plansData = element.plansData || [
           {
-            id: "7days",
-            name: "7-day plan",
-            price: "$6.93",
-            originalPrice: "$13.86",
-            currency: "USD",
-            period: "per day",
-            pricePerDay: "0.99",
+            id: "plan1",
+            name: "Plano Básico", 
+            price: "R$ 97",
+            originalPrice: "R$ 197",
+            promotion: "50% OFF",
+            description: "Perfeito para começar",
             highlighted: false,
-            badge: "",
-            buttonText: "Claim my plan",
-            buttonLink: "#"
+            backgroundColor: "#ffffff",
+            textColor: "#1f2937",
+            borderColor: "#e5e7eb",
+            url: "https://exemplo.com/basico"
           },
           {
-            id: "1month",
-            name: "1-month plan",
-            price: "$19.99",
-            originalPrice: "$39.98",
-            currency: "USD", 
-            period: "per day",
-            pricePerDay: "0.66",
+            id: "plan2", 
+            name: "Plano Premium",
+            price: "R$ 197", 
+            originalPrice: "R$ 397",
+            promotion: "MAIS POPULAR",
+            description: "Recomendado para crescimento",
             highlighted: true,
-            badge: "MOST POPULAR",
-            buttonText: "Claim my plan",
-            buttonLink: "#"
+            backgroundColor: "#f0fdf4",
+            textColor: "#1f2937", 
+            borderColor: "#10b981",
+            url: "https://exemplo.com/premium"
           },
           {
-            id: "3months",
-            name: "3-month plan",
-            price: "$39.99",
-            originalPrice: "$79.98",
-            currency: "USD",
-            period: "per day", 
-            pricePerDay: "0.44",
+            id: "plan3",
+            name: "Plano Enterprise",
+            price: "R$ 397",
+            originalPrice: "R$ 797", 
+            promotion: "MELHOR VALOR",
+            description: "Para alta performance",
             highlighted: false,
-            badge: "",
-            buttonText: "Claim my plan",
-            buttonLink: "#"
+            backgroundColor: "#ffffff",
+            textColor: "#1f2937",
+            borderColor: "#e5e7eb", 
+            url: "https://exemplo.com/enterprise"
           }
         ];
+
+        const [selectedPlan, setSelectedPlan] = React.useState(null);
         
         return (
-          <div className="space-y-4 p-4 max-w-md mx-auto">
+          <div className="space-y-4 p-4 w-full bg-transparent">
+            {element.pricingTitle && (
+              <h3 className="text-xl font-bold text-center mb-6" style={{ color: element.titleColor || '#1f2937' }}>
+                {element.pricingTitle}
+              </h3>
+            )}
+            
             <div className="space-y-3">
               {plansData.map((plan, index) => (
                 <div key={plan.id} className="relative">
-                  {/* Badge destacado */}
-                  {plan.highlighted && plan.badge && (
+                  {/* Badge de promoção */}
+                  {plan.promotion && (
                     <div className="mb-2">
-                      <div className="bg-green-500 text-white text-center py-2 px-4 rounded-lg text-sm font-semibold">
-                        {plan.badge}
+                      <div 
+                        className="text-white text-center py-2 px-4 rounded-lg text-sm font-semibold"
+                        style={{ backgroundColor: element.promotionBgColor || '#10b981' }}
+                      >
+                        {plan.promotion}
                       </div>
                     </div>
                   )}
                   
                   {/* Card do plano */}
                   <div 
-                    className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${
-                      plan.highlighted 
-                        ? 'border-green-500 bg-green-50' 
-                        : 'border-gray-200 bg-white'
-                    }`}
+                    className="border-2 rounded-lg p-4 transition-all duration-200 hover:shadow-md cursor-pointer"
+                    style={{ 
+                      backgroundColor: plan.backgroundColor,
+                      borderColor: plan.highlighted ? plan.borderColor : '#e5e7eb'
+                    }}
+                    onClick={() => {
+                      if (element.autoRedirect) {
+                        window.open(plan.url, '_blank');
+                      } else {
+                        setSelectedPlan(plan.id);
+                      }
+                    }}
                   >
                     <div className="flex items-center justify-between">
-                      {/* Radio button e informações do plano */}
+                      {/* Checkbox e informações do plano */}
                       <div className="flex items-center space-x-3">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          plan.highlighted 
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                          selectedPlan === plan.id || plan.highlighted
                             ? 'border-green-500 bg-green-500' 
                             : 'border-gray-300'
                         }`}>
-                          {plan.highlighted && (
-                            <CheckCircle className="w-4 h-4 text-white" />
+                          {(selectedPlan === plan.id || plan.highlighted) && (
+                            <Check className="w-3 h-3 text-white" />
                           )}
                         </div>
                         
                         <div>
-                          <h3 className="font-medium text-gray-800">{plan.name}</h3>
-                          <div className="flex items-center space-x-2">
+                          <h4 className="font-semibold" style={{ color: plan.textColor }}>
+                            {plan.name}
+                          </h4>
+                          {plan.description && (
+                            <p className="text-sm opacity-70" style={{ color: plan.textColor }}>
+                              {plan.description}
+                            </p>
+                          )}
+                          <div className="flex items-center space-x-2 mt-1">
                             {plan.originalPrice && (
-                              <span className="text-sm text-gray-500 line-through">
+                              <span className="text-sm line-through opacity-60" style={{ color: plan.textColor }}>
                                 {plan.originalPrice}
                               </span>
                             )}
-                            <span className="font-bold text-gray-800">{plan.price}</span>
+                            <span className="text-lg font-bold" style={{ color: plan.textColor }}>
+                              {plan.price}
+                            </span>
                           </div>
-                        </div>
-                      </div>
-                      
-                      {/* Preço por dia */}
-                      <div className="text-right">
-                        <div className="bg-gray-100 rounded-lg px-3 py-2">
-                          <div className="text-xs text-gray-600 uppercase">{plan.currency}</div>
-                          <div className="text-2xl font-bold text-gray-800">
-                            {plan.pricePerDay}
-                          </div>
-                          <div className="text-xs text-gray-600">{plan.period}</div>
                         </div>
                       </div>
                     </div>
@@ -4098,13 +4114,33 @@ const gameElementCategories = [
               ))}
             </div>
             
-            {/* Botão principal */}
-            <button className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-4 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2">
-              <span>{plansData[0]?.buttonText || "Claim my plan"}</span>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </button>
+            {/* Botão de ação - só aparece se não for auto-redirect */}
+            {!element.autoRedirect && (
+              <button 
+                className="w-full font-semibold py-4 px-6 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 hover:opacity-90"
+                style={{ 
+                  backgroundColor: element.buttonBgColor || '#10b981',
+                  color: element.buttonTextColor || '#ffffff'
+                }}
+                onClick={() => {
+                  const selected = plansData.find(p => p.id === selectedPlan);
+                  if (selected) {
+                    window.open(selected.url, '_blank');
+                  }
+                }}
+                disabled={!selectedPlan}
+              >
+                {element.buttonIcon && <span className="text-lg">{element.buttonIcon}</span>}
+                <span>{element.buttonText || "Escolher Plano"}</span>
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            )}
+            
+            {element.pricingDescription && (
+              <p className="text-sm text-center mt-4" style={{ color: element.descriptionColor || '#6b7280' }}>
+                {element.pricingDescription}
+              </p>
+            )}
           </div>
         );
 
@@ -12435,24 +12471,388 @@ const gameElementCategories = [
 
               {selectedElementData.type === "pricing_plans" && (
                 <div className="space-y-4 max-h-96 overflow-y-auto">
-                  <div className="bg-indigo-50 p-3 rounded-lg">
-                    <h4 className="text-sm font-semibold text-indigo-800 mb-2">💎 Tabela de Preços</h4>
-                    <p className="text-xs text-indigo-700">
-                      Exibe opções de planos com preços e funcionalidades
+                  <div className="bg-purple-50 p-3 rounded-lg">
+                    <h4 className="text-sm font-semibold text-purple-800 mb-2">💎 Planos de Preços</h4>
+                    <p className="text-xs text-purple-700">
+                      Tabela de preços com URLs dinâmicas e redirecionamento condicional
                     </p>
                   </div>
 
-                  <div>
-                    <h5 className="font-semibold text-sm mb-3">📝 Conteúdo</h5>
+                  {/* Configurações Gerais */}
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">📝 Configurações Gerais</h5>
                     
-                    <div>
-                      <Label>Título</Label>
-                      <Input
-                        value={selectedElementData.pricingTitle || ""}
-                        onChange={(e) => updateElement(selectedElementData.id, { pricingTitle: e.target.value })}
-                        placeholder="Escolha Seu Plano"
-                        className="mt-1"
-                      />
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Título Principal</Label>
+                        <Input
+                          value={selectedElementData.pricingTitle || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { pricingTitle: e.target.value })}
+                          placeholder="Escolha Seu Plano Ideal"
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label>Descrição</Label>
+                        <Input
+                          value={selectedElementData.pricingDescription || ""}
+                          onChange={(e) => updateElement(selectedElementData.id, { pricingDescription: e.target.value })}
+                          placeholder="Encontre o plano perfeito para suas necessidades"
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Lógica de Redirecionamento */}
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">🎯 Comportamento de Redirecionamento</h5>
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          id="autoRedirect"
+                          checked={selectedElementData.autoRedirect || false}
+                          onChange={(e) => updateElement(selectedElementData.id, { autoRedirect: e.target.checked })}
+                          className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                        />
+                        <Label htmlFor="autoRedirect" className="text-sm">Redirecionamento Automático</Label>
+                      </div>
+                      
+                      <div className="bg-gray-50 p-3 rounded-lg text-xs">
+                        {selectedElementData.autoRedirect 
+                          ? "✅ Ao clicar no plano, redireciona imediatamente para a URL configurada"
+                          : "⚠️ Usuário deve selecionar plano e clicar no botão para redirecionar"
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Configuração do Botão (se não for auto-redirect) */}
+                  {!selectedElementData.autoRedirect && (
+                    <div className="border-b pb-4">
+                      <h5 className="font-semibold text-sm mb-3">🔘 Configurações do Botão</h5>
+                      
+                      <div className="space-y-3">
+                        <div>
+                          <Label>Texto do Botão</Label>
+                          <Input
+                            value={selectedElementData.buttonText || ""}
+                            onChange={(e) => updateElement(selectedElementData.id, { buttonText: e.target.value })}
+                            placeholder="Escolher Plano"
+                            className="mt-1"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label>Ícone do Botão (Emoji)</Label>
+                          <Input
+                            value={selectedElementData.buttonIcon || ""}
+                            onChange={(e) => updateElement(selectedElementData.id, { buttonIcon: e.target.value })}
+                            placeholder="🚀"
+                            className="mt-1"
+                          />
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label>Cor de Fundo</Label>
+                            <div className="flex gap-2 mt-1">
+                              <Input
+                                type="color"
+                                value={selectedElementData.buttonBgColor || "#10b981"}
+                                onChange={(e) => updateElement(selectedElementData.id, { buttonBgColor: e.target.value })}
+                                className="w-16 h-10 p-1"
+                              />
+                              <Input
+                                value={selectedElementData.buttonBgColor || "#10b981"}
+                                onChange={(e) => updateElement(selectedElementData.id, { buttonBgColor: e.target.value })}
+                                placeholder="#10b981"
+                                className="flex-1"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <Label>Cor do Texto</Label>
+                            <div className="flex gap-2 mt-1">
+                              <Input
+                                type="color"
+                                value={selectedElementData.buttonTextColor || "#ffffff"}
+                                onChange={(e) => updateElement(selectedElementData.id, { buttonTextColor: e.target.value })}
+                                className="w-16 h-10 p-1"
+                              />
+                              <Input
+                                value={selectedElementData.buttonTextColor || "#ffffff"}
+                                onChange={(e) => updateElement(selectedElementData.id, { buttonTextColor: e.target.value })}
+                                placeholder="#ffffff"
+                                className="flex-1"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cores Gerais */}
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">🎨 Cores Gerais</h5>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>Cor do Título</Label>
+                        <div className="flex gap-2 mt-1">
+                          <Input
+                            type="color"
+                            value={selectedElementData.titleColor || "#1f2937"}
+                            onChange={(e) => updateElement(selectedElementData.id, { titleColor: e.target.value })}
+                            className="w-16 h-10 p-1"
+                          />
+                          <Input
+                            value={selectedElementData.titleColor || "#1f2937"}
+                            onChange={(e) => updateElement(selectedElementData.id, { titleColor: e.target.value })}
+                            placeholder="#1f2937"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label>Cor da Descrição</Label>
+                        <div className="flex gap-2 mt-1">
+                          <Input
+                            type="color"
+                            value={selectedElementData.descriptionColor || "#6b7280"}
+                            onChange={(e) => updateElement(selectedElementData.id, { descriptionColor: e.target.value })}
+                            className="w-16 h-10 p-1"
+                          />
+                          <Input
+                            value={selectedElementData.descriptionColor || "#6b7280"}
+                            onChange={(e) => updateElement(selectedElementData.id, { descriptionColor: e.target.value })}
+                            placeholder="#6b7280"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label>Cor Badge Promoção</Label>
+                        <div className="flex gap-2 mt-1">
+                          <Input
+                            type="color"
+                            value={selectedElementData.promotionBgColor || "#10b981"}
+                            onChange={(e) => updateElement(selectedElementData.id, { promotionBgColor: e.target.value })}
+                            className="w-16 h-10 p-1"
+                          />
+                          <Input
+                            value={selectedElementData.promotionBgColor || "#10b981"}
+                            onChange={(e) => updateElement(selectedElementData.id, { promotionBgColor: e.target.value })}
+                            placeholder="#10b981"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Gerenciamento de Planos */}
+                  <div>
+                    <h5 className="font-semibold text-sm mb-3">📋 Planos Disponíveis</h5>
+                    
+                    <div className="space-y-3">
+                      {((selectedElementData.plansData as any[]) || []).map((plan: any, index: number) => (
+                        <div key={plan.id || index} className="border rounded-lg p-3 bg-gray-50">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-semibold text-sm text-purple-600">Plano {index + 1}</span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const currentPlans = (selectedElementData.plansData as any[]) || [];
+                                const newPlans = currentPlans.filter((_, i) => i !== index);
+                                updateElement(selectedElementData.id, { plansData: newPlans });
+                              }}
+                              className="h-6 w-6 p-0 text-red-600 hover:bg-red-50"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2 mb-2">
+                            <div>
+                              <Label className="text-xs">Nome do Plano</Label>
+                              <Input
+                                value={plan.name || ""}
+                                onChange={(e) => {
+                                  const currentPlans = [...((selectedElementData.plansData as any[]) || [])];
+                                  currentPlans[index] = { ...currentPlans[index], name: e.target.value };
+                                  updateElement(selectedElementData.id, { plansData: currentPlans });
+                                }}
+                                placeholder="Plano Premium"
+                                className="mt-1 text-xs h-8"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs">Preço</Label>
+                              <Input
+                                value={plan.price || ""}
+                                onChange={(e) => {
+                                  const currentPlans = [...((selectedElementData.plansData as any[]) || [])];
+                                  currentPlans[index] = { ...currentPlans[index], price: e.target.value };
+                                  updateElement(selectedElementData.id, { plansData: currentPlans });
+                                }}
+                                placeholder="R$ 197"
+                                className="mt-1 text-xs h-8"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2 mb-2">
+                            <div>
+                              <Label className="text-xs">Preço Original</Label>
+                              <Input
+                                value={plan.originalPrice || ""}
+                                onChange={(e) => {
+                                  const currentPlans = [...((selectedElementData.plansData as any[]) || [])];
+                                  currentPlans[index] = { ...currentPlans[index], originalPrice: e.target.value };
+                                  updateElement(selectedElementData.id, { plansData: currentPlans });
+                                }}
+                                placeholder="R$ 397"
+                                className="mt-1 text-xs h-8"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs">Badge Promoção</Label>
+                              <Input
+                                value={plan.promotion || ""}
+                                onChange={(e) => {
+                                  const currentPlans = [...((selectedElementData.plansData as any[]) || [])];
+                                  currentPlans[index] = { ...currentPlans[index], promotion: e.target.value };
+                                  updateElement(selectedElementData.id, { plansData: currentPlans });
+                                }}
+                                placeholder="MAIS POPULAR"
+                                className="mt-1 text-xs h-8"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="mb-2">
+                            <Label className="text-xs">Descrição</Label>
+                            <Input
+                              value={plan.description || ""}
+                              onChange={(e) => {
+                                const currentPlans = [...((selectedElementData.plansData as any[]) || [])];
+                                currentPlans[index] = { ...currentPlans[index], description: e.target.value };
+                                updateElement(selectedElementData.id, { plansData: currentPlans });
+                              }}
+                              placeholder="Perfeito para empresas"
+                              className="mt-1 text-xs h-8"
+                            />
+                          </div>
+                          
+                          <div className="mb-2">
+                            <Label className="text-xs">URL de Redirecionamento</Label>
+                            <Input
+                              value={plan.url || ""}
+                              onChange={(e) => {
+                                const currentPlans = [...((selectedElementData.plansData as any[]) || [])];
+                                currentPlans[index] = { ...currentPlans[index], url: e.target.value };
+                                updateElement(selectedElementData.id, { plansData: currentPlans });
+                              }}
+                              placeholder="https://checkout.exemplo.com/premium"
+                              className="mt-1 text-xs h-8"
+                            />
+                          </div>
+                          
+                          <div className="grid grid-cols-3 gap-2 mb-2">
+                            <div>
+                              <Label className="text-xs">Cor Fundo</Label>
+                              <Input
+                                type="color"
+                                value={plan.backgroundColor || "#ffffff"}
+                                onChange={(e) => {
+                                  const currentPlans = [...((selectedElementData.plansData as any[]) || [])];
+                                  currentPlans[index] = { ...currentPlans[index], backgroundColor: e.target.value };
+                                  updateElement(selectedElementData.id, { plansData: currentPlans });
+                                }}
+                                className="w-full h-8 p-1 mt-1"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs">Cor Texto</Label>
+                              <Input
+                                type="color"
+                                value={plan.textColor || "#1f2937"}
+                                onChange={(e) => {
+                                  const currentPlans = [...((selectedElementData.plansData as any[]) || [])];
+                                  currentPlans[index] = { ...currentPlans[index], textColor: e.target.value };
+                                  updateElement(selectedElementData.id, { plansData: currentPlans });
+                                }}
+                                className="w-full h-8 p-1 mt-1"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs">Cor Borda</Label>
+                              <Input
+                                type="color"
+                                value={plan.borderColor || "#e5e7eb"}
+                                onChange={(e) => {
+                                  const currentPlans = [...((selectedElementData.plansData as any[]) || [])];
+                                  currentPlans[index] = { ...currentPlans[index], borderColor: e.target.value };
+                                  updateElement(selectedElementData.id, { plansData: currentPlans });
+                                }}
+                                className="w-full h-8 p-1 mt-1"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={plan.highlighted || false}
+                              onChange={(e) => {
+                                const currentPlans = [...((selectedElementData.plansData as any[]) || [])];
+                                currentPlans[index] = { ...currentPlans[index], highlighted: e.target.checked };
+                                updateElement(selectedElementData.id, { plansData: currentPlans });
+                              }}
+                              className="h-3 w-3"
+                            />
+                            <Label className="text-xs">Destacar este plano</Label>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      <Button
+                        onClick={() => {
+                          const currentPlans = (selectedElementData.plansData as any[]) || [];
+                          const newPlan = {
+                            id: `plan${currentPlans.length + 1}`,
+                            name: `Plano ${currentPlans.length + 1}`,
+                            price: "R$ 97",
+                            originalPrice: "R$ 197",
+                            promotion: "",
+                            description: "Descrição do plano",
+                            highlighted: false,
+                            backgroundColor: "#ffffff",
+                            textColor: "#1f2937",
+                            borderColor: "#e5e7eb",
+                            url: "https://exemplo.com"
+                          };
+                          updateElement(selectedElementData.id, { plansData: [...currentPlans, newPlan] });
+                        }}
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                        size="sm"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Adicionar Plano
+                      </Button>
                     </div>
                   </div>
                 </div>
