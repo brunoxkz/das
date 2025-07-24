@@ -2313,43 +2313,38 @@ const gameElementCategories = [
           </div>
         );
       case "video":
-        const embedUrl = getVideoEmbed(element.content);
-        const videoPlatform = getVideoPlatform(element.content || '');
+        // Sistema completo de embed de vídeo sincronizado
+        const videoUrl = element.content || '';
+        const videoEmbed = getVideoEmbed(videoUrl);
+        const videoPlatform = getVideoPlatform(videoUrl);
         
-        // Configurações de tamanho do vídeo
-        const videoWidth = element.videoWidth || '100%';
-        const videoHeight = element.videoHeight || 'auto';
-        const aspectRatio = element.aspectRatio || '16:9';
+        // Configurações de largura responsiva sincronizadas com painel
+        const videoWidth = element.videoWidth || 100;
+        const tabletSize = element.tabletSize || Math.min(videoWidth + 20, 100);
+        const mobileSize = element.mobileSize || Math.min(videoWidth + 40, 100);
         
         // Configurações de alinhamento
         const videoAlignment = element.videoAlignment || 'center';
-        const alignmentClass = videoAlignment === 'left' ? 'justify-start' :
-                              videoAlignment === 'right' ? 'justify-end' : 'justify-center';
-        
-        // Configurações de estilo
-        const borderRadius = element.borderRadius || 'rounded-lg';
-        const showBorder = element.showBorder !== false;
-        const borderColor = element.borderColor || '#e5e7eb';
-        const showShadow = element.showShadow === true;
-        
-        // Configurações responsivas
-        const responsiveSize = element.responsiveSize || 'default';
-        const sizeClasses = {
-          small: 'max-w-sm',
-          medium: 'max-w-md', 
-          large: 'max-w-lg',
-          xlarge: 'max-w-xl',
-          default: 'w-full'
+        const alignmentClasses = {
+          left: 'justify-start',
+          center: 'justify-center', 
+          right: 'justify-end'
         };
         
         // Configurações de aspect ratio
+        const aspectRatio = element.aspectRatio || '16/9';
         const aspectRatioClasses = {
-          '16:9': 'aspect-video',
-          '4:3': 'aspect-[4/3]',
-          '1:1': 'aspect-square',
-          '21:9': 'aspect-[21/9]',
-          'custom': ''
+          "16/9": "aspect-video",
+          "4/3": "aspect-[4/3]",
+          "1/1": "aspect-square",
+          "21/9": "aspect-[21/9]"
         };
+        
+        // Configurações de controles
+        const autoplay = element.autoplay || "0";
+        const muted = element.muted || "0"; 
+        const controls = element.controls || "1";
+        const loop = element.loop || "0";
         
         // Ícones por plataforma
         const platformIcons = {
@@ -2367,101 +2362,74 @@ const gameElementCategories = [
           unknown: '❓'
         };
         
+        // Construir URL com parâmetros
+        let finalEmbedUrl = videoEmbed?.embedUrl;
+        if (finalEmbedUrl && videoEmbed && (videoEmbed.platform === 'youtube' || videoEmbed.platform === 'vimeo')) {
+          const params = new URLSearchParams();
+          if (autoplay === "1") params.append('autoplay', '1');
+          if (muted === "1") params.append('muted', '1');
+          if (controls === "0") params.append('controls', '0');
+          if (loop === "1") params.append('loop', '1');
+          
+          finalEmbedUrl += (finalEmbedUrl.includes('?') ? '&' : '?') + params.toString();
+        }
+
         return (
           <div className="space-y-2">
-            {/* Título do vídeo */}
-            {element.videoTitle && (
-              <h3 className="text-lg font-semibold text-gray-800" style={{
-                textAlign: videoAlignment,
-                fontSize: element.titleFontSize || '18px',
-                color: element.titleColor || '#1f2937'
-              }}>
-                {element.videoTitle}
-              </h3>
-            )}
-            
-            {/* Descrição do vídeo */}
-            {element.videoDescription && (
-              <p className="text-sm text-gray-600" style={{
-                textAlign: videoAlignment,
-                color: element.descriptionColor || '#6b7280'
-              }}>
-                {element.videoDescription}
-              </p>
-            )}
-            
-            <div className={`flex ${alignmentClass} w-full`}>
-              {embedUrl ? (
-                <div 
-                  className={`${sizeClasses[responsiveSize]} ${aspectRatioClasses[aspectRatio]} ${borderRadius} ${showBorder ? 'border-2' : ''} ${showShadow ? 'shadow-lg' : ''} overflow-hidden`}
-                  style={{
-                    width: videoWidth !== '100%' ? videoWidth : undefined,
-                    height: aspectRatio === 'custom' && videoHeight !== 'auto' ? videoHeight : undefined,
-                    borderColor: showBorder ? borderColor : 'transparent',
-                    maxWidth: videoWidth === '100%' ? '100%' : videoWidth
-                  }}
-                >
+            <div className={`flex ${alignmentClasses[videoAlignment as keyof typeof alignmentClasses] || alignmentClasses.center} w-full`}>
+              <div 
+                className={`
+                  ${aspectRatioClasses[aspectRatio as keyof typeof aspectRatioClasses] || aspectRatioClasses["16/9"]} 
+                  bg-gray-100 rounded-lg overflow-hidden
+                  w-full
+                  max-w-[${videoWidth}%]
+                  lg:max-w-[${videoWidth}%]
+                  md:max-w-[${tabletSize}%]
+                  sm:max-w-[${mobileSize}%]
+                `}
+                style={{ 
+                  width: `${videoWidth}%`,
+                  maxWidth: `${videoWidth}%`
+                }}
+              >
+                {videoEmbed?.embedUrl ? (
                   <iframe
-                    src={embedUrl}
+                    src={finalEmbedUrl}
                     className="w-full h-full"
                     allowFullScreen
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    loading="lazy"
-                    title={element.videoTitle || `Vídeo ${videoPlatform}`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    title="Vídeo"
+                    style={{ border: 'none' }}
                   />
-                </div>
-              ) : (
-                <div 
-                  className={`${sizeClasses[responsiveSize]} h-48 border-2 border-dashed border-gray-300 ${borderRadius} flex items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer`}
-                  style={{
-                    width: videoWidth !== '100%' ? videoWidth : undefined,
-                    maxWidth: videoWidth === '100%' ? '100%' : videoWidth
-                  }}
-                >
-                  <div className="text-center p-6">
-                    <Video className="w-12 h-12 mx-auto text-gray-400 mb-3" />
-                    <p className="text-sm font-medium text-gray-600 mb-2">
-                      {element.content ? "URL de vídeo inválida" : "Adicionar vídeo"}
-                    </p>
-                    <p className="text-xs text-gray-500 mb-3">
-                      Suporte para múltiplas plataformas:
-                    </p>
-                    <div className="flex flex-wrap gap-1 justify-center text-xs">
-                      <span className="bg-red-100 text-red-700 px-2 py-1 rounded">📺 YouTube</span>
-                      <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">🎬 Vimeo</span>
-                      <span className="bg-black text-white px-2 py-1 rounded">🎵 TikTok</span>
-                      <span className="bg-pink-100 text-pink-700 px-2 py-1 rounded">📸 Instagram</span>
+                ) : videoUrl ? (
+                  <div className="w-full h-full flex items-center justify-center bg-red-50">
+                    <div className="text-center p-4">
+                      <PlayCircle className="w-12 h-12 text-red-400 mx-auto mb-2" />
+                      <p className="text-sm text-red-600 font-medium">URL de vídeo não suportada</p>
+                      <p className="text-xs text-red-500 mt-1">Verifique se a URL está correta</p>
                     </div>
-                    <div className="flex flex-wrap gap-1 justify-center text-xs mt-1">
-                      <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded">🎥 VTURB</span>
-                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded">▶️ VSLPlayer</span>
-                      <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded">🐼 PandaVideo</span>
-                      <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded">🎯 Outros</span>
-                    </div>
-                    {element.content && (
-                      <p className="text-xs text-red-500 mt-2">
-                        ⚠️ Verifique se a URL está correta
-                      </p>
-                    )}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                    <div className="text-center p-4">
+                      <PlayCircle className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600 font-medium">Cole a URL do vídeo</p>
+                      <p className="text-xs text-gray-500 mt-1">No painel de propriedades</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             
             {/* Info da plataforma detectada */}
-            {embedUrl && videoPlatform !== 'unknown' && (
+            {videoEmbed?.embedUrl && videoPlatform !== 'unknown' && (
               <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
                 <span>{platformIcons[videoPlatform]}</span>
                 <span>Plataforma: {videoPlatform.toUpperCase()}</span>
-                {element.showVideoStats && (
-                  <>
-                    <span>•</span>
-                    <span>Responsivo: {responsiveSize}</span>
-                    <span>•</span>
-                    <span>Aspecto: {aspectRatio}</span>
-                  </>
-                )}
+                <span>•</span>
+                <span>Largura: {videoWidth}%</span>
+                <span>•</span>
+                <span>Aspecto: {aspectRatio}</span>
               </div>
             )}
           </div>
