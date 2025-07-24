@@ -309,7 +309,7 @@ export function UltraPersonalizedEmailModal({ open, onClose, quizId, quizTitle }
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ArrowRight className="w-5 h-5" />
-                Regras Condicionais "SE > ENTÃO"
+                Regras Condicionais "SE {'>'}  ENTÃO"
               </CardTitle>
               <CardDescription>
                 Configure mensagens personalizadas baseadas nas respostas dos usuários
