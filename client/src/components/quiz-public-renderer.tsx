@@ -2179,7 +2179,8 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         const sizeClasses = {
           small: "px-4 py-2 text-sm",
           medium: "px-6 py-3 text-base", 
-          large: "px-8 py-4 text-lg"
+          large: "px-8 py-4 text-lg",
+          full: "w-full px-6 py-3 text-base"
         };
         
         const styleClasses = {
@@ -2189,11 +2190,11 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         };
         
         return (
-          <div key={id} className={`flex justify-center ${isFixedFooter ? 'fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm border-t shadow-lg py-4' : ''}`}>
+          <div key={id} className={`${isFixedFooter ? 'fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm border-t shadow-lg p-4' : 'flex justify-center'}`}>
             <Button
               onClick={handleNextPage}
               disabled={isSubmitting}
-              className={`${sizeClasses[buttonSize]} ${styleClasses[buttonStyle]} font-medium shadow-lg transition-all duration-200 hover:shadow-xl`}
+              className={`${sizeClasses[buttonSize]} ${styleClasses[buttonStyle]} font-medium shadow-lg transition-all duration-200 hover:shadow-xl ${buttonSize === 'full' ? '' : 'hover:scale-105'}`}
               style={{
                 backgroundColor: buttonBgColor,
                 color: buttonTextColor,

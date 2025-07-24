@@ -766,6 +766,7 @@ export function PageEditorHorizontal({
     globalBackground: false,
     buttonColors: false
   });
+  const [previewDevice, setPreviewDevice] = useState<'mobile' | 'desktop'>('mobile'); // Mobile-first como solicitado
 
   // Função para calcular cor de fundo baseada no tema
   const getBackgroundColor = () => {
@@ -2888,7 +2889,8 @@ const gameElementCategories = [
         const buttonSizeClasses = {
           small: "px-4 py-2 text-sm",
           medium: "px-6 py-3 text-base",
-          large: "px-8 py-4 text-lg"
+          large: "px-8 py-4 text-lg",
+          full: "w-full px-6 py-3 text-base"
         };
         
         const radiusClasses = {
@@ -2906,17 +2908,25 @@ const gameElementCategories = [
               <span className="font-medium text-blue-800">Botão de Navegação</span>
             </div>
             
-            <div className={`flex justify-center ${isFixedFooter ? 'p-4 bg-gray-100 border-t' : ''}`}>
+            <div className={`${isFixedFooter ? 'fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm border-t shadow-lg p-4' : 'flex justify-center'}`}>
               <button
-                style={{backgroundColor: buttonBgColor,
-                  color: buttonTextColor,}}
+                style={{
+                  backgroundColor: buttonBgColor,
+                  color: buttonTextColor,
+                }}
                 className={`
                   ${buttonSizeClasses[buttonSize]} 
                   ${radiusClasses[buttonBorderRadius]}
-                  font-medium shadow-lg transform transition-all duration-200
-                  hover:scale-105 hover:shadow-xl
-                  relative overflow-hidden
+                  font-medium shadow-lg transition-all duration-200
+                  hover:shadow-xl relative overflow-hidden
+                  ${buttonSize === 'full' ? '' : 'hover:scale-105'}
                 `}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = element.buttonHoverColor || "#059669";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = buttonBgColor;
+                }}
               >
                 <span className="relative z-10">{buttonText}</span>
               </button>
@@ -5833,26 +5843,61 @@ const gameElementCategories = [
       {/* 3. Painel Preview - Mobile First */}
       <div className="flex-1 flex flex-col bg-gray-50 overflow-hidden order-first lg:order-none">
         <div className="p-4 border-b bg-gradient-to-r from-primary-600 to-primary-700 text-white">
-          <h3 className={cn(
-            "font-semibold flex items-center gap-2",
-            animations.fadeIn
-          )}>
-            <Eye className="w-4 h-4" />
-            Prévia
-            {currentPage && (
-              <Badge variant="secondary" className="ml-2 bg-white/20">{currentPage.title}</Badge>
-            )}
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className={cn(
+              "font-semibold flex items-center gap-2",
+              animations.fadeIn
+            )}>
+              <Eye className="w-4 h-4" />
+              Prévia
+              {currentPage && (
+                <Badge variant="secondary" className="ml-2 bg-white/20">{currentPage.title}</Badge>
+              )}
+            </h3>
+            
+            {/* Controles de Device - Mobile First */}
+            <div className="flex items-center gap-2 bg-white/10 rounded-lg p-1">
+              <button
+                onClick={() => setPreviewDevice('mobile')}
+                className={cn(
+                  "px-3 py-1.5 rounded text-xs font-medium transition-all duration-200",
+                  previewDevice === 'mobile' 
+                    ? "bg-white text-primary-600 shadow-sm" 
+                    : "text-white/80 hover:text-white hover:bg-white/20"
+                )}
+              >
+                📱 Mobile
+              </button>
+              <button
+                onClick={() => setPreviewDevice('desktop')}
+                className={cn(
+                  "px-3 py-1.5 rounded text-xs font-medium transition-all duration-200",
+                  previewDevice === 'desktop' 
+                    ? "bg-white text-primary-600 shadow-sm" 
+                    : "text-white/80 hover:text-white hover:bg-white/20"
+                )}
+              >
+                🖥️ Desktop
+              </button>
+            </div>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
           {currentPage ? (
-            <div 
-              className={cn(
-                "space-y-4 border border-gray-200 rounded-xl p-6 min-h-[500px] shadow-soft",
-                animations.slideInUp
-              )}
-              style={getPageBackgroundStyle()}
-            >
+            <div className={cn(
+              "mx-auto transition-all duration-300",
+              previewDevice === 'mobile' 
+                ? "max-w-[375px] border-8 border-gray-800 rounded-[2.5rem] bg-gray-800 p-1 shadow-xl" 
+                : "max-w-full"
+            )}>
+              <div 
+                className={cn(
+                  "space-y-4 border border-gray-200 rounded-xl p-6 min-h-[500px] shadow-soft",
+                  animations.slideInUp,
+                  previewDevice === 'mobile' ? "rounded-[1.75rem] min-h-[600px]" : ""
+                )}
+                style={getPageBackgroundStyle()}
+              >
               {currentPage.elements.length === 0 ? (
                 <div className="text-center text-gray-500 py-16">
                   <Edit3 className="w-16 h-16 mx-auto mb-4 opacity-50" />
@@ -5911,6 +5956,7 @@ const gameElementCategories = [
                   ))}
                 </DragDropContainer>
               )}
+              </div>
             </div>
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500">
@@ -11058,12 +11104,13 @@ const gameElementCategories = [
                     <Label>Tamanho do Botão</Label>
                     <select
                       value={selectedElementData.buttonSize || "medium"}
-                      onChange={(e) => updateElement(selectedElementData.id, { buttonSize: e.target.value as "small" | "medium" | "large" })}
+                      onChange={(e) => updateElement(selectedElementData.id, { buttonSize: e.target.value as "small" | "medium" | "large" | "full" })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md mt-1"
                     >
                       <option value="small">Pequeno</option>
                       <option value="medium">Médio</option>
                       <option value="large">Grande</option>
+                      <option value="full">Largura Total</option>
                     </select>
                   </div>
 
