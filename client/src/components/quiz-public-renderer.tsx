@@ -1031,8 +1031,54 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
   const currentPage = pages[currentPageIndex];
   const isLastPage = currentPageIndex === pages.length - 1;
 
+  // Função para salvar dados antes de sair da página
+  const saveCurrentPageData = async () => {
+    if (autoSaveRef.current) {
+      clearTimeout(autoSaveRef.current);
+    }
+
+    // Salvar imediatamente os dados da página atual com validação mais flexível
+    const currentResponses = quizResponses.filter(r => r.pageId === currentPage.id);
+    const validResponses = currentResponses.filter(r => {
+      // Para telefones, aceitar se tiver pelo menos 8 dígitos para não perder dados parciais válidos
+      if (r.elementType === 'phone' && r.answer) {
+        const phoneNumber = r.answer.replace(/\D/g, '');
+        return phoneNumber.length >= 8 && phoneNumber.length <= 15 && /^\d+$/.test(phoneNumber);
+      }
+      // Para emails, aceitar se tiver @ e pelo menos 5 caracteres
+      if (r.elementType === 'email' && r.answer) {
+        return r.answer.includes('@') && r.answer.length >= 5;
+      }
+      // Para outros campos, salvar se não estiver vazio
+      return r.answer && r.answer.toString().trim().length > 0;
+    });
+
+    if (validResponses.length > 0) {
+      try {
+        await fetch(`/api/quizzes/${quiz.id}/partial-responses`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sessionId,
+            responses: validResponses,
+            isPartial: true,
+            pageTransition: true // Flag para indicar que é uma transição de página
+          })
+        });
+        console.log('Dados da página salvos antes da transição:', validResponses.length, 'campos');
+      } catch (error) {
+        console.error('Erro ao salvar dados da página:', error);
+      }
+    }
+  };
+
   // Função para avançar para próxima página
-  const goToNextPage = () => {
+  const goToNextPage = async () => {
+    // Salvar dados da página atual antes de avançar
+    await saveCurrentPageData();
+    
     if (currentPageIndex < pages.length - 1) {
       setCurrentPageIndex(currentPageIndex + 1);
       // Limpar respostas da página atual quando avançar
@@ -1040,6 +1086,18 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
     } else {
       // Finalizar quiz
       setShowResults(true);
+    }
+  };
+
+  // Função para voltar para página anterior
+  const goToPreviousPage = async () => {
+    // Salvar dados da página atual antes de voltar
+    await saveCurrentPageData();
+    
+    if (currentPageIndex > 0) {
+      setCurrentPageIndex(currentPageIndex - 1);
+      // Limpar respostas da página atual quando voltar
+      setAnswers({});
     }
   };
 
@@ -1249,9 +1307,13 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
                        phoneNumber.length > 8 && // Evita números muito curtos
                        /^\d+$/.test(phoneNumber); // Só números
               }
-              // Para emails, só salvar se for válido
+              // Para emails, validação mais robusta contra fragmentação
               if (r.elementType === 'email' && r.answer) {
-                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.answer);
+                const email = r.answer.trim().toLowerCase();
+                // Validação rigorosa: deve ter @, domínio válido e pelo menos 7 caracteres
+                return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email) && 
+                       email.length >= 7 && 
+                       email.length <= 254; // RFC 5321 limit
               }
               // Para outros campos, só salvar se não estiver vazio
               return r.answer && r.answer.toString().trim().length > 0;

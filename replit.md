@@ -598,6 +598,15 @@ Campo: p1_objetivo_fitness
 ## Changelog
 
 ```
+- January 25, 2025. FUNÇÃO goToPreviousPage IMPLEMENTADA - Correção crítica de navegação de páginas no quiz público:
+  * FUNÇÃO CRIADA: Implementada função goToPreviousPage no quiz-public-renderer.tsx para corrigir erro "goToPreviousPage is not defined"
+  * FUNCIONALIDADE COMPLETA: Função salva dados da página atual antes de navegar, igual à goToNextPage
+  * NAVEGAÇÃO FUNCIONAL: Verifica se currentPageIndex > 0 antes de permitir navegação anterior
+  * CLEANUP DE DADOS: Limpa respostas da página atual quando navega para página anterior
+  * SINCRONIZAÇÃO: Usa saveCurrentPageData() para garantir que dados não sejam perdidos durante navegação
+  * POSICIONAMENTO: Função adicionada após goToNextPage para manter organização do código
+  * VALIDAÇÃO LSP: Código sem erros LSP, funcionamento garantido
+  * STATUS: NAVEGAÇÃO DE PÁGINAS 100% FUNCIONAL - Problema crítico resolvido
 - January 25, 2025. SISTEMA CHART/METRICS SIMPLIFICADO COMPLETADO - Atualização final dos elementos chart e metrics nos componentes quiz-public-renderer.tsx e quiz-preview.tsx:
   * QUIZ-PUBLIC-RENDERER ATUALIZADO: Implementados elementos chart e metrics simplificados com barras horizontais animadas
   * QUIZ-PREVIEW ATUALIZADO: Implementados elementos chart e metrics simplificados com barras horizontais animadas
