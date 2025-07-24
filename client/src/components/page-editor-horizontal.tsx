@@ -886,39 +886,104 @@ export function PageEditorHorizontal({
     });
   };
 
-  // Função para criar embed de vídeo automático
+  // Função avançada para detectar e gerar embed de múltiplas plataformas de vídeo
   const getVideoEmbed = (url: string) => {
     if (!url) return null;
     
-    // YouTube
-    const youtubeMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
+    // YouTube (youtube.com, youtu.be)
+    const youtubeMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
     if (youtubeMatch) {
       const videoId = youtubeMatch[1];
-      return `https://www.youtube.com/embed/${videoId}`;
+      return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0&controls=1`;
     }
     
-    // Vimeo
-    const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+    // Vimeo (vimeo.com)
+    const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
     if (vimeoMatch) {
       const videoId = vimeoMatch[1];
-      return `https://player.vimeo.com/video/${videoId}`;
+      return `https://player.vimeo.com/video/${videoId}?color=ffffff&title=0&byline=0&portrait=0`;
     }
     
-    // TikTok
-    const tiktokMatch = url.match(/tiktok\.com\/@[^\/]+\/video\/(\d+)/);
+    // TikTok (tiktok.com)
+    const tiktokMatch = url.match(/tiktok\.com\/@[^\/]+\/video\/(\d+)|tiktok\.com\/t\/([A-Za-z0-9]+)/);
     if (tiktokMatch) {
-      const videoId = tiktokMatch[1];
+      const videoId = tiktokMatch[1] || tiktokMatch[2];
       return `https://www.tiktok.com/embed/v2/${videoId}`;
     }
     
-    // Instagram
-    const instagramMatch = url.match(/instagram\.com\/p\/([A-Za-z0-9_-]+)/);
+    // Instagram (instagram.com/p/ ou instagram.com/reel/)
+    const instagramMatch = url.match(/instagram\.com\/(?:p|reel)\/([A-Za-z0-9_-]+)/);
     if (instagramMatch) {
       const postId = instagramMatch[1];
       return `https://www.instagram.com/p/${postId}/embed`;
     }
     
+    // VTURB (vturb.com.br)
+    const vturbMatch = url.match(/vturb\.com\.br\/v\/([A-Za-z0-9_-]+)|vturb\.com\.br\/watch\?v=([A-Za-z0-9_-]+)/);
+    if (vturbMatch) {
+      const videoId = vturbMatch[1] || vturbMatch[2];
+      return `https://vturb.com.br/embed/${videoId}`;
+    }
+    
+    // VSLPlayer (player.vslplayer.com ou vslplayer.com)
+    const vslMatch = url.match(/(?:player\.)?vslplayer\.com\/v\/([A-Za-z0-9_-]+)|vslplayer\.com\/watch\?v=([A-Za-z0-9_-]+)/);
+    if (vslMatch) {
+      const videoId = vslMatch[1] || vslMatch[2];
+      return `https://player.vslplayer.com/embed/${videoId}`;
+    }
+    
+    // PandaVideo (player.pandavideo.com)
+    const pandaMatch = url.match(/player\.pandavideo\.com\/embed\/([A-Za-z0-9_-]+)|pandavideo\.com\/v\/([A-Za-z0-9_-]+)/);
+    if (pandaMatch) {
+      const videoId = pandaMatch[1] || pandaMatch[2];
+      return `https://player.pandavideo.com/embed/${videoId}`;
+    }
+    
+    // Wistia (wistia.com)
+    const wistiaMatch = url.match(/wistia\.com\/medias\/([A-Za-z0-9_-]+)|wi\.st\/([A-Za-z0-9_-]+)/);
+    if (wistiaMatch) {
+      const videoId = wistiaMatch[1] || wistiaMatch[2];
+      return `https://fast.wistia.net/embed/iframe/${videoId}`;
+    }
+    
+    // JWPlayer (jwplayer.com)
+    const jwMatch = url.match(/jwplayer\.com\/players\/([A-Za-z0-9_-]+)/);
+    if (jwMatch) {
+      const playerId = jwMatch[1];
+      return `https://content.jwplatform.com/players/${playerId}.html`;
+    }
+    
+    // Brightcove (players.brightcove.net)
+    const brightcoveMatch = url.match(/players\.brightcove\.net\/(\d+)\/([A-Za-z0-9_-]+)_default\/index\.html\?videoId=(\d+)/);
+    if (brightcoveMatch) {
+      const [, accountId, playerId, videoId] = brightcoveMatch;
+      return `https://players.brightcove.net/${accountId}/${playerId}_default/index.html?videoId=${videoId}`;
+    }
+    
+    // Fallback: Se contém "embed" na URL, usar diretamente
+    if (url.includes('/embed/') || url.includes('embed.')) {
+      return url;
+    }
+    
     return null;
+  };
+
+  // Função para detectar plataforma do vídeo
+  const getVideoPlatform = (url: string) => {
+    if (!url) return 'unknown';
+    
+    if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+    if (url.includes('vimeo.com')) return 'vimeo';
+    if (url.includes('tiktok.com')) return 'tiktok';
+    if (url.includes('instagram.com')) return 'instagram';
+    if (url.includes('vturb.com')) return 'vturb';
+    if (url.includes('vslplayer.com')) return 'vslplayer';
+    if (url.includes('pandavideo.com')) return 'pandavideo';
+    if (url.includes('wistia.com')) return 'wistia';
+    if (url.includes('jwplayer.com')) return 'jwplayer';
+    if (url.includes('brightcove.net')) return 'brightcove';
+    
+    return 'custom';
   };
 
   const elementCategories = [
@@ -2249,29 +2314,154 @@ const gameElementCategories = [
         );
       case "video":
         const embedUrl = getVideoEmbed(element.content);
+        const videoPlatform = getVideoPlatform(element.content || '');
+        
+        // Configurações de tamanho do vídeo
+        const videoWidth = element.videoWidth || '100%';
+        const videoHeight = element.videoHeight || 'auto';
+        const aspectRatio = element.aspectRatio || '16:9';
+        
+        // Configurações de alinhamento
+        const videoAlignment = element.videoAlignment || 'center';
+        const alignmentClass = videoAlignment === 'left' ? 'justify-start' :
+                              videoAlignment === 'right' ? 'justify-end' : 'justify-center';
+        
+        // Configurações de estilo
+        const borderRadius = element.borderRadius || 'rounded-lg';
+        const showBorder = element.showBorder !== false;
+        const borderColor = element.borderColor || '#e5e7eb';
+        const showShadow = element.showShadow === true;
+        
+        // Configurações responsivas
+        const responsiveSize = element.responsiveSize || 'default';
+        const sizeClasses = {
+          small: 'max-w-sm',
+          medium: 'max-w-md', 
+          large: 'max-w-lg',
+          xlarge: 'max-w-xl',
+          default: 'w-full'
+        };
+        
+        // Configurações de aspect ratio
+        const aspectRatioClasses = {
+          '16:9': 'aspect-video',
+          '4:3': 'aspect-[4/3]',
+          '1:1': 'aspect-square',
+          '21:9': 'aspect-[21/9]',
+          'custom': ''
+        };
+        
+        // Ícones por plataforma
+        const platformIcons = {
+          youtube: '📺',
+          vimeo: '🎬',
+          tiktok: '🎵',
+          instagram: '📸',
+          vturb: '🎥',
+          vslplayer: '▶️',
+          pandavideo: '🐼',
+          wistia: '🎯',
+          jwplayer: '⚡',
+          brightcove: '☁️',
+          custom: '🎞️',
+          unknown: '❓'
+        };
+        
         return (
           <div className="space-y-2">
-            {embedUrl ? (
-              <div className="aspect-video w-full">
-                <iframe
-                  src={embedUrl}
-                  className="w-full h-full rounded-lg border"
-                  allowFullScreen
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                />
-              </div>
-            ) : (
-              <div className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
-                <div className="text-center">
-                  <Video className="w-12 h-12 mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-500 mb-1">
-                    {element.content ? "URL de vídeo inválida" : "Adicionar vídeo"}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    YouTube, Vimeo, MP4
-                  </p>
+            {/* Título do vídeo */}
+            {element.videoTitle && (
+              <h3 className="text-lg font-semibold text-gray-800" style={{
+                textAlign: videoAlignment,
+                fontSize: element.titleFontSize || '18px',
+                color: element.titleColor || '#1f2937'
+              }}>
+                {element.videoTitle}
+              </h3>
+            )}
+            
+            {/* Descrição do vídeo */}
+            {element.videoDescription && (
+              <p className="text-sm text-gray-600" style={{
+                textAlign: videoAlignment,
+                color: element.descriptionColor || '#6b7280'
+              }}>
+                {element.videoDescription}
+              </p>
+            )}
+            
+            <div className={`flex ${alignmentClass} w-full`}>
+              {embedUrl ? (
+                <div 
+                  className={`${sizeClasses[responsiveSize]} ${aspectRatioClasses[aspectRatio]} ${borderRadius} ${showBorder ? 'border-2' : ''} ${showShadow ? 'shadow-lg' : ''} overflow-hidden`}
+                  style={{
+                    width: videoWidth !== '100%' ? videoWidth : undefined,
+                    height: aspectRatio === 'custom' && videoHeight !== 'auto' ? videoHeight : undefined,
+                    borderColor: showBorder ? borderColor : 'transparent',
+                    maxWidth: videoWidth === '100%' ? '100%' : videoWidth
+                  }}
+                >
+                  <iframe
+                    src={embedUrl}
+                    className="w-full h-full"
+                    allowFullScreen
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    loading="lazy"
+                    title={element.videoTitle || `Vídeo ${videoPlatform}`}
+                  />
                 </div>
+              ) : (
+                <div 
+                  className={`${sizeClasses[responsiveSize]} h-48 border-2 border-dashed border-gray-300 ${borderRadius} flex items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer`}
+                  style={{
+                    width: videoWidth !== '100%' ? videoWidth : undefined,
+                    maxWidth: videoWidth === '100%' ? '100%' : videoWidth
+                  }}
+                >
+                  <div className="text-center p-6">
+                    <Video className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                    <p className="text-sm font-medium text-gray-600 mb-2">
+                      {element.content ? "URL de vídeo inválida" : "Adicionar vídeo"}
+                    </p>
+                    <p className="text-xs text-gray-500 mb-3">
+                      Suporte para múltiplas plataformas:
+                    </p>
+                    <div className="flex flex-wrap gap-1 justify-center text-xs">
+                      <span className="bg-red-100 text-red-700 px-2 py-1 rounded">📺 YouTube</span>
+                      <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">🎬 Vimeo</span>
+                      <span className="bg-black text-white px-2 py-1 rounded">🎵 TikTok</span>
+                      <span className="bg-pink-100 text-pink-700 px-2 py-1 rounded">📸 Instagram</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 justify-center text-xs mt-1">
+                      <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded">🎥 VTURB</span>
+                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded">▶️ VSLPlayer</span>
+                      <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded">🐼 PandaVideo</span>
+                      <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded">🎯 Outros</span>
+                    </div>
+                    {element.content && (
+                      <p className="text-xs text-red-500 mt-2">
+                        ⚠️ Verifique se a URL está correta
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Info da plataforma detectada */}
+            {embedUrl && videoPlatform !== 'unknown' && (
+              <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+                <span>{platformIcons[videoPlatform]}</span>
+                <span>Plataforma: {videoPlatform.toUpperCase()}</span>
+                {element.showVideoStats && (
+                  <>
+                    <span>•</span>
+                    <span>Responsivo: {responsiveSize}</span>
+                    <span>•</span>
+                    <span>Aspecto: {aspectRatio}</span>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -2710,7 +2900,7 @@ const gameElementCategories = [
         const buttonTextColor = element.buttonTextColor || "#FFFFFF";
         const isFixedFooter = element.isFixedFooter || false;
         
-        const sizeClasses = {
+        const buttonSizeClasses = {
           small: "px-4 py-2 text-sm",
           medium: "px-6 py-3 text-base",
           large: "px-8 py-4 text-lg"
@@ -2736,7 +2926,7 @@ const gameElementCategories = [
                 style={{backgroundColor: buttonBgColor,
                   color: buttonTextColor,}}
                 className={`
-                  ${sizeClasses[buttonSize]} 
+                  ${buttonSizeClasses[buttonSize]} 
                   ${radiusClasses[buttonBorderRadius]}
                   font-medium shadow-lg transform transition-all duration-200
                   hover:scale-105 hover:shadow-xl
@@ -8854,6 +9044,181 @@ const gameElementCategories = [
                         placeholder="#DC2626"
                         className="flex-1"
                       />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Vídeo */}
+              {selectedElementData.type === "video" && (
+                <div className="space-y-6">
+                  {/* URL do Vídeo */}
+                  <div>
+                    <Label>URL do Vídeo</Label>
+                    <Input
+                      value={selectedElementData.content || ""}
+                      onChange={(e) => updateElement(selectedElementData.id, { content: e.target.value })}
+                      placeholder="https://youtube.com/watch?v=..."
+                      className="mt-1"
+                    />
+                    <div className="text-xs text-gray-500 mt-1">
+                      Suporte: YouTube, Vimeo, TikTok, Instagram, VTURB, VSLPlayer, PandaVideo
+                    </div>
+                  </div>
+
+                  {/* Configurações de Layout */}
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <h4 className="font-semibold text-sm mb-3">🎯 Layout do Vídeo</h4>
+                    
+                    {/* Alinhamento */}
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-xs">Alinhamento</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.videoAlignment || "center"}
+                          onChange={(e) => updateElement(selectedElementData.id, { videoAlignment: e.target.value })}
+                        >
+                          <option value="left">Esquerda</option>
+                          <option value="center">Centro</option>
+                          <option value="right">Direita</option>
+                        </select>
+                      </div>
+
+                      {/* Largura */}
+                      <div>
+                        <Label className="text-xs">Largura (%)</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.videoWidth || "100"}
+                          onChange={(e) => updateElement(selectedElementData.id, { videoWidth: e.target.value })}
+                        >
+                          <option value="25">25% da tela</option>
+                          <option value="50">50% da tela</option>
+                          <option value="75">75% da tela</option>
+                          <option value="100">100% da tela</option>
+                        </select>
+                      </div>
+
+                      {/* Proporção */}
+                      <div>
+                        <Label className="text-xs">Proporção</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.aspectRatio || "16/9"}
+                          onChange={(e) => updateElement(selectedElementData.id, { aspectRatio: e.target.value })}
+                        >
+                          <option value="16/9">16:9 (Padrão)</option>
+                          <option value="4/3">4:3 (Clássico)</option>
+                          <option value="1/1">1:1 (Quadrado)</option>
+                          <option value="21/9">21:9 (Cinema)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Configurações Avançadas */}
+                  <div className="border rounded-lg p-4 bg-blue-50">
+                    <h4 className="font-semibold text-sm mb-3">⚙️ Configurações Avançadas</h4>
+                    
+                    <div className="space-y-3">
+                      {/* Auto Play */}
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="autoplay"
+                          checked={selectedElementData.autoplay || false}
+                          onChange={(e) => updateElement(selectedElementData.id, { autoplay: e.target.checked })}
+                        />
+                        <Label htmlFor="autoplay" className="text-xs">▶️ Auto Play</Label>
+                      </div>
+
+                      {/* Muted */}
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="muted"
+                          checked={selectedElementData.muted || false}
+                          onChange={(e) => updateElement(selectedElementData.id, { muted: e.target.checked })}
+                        />
+                        <Label htmlFor="muted" className="text-xs">🔇 Silenciado</Label>
+                      </div>
+
+                      {/* Loop */}
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="loop"
+                          checked={selectedElementData.loop || false}
+                          onChange={(e) => updateElement(selectedElementData.id, { loop: e.target.checked })}
+                        />
+                        <Label htmlFor="loop" className="text-xs">🔄 Repetir</Label>
+                      </div>
+
+                      {/* Controles */}
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="controls"
+                          checked={selectedElementData.controls !== false}
+                          onChange={(e) => updateElement(selectedElementData.id, { controls: e.target.checked })}
+                        />
+                        <Label htmlFor="controls" className="text-xs">🎮 Mostrar Controles</Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Configurações de Responsividade */}
+                  <div className="border rounded-lg p-4 bg-green-50">
+                    <h4 className="font-semibold text-sm mb-3">📱 Responsividade</h4>
+                    
+                    <div className="space-y-3">
+                      {/* Mobile Size */}
+                      <div>
+                        <Label className="text-xs">Tamanho no Mobile (%)</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.mobileSize || "100"}
+                          onChange={(e) => updateElement(selectedElementData.id, { mobileSize: e.target.value })}
+                        >
+                          <option value="80">80%</option>
+                          <option value="90">90%</option>
+                          <option value="100">100%</option>
+                        </select>
+                      </div>
+
+                      {/* Tablet Size */}
+                      <div>
+                        <Label className="text-xs">Tamanho no Tablet (%)</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.tabletSize || "100"}
+                          onChange={(e) => updateElement(selectedElementData.id, { tabletSize: e.target.value })}
+                        >
+                          <option value="75">75%</option>
+                          <option value="90">90%</option>
+                          <option value="100">100%</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Estatísticas do Vídeo */}
+                  <div className="border rounded-lg p-4 bg-purple-50">
+                    <h4 className="font-semibold text-sm mb-3">📊 Estatísticas</h4>
+                    
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="showVideoStats"
+                        checked={selectedElementData.showVideoStats || false}
+                        onChange={(e) => updateElement(selectedElementData.id, { showVideoStats: e.target.checked })}
+                      />
+                      <Label htmlFor="showVideoStats" className="text-xs">Mostrar informações técnicas</Label>
+                    </div>
+                    
+                    <div className="text-xs text-gray-500 mt-2">
+                      Exibe plataforma detectada, aspecto e tamanho responsivo
                     </div>
                   </div>
                 </div>

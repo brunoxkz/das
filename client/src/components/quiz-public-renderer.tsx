@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight, ArrowLeft, CheckCircle, Calendar, Star, Target, Scale, ArrowUpDown, Share2, Loader2, BarChart3, TrendingUp } from "lucide-react";
+import { ArrowRight, ArrowLeft, CheckCircle, Calendar, Star, Target, Scale, ArrowUpDown, Share2, Loader2, BarChart3, TrendingUp, PlayCircle } from "lucide-react";
 import { nanoid } from "nanoid";
 import { backRedirectManager } from "@/utils/backRedirectManager";
 import Chart from "./Chart";
@@ -1516,23 +1516,157 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         );
 
       case 'video':
+        // Função para obter URL do embed do vídeo
+        const getVideoEmbed = (url: string): { embedUrl: string; platform: string } | null => {
+          if (!url) return null;
+          
+          // YouTube
+          if (url.includes('youtube.com') || url.includes('youtu.be')) {
+            let videoId = '';
+            if (url.includes('youtu.be/')) {
+              videoId = url.split('youtu.be/')[1].split('?')[0];
+            } else if (url.includes('watch?v=')) {
+              videoId = url.split('watch?v=')[1].split('&')[0];
+            }
+            return videoId ? { embedUrl: `https://www.youtube.com/embed/${videoId}`, platform: 'youtube' } : null;
+          }
+          
+          // Vimeo
+          if (url.includes('vimeo.com')) {
+            const videoId = url.split('vimeo.com/')[1]?.split('?')[0];
+            return videoId ? { embedUrl: `https://player.vimeo.com/video/${videoId}`, platform: 'vimeo' } : null;
+          }
+          
+          // TikTok (embed)
+          if (url.includes('tiktok.com')) {
+            const videoId = url.split('/video/')[1]?.split('?')[0];
+            return videoId ? { embedUrl: `https://www.tiktok.com/embed/v2/${videoId}`, platform: 'tiktok' } : null;
+          }
+          
+          // Instagram
+          if (url.includes('instagram.com')) {
+            const postUrl = url.split('?')[0];
+            return { embedUrl: `${postUrl}embed/`, platform: 'instagram' };
+          }
+          
+          // VTURB (player específico)
+          if (url.includes('vturb.com.br') || url.includes('vturb')) {
+            return { embedUrl: url, platform: 'vturb' };
+          }
+          
+          // VSLPlayer
+          if (url.includes('vslplayer') || url.includes('vsl')) {
+            return { embedUrl: url, platform: 'vslplayer' };
+          }
+          
+          // PandaVideo
+          if (url.includes('pandavideo') || url.includes('panda')) {
+            return { embedUrl: url, platform: 'pandavideo' };
+          }
+          
+          // Outros embeds diretos
+          return { embedUrl: url, platform: 'other' };
+        };
+
+        const videoUrl = properties.content || element.content;
+        const videoEmbed = getVideoEmbed(videoUrl);
+        
+        // Configurações de layout
+        const videoAlignment = properties.videoAlignment || "center";
+        const videoWidth = properties.videoWidth || "100";
+        const aspectRatio = properties.aspectRatio || "16/9";
+        const mobileSize = properties.mobileSize || "100";
+        const tabletSize = properties.tabletSize || "100";
+        
+        // Configurações avançadas
+        const autoplay = properties.autoplay ? "1" : "0";
+        const muted = properties.muted ? "1" : "0";
+        const loop = properties.loop ? "1" : "0";
+        const controls = properties.controls !== false ? "1" : "0";
+        
+        // Classes de alinhamento
+        const alignmentClasses = {
+          left: "justify-start",
+          center: "justify-center", 
+          right: "justify-end"
+        };
+        
+        // Classes de aspect ratio
+        const aspectRatioClasses = {
+          "16/9": "aspect-video",
+          "4/3": "aspect-[4/3]",
+          "1/1": "aspect-square",
+          "21/9": "aspect-[21/9]"
+        };
+        
+        // Construir URL com parâmetros
+        let finalEmbedUrl = videoEmbed?.embedUrl;
+        if (finalEmbedUrl && videoEmbed && (videoEmbed.platform === 'youtube' || videoEmbed.platform === 'vimeo')) {
+          const params = new URLSearchParams();
+          if (autoplay === "1") params.append('autoplay', '1');
+          if (muted === "1") params.append('muted', '1');
+          if (loop === "1") params.append('loop', '1');
+          if (controls === "0") params.append('controls', '0');
+          
+          finalEmbedUrl += (finalEmbedUrl.includes('?') ? '&' : '?') + params.toString();
+        }
+
         return (
           <div key={id} className="space-y-2">
-            <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-              {properties.src ? (
-                <iframe
-                  src={properties.src}
-                  className="w-full h-full rounded-md"
-                  allowFullScreen
-                  title={properties.title || 'Vídeo'}
-                />
-              ) : (
-                <div className="text-center">
-                  <PlayCircle className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500">Vídeo não configurado</p>
-                </div>
-              )}
+            <div className={`flex ${alignmentClasses[videoAlignment as keyof typeof alignmentClasses] || alignmentClasses.center} w-full`}>
+              <div 
+                className={`
+                  ${aspectRatioClasses[aspectRatio as keyof typeof aspectRatioClasses] || aspectRatioClasses["16/9"]} 
+                  bg-gray-100 rounded-lg overflow-hidden
+                  w-full
+                  max-w-[${videoWidth}%]
+                  lg:max-w-[${videoWidth}%]
+                  md:max-w-[${tabletSize}%]
+                  sm:max-w-[${mobileSize}%]
+                `}
+                style={{ 
+                  width: `${videoWidth}%`,
+                  maxWidth: `${videoWidth}%`
+                }}
+              >
+                {videoEmbed?.embedUrl ? (
+                  <iframe
+                    src={finalEmbedUrl}
+                    className="w-full h-full"
+                    allowFullScreen
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    title="Vídeo"
+                    style={{ border: 'none' }}
+                  />
+                ) : videoUrl ? (
+                  <div className="w-full h-full flex items-center justify-center bg-red-50">
+                    <div className="text-center p-4">
+                      <PlayCircle className="w-12 h-12 text-red-400 mx-auto mb-2" />
+                      <p className="text-red-600 text-sm">URL de vídeo inválida</p>
+                      <p className="text-red-500 text-xs mt-1">Verifique o formato da URL</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="text-center p-4">
+                      <PlayCircle className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-500">Vídeo não configurado</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
+            
+            {/* Informações técnicas (se habilitado) */}
+            {properties.showVideoStats && videoEmbed && (
+              <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-2">
+                <span>📹 {videoEmbed.platform.toUpperCase()}</span>
+                <span>•</span>
+                <span>📐 {aspectRatio}</span>
+                <span>•</span>
+                <span>📱 {videoWidth}%</span>
+              </div>
+            )}
           </div>
         );
 
