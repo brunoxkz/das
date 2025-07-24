@@ -532,17 +532,8 @@ export default function Dashboard() {
       });
     });
   }, [toast]);
-    }).catch((error) => {
-      console.error('Erro ao copiar URL:', error);
-      toast({
-        title: "Erro ao copiar",
-        description: "Não foi possível copiar a URL. Tente novamente.",
-        variant: "destructive",
-      });
-    });
-  };
 
-  const handleDeleteQuiz = async (quiz: any) => {
+  const handleDeleteQuiz = useCallback(async (quiz: any) => {
     if (!confirm(`Tem certeza que deseja excluir o quiz "${quiz.title}"?`)) {
       return;
     }
@@ -567,7 +558,7 @@ export default function Dashboard() {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
 
   const dashboardStats = [
     {
