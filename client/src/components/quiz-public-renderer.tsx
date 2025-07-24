@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,461 @@ function adjustColorBrightness(color: string, amount: number): string {
   
   return (usePound ? '#' : '') + (r << 16 | g << 8 | b).toString(16).padStart(6, '0');
 }
+
+// Componente AdvancedCarousel com funcionalidades completas
+const AdvancedCarousel = ({ id, properties }: { id: string, properties: any }) => {
+  const carouselImages = properties.carouselImages || [
+    { id: "img-1", url: "https://via.placeholder.com/600x300/10b981/white?text=Imagem+1", alt: "Imagem 1", caption: "Primeira imagem do carrossel", title: "Título da Imagem 1" },
+    { id: "img-2", url: "https://via.placeholder.com/600x300/3b82f6/white?text=Imagem+2", alt: "Imagem 2", caption: "Segunda imagem do carrossel", title: "Título da Imagem 2" },
+    { id: "img-3", url: "https://via.placeholder.com/600x300/8b5cf6/white?text=Imagem+3", alt: "Imagem 3", caption: "Terceira imagem do carrossel", title: "Título da Imagem 3" }
+  ];
+
+  // Estados para o carrossel
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
+  // Configurações do carrossel
+  const carouselHeight = properties.carouselHeight || "medium";
+  const carouselBorderRadius = properties.carouselBorderRadius || "lg";
+  const carouselTransition = properties.carouselTransition || "slide";
+  const carouselSpeed = properties.carouselSpeed || "normal";
+  const carouselAutoplay = properties.carouselAutoplay || false;
+  const carouselAutoplayInterval = properties.carouselAutoplayInterval || 3;
+  const carouselShowArrows = properties.carouselShowArrows !== false;
+  const carouselShowDots = properties.carouselShowDots !== false;
+  const carouselInfinite = properties.carouselInfinite !== false;
+  const carouselTheme = properties.carouselTheme || "default";
+  const carouselImageFit = properties.carouselImageFit || "cover";
+  const carouselArrowStyle = properties.carouselArrowStyle || "simple";
+  const carouselDotStyle = properties.carouselDotStyle || "dots";
+  const carouselShowThumbnails = properties.carouselShowThumbnails || false;
+  const carouselShowProgress = properties.carouselShowProgress || false;
+  const carouselPauseOnHover = properties.carouselPauseOnHover !== false;
+  const carouselSwipeEnabled = properties.carouselSwipeEnabled !== false;
+  const carouselKeyboardNav = properties.carouselKeyboardNav !== false;
+  const carouselSlidesToShow = properties.carouselSlidesToShow || 1;
+
+  // Classes e estilos
+  const heightClasses = {
+    small: "h-48",
+    medium: "h-72", 
+    large: "h-96",
+    xlarge: "h-[500px]"
+  };
+
+  const borderRadiusClasses = {
+    none: "rounded-none",
+    sm: "rounded-sm",
+    md: "rounded-md", 
+    lg: "rounded-lg",
+    xl: "rounded-xl"
+  };
+
+  const speedDurations = {
+    slow: 1000,
+    normal: 500,
+    fast: 300,
+    instant: 100
+  };
+
+  const imageFitClasses = {
+    cover: "object-cover",
+    contain: "object-contain",
+    fill: "object-fill"
+  };
+
+  // Temas
+  const themeStyles = {
+    default: {
+      container: "bg-gray-100",
+      arrows: "bg-black/50 hover:bg-black/70 text-white",
+      dots: "bg-gray-300 hover:bg-gray-400",
+      activeDot: "bg-blue-500"
+    },
+    dark: {
+      container: "bg-gray-900",
+      arrows: "bg-white/20 hover:bg-white/40 text-white",
+      dots: "bg-gray-600 hover:bg-gray-500",
+      activeDot: "bg-white"
+    },
+    minimal: {
+      container: "bg-white",
+      arrows: "bg-gray-200 hover:bg-gray-300 text-gray-700",
+      dots: "bg-gray-200 hover:bg-gray-300",
+      activeDot: "bg-gray-700"
+    },
+    colorful: {
+      container: "bg-gradient-to-r from-purple-400 via-pink-500 to-red-500",
+      arrows: "bg-white/80 hover:bg-white text-gray-800",
+      dots: "bg-white/60 hover:bg-white/80",
+      activeDot: "bg-white"
+    }
+  };
+
+  const currentTheme = themeStyles[carouselTheme as keyof typeof themeStyles] || themeStyles.default;
+
+  // Funções de navegação
+  const nextImage = useCallback(() => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    
+    setTimeout(() => {
+      setCurrentImageIndex(prev => {
+        if (carouselInfinite) {
+          return (prev + 1) % carouselImages.length;
+        } else {
+          return prev < carouselImages.length - 1 ? prev + 1 : prev;
+        }
+      });
+      setIsTransitioning(false);
+    }, 50);
+  }, [isTransitioning, carouselInfinite, carouselImages.length]);
+
+  const prevImage = useCallback(() => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    
+    setTimeout(() => {
+      setCurrentImageIndex(prev => {
+        if (carouselInfinite) {
+          return prev === 0 ? carouselImages.length - 1 : prev - 1;
+        } else {
+          return prev > 0 ? prev - 1 : prev;
+        }
+      });
+      setIsTransitioning(false);
+    }, 50);
+  }, [isTransitioning, carouselInfinite, carouselImages.length]);
+
+  const goToImage = useCallback((index: number) => {
+    if (isTransitioning || index === currentImageIndex) return;
+    setIsTransitioning(true);
+    
+    setTimeout(() => {
+      setCurrentImageIndex(index);
+      setIsTransitioning(false);
+    }, 50);
+  }, [isTransitioning, currentImageIndex]);
+
+  // Autoplay
+  useEffect(() => {
+    if (carouselAutoplay && carouselImages.length > 1 && !isPaused) {
+      intervalRef.current = setInterval(() => {
+        nextImage();
+      }, carouselAutoplayInterval * 1000);
+
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+        }
+      };
+    }
+  }, [carouselAutoplay, carouselAutoplayInterval, currentImageIndex, isPaused, nextImage, carouselImages.length]);
+
+  // Controle por teclado
+  useEffect(() => {
+    if (!carouselKeyboardNav) return;
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        prevImage();
+      } else if (e.key === 'ArrowRight') {
+        nextImage();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [carouselKeyboardNav, prevImage, nextImage]);
+
+  // Touch/Swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!carouselSwipeEnabled) return;
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!carouselSwipeEnabled) return;
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!carouselSwipeEnabled || !touchStartX.current || !touchEndX.current) return;
+    
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      nextImage();
+    }
+    if (isRightSwipe) {
+      prevImage();
+    }
+    
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
+
+  // Pausar/Retomar no hover
+  const handleMouseEnter = () => {
+    if (carouselPauseOnHover && carouselAutoplay) {
+      setIsPaused(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (carouselPauseOnHover && carouselAutoplay) {
+      setIsPaused(false);
+    }
+  };
+
+  // Estilos de transição
+  const getTransitionStyles = () => {
+    const duration = speedDurations[carouselSpeed as keyof typeof speedDurations];
+    
+    switch (carouselTransition) {
+      case "fade":
+        return {
+          opacity: isTransitioning ? 0 : 1,
+          transition: `opacity ${duration}ms ease-in-out`
+        };
+      case "zoom":
+        return {
+          transform: isTransitioning ? "scale(1.1)" : "scale(1)",
+          opacity: isTransitioning ? 0 : 1,
+          transition: `all ${duration}ms ease-in-out`
+        };
+      case "flip":
+        return {
+          transform: isTransitioning ? "rotateY(90deg)" : "rotateY(0deg)",
+          transition: `transform ${duration}ms ease-in-out`
+        };
+      case "slide":
+      default:
+        return {
+          transform: `translateX(-${currentImageIndex * (100 / carouselSlidesToShow)}%)`,
+          transition: `transform ${duration}ms ease-in-out`
+        };
+    }
+  };
+
+  const currentImage = carouselImages[currentImageIndex];
+
+  // Estilos das setas baseados no estilo escolhido
+  const getArrowClasses = () => {
+    const baseClasses = `absolute top-1/2 -translate-y-1/2 ${currentTheme.arrows} p-2 transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed`;
+    
+    switch (carouselArrowStyle) {
+      case "rounded":
+        return `${baseClasses} rounded-full`;
+      case "square":
+        return `${baseClasses} rounded-none`;
+      case "simple":
+      default:
+        return `${baseClasses} rounded`;
+    }
+  };
+
+  // Estilos dos indicadores
+  const getDotClasses = (index: number, isActive: boolean) => {
+    const baseClasses = "transition-all duration-200";
+    const activeClasses = isActive ? `${currentTheme.activeDot} scale-110` : `${currentTheme.dots}`;
+    
+    switch (carouselDotStyle) {
+      case "lines":
+        return `${baseClasses} ${activeClasses} h-1 ${isActive ? 'w-8' : 'w-4'} rounded-full`;
+      case "squares":
+        return `${baseClasses} ${activeClasses} w-3 h-3 rounded-sm`;
+      case "dots":
+      default:
+        return `${baseClasses} ${activeClasses} w-3 h-3 rounded-full`;
+    }
+  };
+
+  return (
+    <div 
+      className="w-full space-y-4"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div className={`relative overflow-hidden ${heightClasses[carouselHeight as keyof typeof heightClasses]} ${borderRadiusClasses[carouselBorderRadius as keyof typeof borderRadiusClasses]} ${currentTheme.container}`}>
+        
+        {/* Barra de Progresso */}
+        {carouselShowProgress && (
+          <div className="absolute top-0 left-0 right-0 h-1 bg-black/20 z-10">
+            <div 
+              className={`h-full ${currentTheme.activeDot} transition-all duration-300`}
+              style={{ 
+                width: `${((currentImageIndex + 1) / carouselImages.length) * 100}%` 
+              }}
+            />
+          </div>
+        )}
+
+        {/* Container das imagens */}
+        {carouselTransition === "slide" ? (
+          <div 
+            className="flex h-full"
+            style={getTransitionStyles()}
+          >
+            {carouselImages.map((image: any, index: number) => (
+              <div
+                key={image.id || index}
+                className={`${carouselSlidesToShow === 1 ? 'w-full' : `w-1/${carouselSlidesToShow}`} h-full flex-shrink-0 relative`}
+              >
+                <img 
+                  src={image.url} 
+                  alt={image.alt || `Imagem ${index + 1}`}
+                  className={`w-full h-full ${imageFitClasses[carouselImageFit as keyof typeof imageFitClasses]}`}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = `https://via.placeholder.com/600x300/6b7280/white?text=Erro+ao+Carregar`;
+                  }}
+                />
+                
+                {/* Overlay com título e legenda */}
+                {(image.title || image.caption) && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                    {image.title && (
+                      <h4 className="text-white font-bold text-lg mb-1">
+                        {image.title}
+                      </h4>
+                    )}
+                    {image.caption && (
+                      <p className="text-white/90 text-sm">
+                        {image.caption}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          // Para outros tipos de transição (fade, zoom, flip)
+          <div className="relative w-full h-full">
+            <img 
+              src={currentImage.url} 
+              alt={currentImage.alt || `Imagem ${currentImageIndex + 1}`}
+              className={`w-full h-full ${imageFitClasses[carouselImageFit as keyof typeof imageFitClasses]}`}
+              style={getTransitionStyles()}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = `https://via.placeholder.com/600x300/6b7280/white?text=Erro+ao+Carregar`;
+              }}
+            />
+            
+            {/* Overlay com título e legenda */}
+            {(currentImage.title || currentImage.caption) && (
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                {currentImage.title && (
+                  <h4 className="text-white font-bold text-lg mb-1">
+                    {currentImage.title}
+                  </h4>
+                )}
+                {currentImage.caption && (
+                  <p className="text-white/90 text-sm">
+                    {currentImage.caption}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Setas de navegação */}
+        {carouselShowArrows && carouselImages.length > 1 && (
+          <>
+            <button
+              onClick={prevImage}
+              disabled={!carouselInfinite && currentImageIndex === 0}
+              className={`${getArrowClasses()} left-2`}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            
+            <button
+              onClick={nextImage}
+              disabled={!carouselInfinite && currentImageIndex === carouselImages.length - 1}
+              className={`${getArrowClasses()} right-2`}
+            >
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </>
+        )}
+
+        {/* Contador de imagens */}
+        <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
+          {currentImageIndex + 1} / {carouselImages.length}
+        </div>
+      </div>
+
+      {/* Miniaturas */}
+      {carouselShowThumbnails && carouselImages.length > 1 && (
+        <div className="flex justify-center space-x-2 overflow-x-auto pb-2">
+          {carouselImages.map((image: any, index: number) => (
+            <button
+              key={index}
+              onClick={() => goToImage(index)}
+              className={`flex-shrink-0 w-16 h-12 rounded overflow-hidden border-2 transition-all duration-200 ${
+                index === currentImageIndex 
+                  ? `border-blue-500 opacity-100` 
+                  : 'border-gray-300 opacity-70 hover:opacity-100'
+              }`}
+            >
+              <img 
+                src={image.url} 
+                alt={`Miniatura ${index + 1}`}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = `https://via.placeholder.com/64x48/6b7280/white?text=${index + 1}`;
+                }}
+              />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Indicadores (pontinhos) */}
+      {carouselShowDots && carouselImages.length > 1 && (
+        <div className="flex justify-center space-x-2">
+          {carouselImages.map((_: any, index: number) => (
+            <button
+              key={index}
+              onClick={() => goToImage(index)}
+              className={getDotClasses(index, index === currentImageIndex)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Informações da imagem atual */}
+      {currentImage && (currentImage.title || currentImage.caption) && (
+        <div className="text-center space-y-1">
+          {currentImage.title && (
+            <h3 className="font-semibold text-lg text-gray-800">
+              {currentImage.title}
+            </h3>
+          )}
+          {currentImage.caption && (
+            <p className="text-gray-600 text-sm max-w-2xl mx-auto">
+              {currentImage.caption}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface Element {
   id: string;
@@ -2401,6 +2856,9 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
             </div>
           </div>
         );
+
+      case 'image_carousel':
+        return <AdvancedCarousel key={id} id={id} properties={properties} />;
 
       default:
         return (

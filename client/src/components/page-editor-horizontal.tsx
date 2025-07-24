@@ -71,7 +71,14 @@ import {
   HelpCircle,
   Brain,
   Copy,
-  Timer
+  Timer,
+  ChevronLeft,
+  ChevronRight,
+  Play,
+  Pause,
+  RotateCcw,
+  Settings2,
+  Move3D
 } from "lucide-react";
 
 // Função utilitária para gerar IDs de remarketing estruturados
@@ -460,19 +467,29 @@ interface Element {
   faqHeaderColor?: string;
   
   // Carrossel Properties
-  carouselImages?: { url: string; alt: string; caption?: string }[];
+  carouselImages?: { id: string; url: string; alt: string; caption?: string; title?: string }[];
   carouselAutoplay?: boolean;
-  carouselSpeed?: number;
+  carouselSpeed?: string;
   carouselShowDots?: boolean;
   carouselShowArrows?: boolean;
   carouselInfinite?: boolean;
   carouselSlidesToShow?: number;
   carouselSlidesToScroll?: number;
-  carouselEffect?: "slide" | "fade" | "cube" | "coverflow";
+  carouselTransition?: "slide" | "fade" | "zoom" | "flip";
   carouselArrowStyle?: "simple" | "rounded" | "square";
   carouselDotStyle?: "dots" | "lines" | "squares";
   carouselBorderRadius?: string;
   carouselImageFit?: "cover" | "contain" | "fill";
+  carouselTitle?: string;
+  carouselHeight?: string;
+  carouselWidth?: number;
+  carouselShowThumbnails?: boolean;
+  carouselShowProgress?: boolean;
+  carouselAutoplayInterval?: number;
+  carouselTheme?: string;
+  carouselPauseOnHover?: boolean;
+  carouselSwipeEnabled?: boolean;
+  carouselKeyboardNav?: boolean;
   
   // Stripe Embed Properties
   stripePublishableKey?: string;
@@ -4252,57 +4269,204 @@ const gameElementCategories = [
 
       case "image_carousel":
         const carouselImages = element.carouselImages || [
-          { url: "https://via.placeholder.com/600x300/10b981/white?text=Imagem+1", alt: "Imagem 1", caption: "Primeira imagem" },
-          { url: "https://via.placeholder.com/600x300/3b82f6/white?text=Imagem+2", alt: "Imagem 2", caption: "Segunda imagem" },
-          { url: "https://via.placeholder.com/600x300/8b5cf6/white?text=Imagem+3", alt: "Imagem 3", caption: "Terceira imagem" }
+          { id: "img-1", url: "https://via.placeholder.com/600x300/10b981/white?text=Imagem+1", alt: "Imagem 1", caption: "Primeira imagem do carrossel", title: "Título da Imagem 1" },
+          { id: "img-2", url: "https://via.placeholder.com/600x300/3b82f6/white?text=Imagem+2", alt: "Imagem 2", caption: "Segunda imagem do carrossel", title: "Título da Imagem 2" },
+          { id: "img-3", url: "https://via.placeholder.com/600x300/8b5cf6/white?text=Imagem+3", alt: "Imagem 3", caption: "Terceira imagem do carrossel", title: "Título da Imagem 3" }
         ];
-        
+
+        // Configurações do carrossel com valores padrão
+        const carouselAutoplay = element.carouselAutoplay ?? true;
+        const carouselSpeed = element.carouselSpeed || 3000;
+        const carouselShowDots = element.carouselShowDots ?? true;
+        const carouselShowArrows = element.carouselShowArrows ?? true;
+        const carouselInfinite = element.carouselInfinite ?? true;
+        const carouselSlidesToShow = element.carouselSlidesToShow || 1;
+        const carouselEffect = element.carouselEffect || "slide";
+        const carouselArrowStyle = element.carouselArrowStyle || "rounded";
+        const carouselDotStyle = element.carouselDotStyle || "dots";
+        const carouselBorderRadius = element.carouselBorderRadius || "8px";
+        const carouselImageFit = element.carouselImageFit || "cover";
+        const carouselHeight = element.carouselHeight || "300px";
+        const carouselWidth = element.carouselWidth || 100;
+
+        // Estilos dinâmicos baseados nas configurações
+        const carouselContainerStyle = {
+          width: `${Math.min(Math.max(carouselWidth, 10), 100)}%`,
+          borderRadius: carouselBorderRadius
+        };
+
+        const imageStyle = {
+          height: carouselHeight,
+          objectFit: carouselImageFit as any,
+          borderRadius: carouselBorderRadius
+        };
+
+        // Estilos das setas baseados na configuração
+        const arrowBaseClass = "absolute top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 transition-all duration-200 shadow-lg z-10";
+        const arrowStyleClass = carouselArrowStyle === "simple" ? "p-1" :
+                               carouselArrowStyle === "rounded" ? "p-2 rounded-full" :
+                               "p-2 rounded-md";
+
+        // Estilos dos dots baseados na configuração
+        const dotBaseClass = "transition-all duration-200 cursor-pointer";
+        const dotStyleClass = carouselDotStyle === "dots" ? "w-3 h-3 rounded-full" :
+                             carouselDotStyle === "lines" ? "w-8 h-1 rounded-full" :
+                             "w-3 h-3 rounded-sm";
+
+        // Simulação de estado atual do slide (no preview sempre mostra o primeiro)
+        const currentSlide = 0;
+
         return (
-          <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
-            <div className="relative">
-              <div className="overflow-hidden rounded-lg">
-                <div className="flex transition-transform duration-300">
-                  {carouselImages.map((image, index) => (
-                    <div key={index} className="w-full flex-shrink-0 relative">
-                      <img 
-                        src={image.url} 
-                        alt={image.alt}
-                        className="w-full h-64 object-cover"
-                      />
-                      {image.caption && (
-                        <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
-                          {image.caption}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+          <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-white" style={carouselContainerStyle}>
+            {/* Título do carrossel */}
+            {element.carouselTitle && (
+              <h3 className="text-lg font-semibold text-gray-800 text-center mb-4">
+                {element.carouselTitle}
+              </h3>
+            )}
+
+            <div className="relative overflow-hidden" style={{ borderRadius: carouselBorderRadius }}>
+              {/* Container das imagens */}
+              <div 
+                className={`flex transition-all duration-500 ${
+                  carouselEffect === "fade" ? "absolute" : 
+                  carouselEffect === "cube" ? "transform-gpu perspective-1000" :
+                  carouselEffect === "coverflow" ? "transform-gpu" : ""
+                }`}
+                style={{
+                  transform: carouselEffect === "slide" ? `translateX(-${currentSlide * (100 / carouselSlidesToShow)}%)` : 'none'
+                }}
+              >
+                {carouselImages.map((image, index) => (
+                  <div 
+                    key={image.id}
+                    className={`relative flex-shrink-0 ${
+                      carouselEffect === "fade" && index !== currentSlide ? "opacity-0" : "opacity-100"
+                    }`}
+                    style={{ 
+                      width: `${100 / carouselSlidesToShow}%`,
+                      transform: carouselEffect === "cube" ? `rotateY(${(index - currentSlide) * 90}deg) translateZ(150px)` :
+                               carouselEffect === "coverflow" ? `rotateY(${(index - currentSlide) * 45}deg) translateZ(${index === currentSlide ? 0 : -100}px)` :
+                               'none'
+                    }}
+                  >
+                    <img 
+                      src={image.url} 
+                      alt={image.alt}
+                      className="w-full transition-transform duration-300 hover:scale-105"
+                      style={imageStyle}
+                    />
+                    
+                    {/* Overlay com título e caption */}
+                    {(image.title || image.caption) && (
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-transparent to-transparent p-4">
+                        {image.title && (
+                          <h4 className="text-white font-semibold text-lg mb-1">
+                            {image.title}
+                          </h4>
+                        )}
+                        {image.caption && (
+                          <p className="text-white text-sm opacity-90">
+                            {image.caption}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Indicador de slide atual */}
+                    {index === currentSlide && (
+                      <div className="absolute top-3 right-3 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+                        {index + 1} / {carouselImages.length}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
               
-              {element.carouselShowArrows && (
+              {/* Setas de navegação */}
+              {carouselShowArrows && carouselImages.length > 1 && (
                 <>
-                  <button className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full p-2 shadow-lg">
-                    <ChevronLeft className="w-4 h-4" />
+                  <button className={`${arrowBaseClass} ${arrowStyleClass} left-3`}>
+                    <ChevronLeft className="w-5 h-5 text-gray-700" />
                   </button>
-                  <button className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full p-2 shadow-lg">
-                    <ChevronRight className="w-4 h-4" />
+                  <button className={`${arrowBaseClass} ${arrowStyleClass} right-3`}>
+                    <ChevronRight className="w-5 h-5 text-gray-700" />
                   </button>
                 </>
               )}
+
+              {/* Controles de autoplay */}
+              {carouselAutoplay && (
+                <div className="absolute top-3 left-3 flex space-x-1">
+                  <button className="bg-black bg-opacity-50 text-white p-1 rounded hover:bg-opacity-70 transition-opacity">
+                    <Play className="w-3 h-3" />
+                  </button>
+                  <button className="bg-black bg-opacity-50 text-white p-1 rounded hover:bg-opacity-70 transition-opacity">
+                    <Pause className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
             </div>
             
-            {element.carouselShowDots && (
-              <div className="flex justify-center space-x-2">
+            {/* Indicadores (dots) */}
+            {carouselShowDots && carouselImages.length > 1 && (
+              <div className="flex justify-center space-x-2 mt-4">
                 {carouselImages.map((_, index) => (
                   <button 
                     key={index}
-                    className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                      index === 0 ? 'bg-blue-500' : 'bg-gray-300'
+                    className={`${dotBaseClass} ${dotStyleClass} ${
+                      index === currentSlide 
+                        ? 'bg-blue-500' 
+                        : 'bg-gray-300 hover:bg-gray-400'
                     }`}
                   />
                 ))}
               </div>
             )}
+
+            {/* Thumbnail navigation (opcional) */}
+            {element.carouselShowThumbnails && carouselImages.length > 1 && (
+              <div className="flex justify-center space-x-2 mt-3 overflow-x-auto pb-2">
+                {carouselImages.map((image, index) => (
+                  <button 
+                    key={index}
+                    className={`flex-shrink-0 relative overflow-hidden rounded transition-all duration-200 ${
+                      index === currentSlide 
+                        ? 'ring-2 ring-blue-500 opacity-100' 
+                        : 'opacity-60 hover:opacity-80'
+                    }`}
+                  >
+                    <img 
+                      src={image.url} 
+                      alt={image.alt}
+                      className="w-16 h-10 object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Progress bar para autoplay */}
+            {carouselAutoplay && element.carouselShowProgress && (
+              <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                <div 
+                  className="bg-blue-500 h-1 rounded-full transition-all duration-100"
+                  style={{ width: `${((Date.now() % carouselSpeed) / carouselSpeed) * 100}%` }}
+                />
+              </div>
+            )}
+
+            {/* Informações adicionais */}
+            <div className="flex justify-between items-center text-xs text-gray-500 mt-2">
+              <span>{carouselImages.length} imagens</span>
+              {carouselAutoplay && (
+                <span className="flex items-center space-x-1">
+                  <Play className="w-3 h-3" />
+                  <span>Auto: {carouselSpeed/1000}s</span>
+                </span>
+              )}
+              <span>Efeito: {carouselEffect}</span>
+            </div>
           </div>
         );
 
@@ -13168,6 +13332,410 @@ const gameElementCategories = [
                           onChange={(e) => updateElement(selectedElementData.id, { guaranteeIconColor: e.target.value })}
                           className="w-full h-8 mt-1"
                         />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Propriedades para Carrossel de Imagens */}
+              {selectedElementData.type === "image_carousel" && (
+                <div className="space-y-4">
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Images className="w-5 h-5 text-green-600" />
+                      <h4 className="font-semibold text-green-800">Carrossel de Imagens</h4>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Configurações Gerais */}
+                      <div className="border-b pb-4">
+                        <h5 className="font-semibold text-sm mb-3">⚙️ Configurações Gerais</h5>
+                        
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs">Altura</Label>
+                              <select 
+                                className="w-full px-2 py-1 border rounded text-xs"
+                                value={selectedElementData.carouselHeight || "medium"}
+                                onChange={(e) => updateElement(selectedElementData.id, { carouselHeight: e.target.value })}
+                              >
+                                <option value="small">Pequena (200px)</option>
+                                <option value="medium">Média (300px)</option>
+                                <option value="large">Grande (400px)</option>
+                                <option value="xlarge">Extra Grande (500px)</option>
+                              </select>
+                            </div>
+                            <div>
+                              <Label className="text-xs">Bordas</Label>
+                              <select 
+                                className="w-full px-2 py-1 border rounded text-xs"
+                                value={selectedElementData.carouselBorderRadius || "lg"}
+                                onChange={(e) => updateElement(selectedElementData.id, { carouselBorderRadius: e.target.value })}
+                              >
+                                <option value="none">Sem bordas</option>
+                                <option value="sm">Pequenas</option>
+                                <option value="md">Médias</option>
+                                <option value="lg">Grandes</option>
+                                <option value="xl">Extra Grandes</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs">Efeito de Transição</Label>
+                              <select 
+                                className="w-full px-2 py-1 border rounded text-xs"
+                                value={selectedElementData.carouselTransition || "slide"}
+                                onChange={(e) => updateElement(selectedElementData.id, { carouselTransition: e.target.value })}
+                              >
+                                <option value="slide">Deslizar</option>
+                                <option value="fade">Desvanecer</option>
+                                <option value="zoom">Zoom</option>
+                                <option value="flip">Virar</option>
+                              </select>
+                            </div>
+                            <div>
+                              <Label className="text-xs">Velocidade</Label>
+                              <select 
+                                className="w-full px-2 py-1 border rounded text-xs"
+                                value={selectedElementData.carouselSpeed || "normal"}
+                                onChange={(e) => updateElement(selectedElementData.id, { carouselSpeed: e.target.value })}
+                              >
+                                <option value="slow">Lenta (1s)</option>
+                                <option value="normal">Normal (0.5s)</option>
+                                <option value="fast">Rápida (0.3s)</option>
+                                <option value="instant">Instantânea (0.1s)</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Autoplay e Navegação */}
+                      <div className="border-b pb-4">
+                        <h5 className="font-semibold text-sm mb-3">🔄 Autoplay e Navegação</h5>
+                        
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="carousel-autoplay"
+                              checked={selectedElementData.carouselAutoplay || false}
+                              onChange={(e) => updateElement(selectedElementData.id, { carouselAutoplay: e.target.checked })}
+                              className="rounded"
+                            />
+                            <Label htmlFor="carousel-autoplay" className="text-xs">Ativar reprodução automática</Label>
+                          </div>
+
+                          {selectedElementData.carouselAutoplay && (
+                            <div>
+                              <Label className="text-xs">Intervalo de Autoplay (segundos)</Label>
+                              <select 
+                                className="w-full px-2 py-1 border rounded text-xs mt-1"
+                                value={selectedElementData.carouselAutoplayInterval || "3"}
+                                onChange={(e) => updateElement(selectedElementData.id, { carouselAutoplayInterval: parseInt(e.target.value) })}
+                              >
+                                <option value="2">2 segundos</option>
+                                <option value="3">3 segundos</option>
+                                <option value="4">4 segundos</option>
+                                <option value="5">5 segundos</option>
+                                <option value="7">7 segundos</option>
+                                <option value="10">10 segundos</option>
+                              </select>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="carousel-show-arrows"
+                              checked={selectedElementData.carouselShowArrows !== false}
+                              onChange={(e) => updateElement(selectedElementData.id, { carouselShowArrows: e.target.checked })}
+                              className="rounded"
+                            />
+                            <Label htmlFor="carousel-show-arrows" className="text-xs">Mostrar setas de navegação</Label>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="carousel-show-dots"
+                              checked={selectedElementData.carouselShowDots !== false}
+                              onChange={(e) => updateElement(selectedElementData.id, { carouselShowDots: e.target.checked })}
+                              className="rounded"
+                            />
+                            <Label htmlFor="carousel-show-dots" className="text-xs">Mostrar indicadores (pontinhos)</Label>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="carousel-infinite"
+                              checked={selectedElementData.carouselInfinite !== false}
+                              onChange={(e) => updateElement(selectedElementData.id, { carouselInfinite: e.target.checked })}
+                              className="rounded"
+                            />
+                            <Label htmlFor="carousel-infinite" className="text-xs">Loop infinito</Label>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Configurações Avançadas de Estilo */}
+                      <div className="border-b pb-4">
+                        <h5 className="font-semibold text-sm mb-3">🎨 Estilo Avançado</h5>
+                        
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs">Ajuste da Imagem</Label>
+                              <select 
+                                className="w-full px-2 py-1 border rounded text-xs"
+                                value={selectedElementData.carouselImageFit || "cover"}
+                                onChange={(e) => updateElement(selectedElementData.id, { carouselImageFit: e.target.value })}
+                              >
+                                <option value="cover">Cobrir (recorta)</option>
+                                <option value="contain">Conter (mostra tudo)</option>
+                                <option value="fill">Esticar</option>
+                              </select>
+                            </div>
+                            <div>
+                              <Label className="text-xs">Estilo das Setas</Label>
+                              <select 
+                                className="w-full px-2 py-1 border rounded text-xs"
+                                value={selectedElementData.carouselArrowStyle || "simple"}
+                                onChange={(e) => updateElement(selectedElementData.id, { carouselArrowStyle: e.target.value })}
+                              >
+                                <option value="simple">Simples</option>
+                                <option value="rounded">Arredondadas</option>
+                                <option value="square">Quadradas</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs">Estilo dos Indicadores</Label>
+                              <select 
+                                className="w-full px-2 py-1 border rounded text-xs"
+                                value={selectedElementData.carouselDotStyle || "dots"}
+                                onChange={(e) => updateElement(selectedElementData.id, { carouselDotStyle: e.target.value })}
+                              >
+                                <option value="dots">Pontos</option>
+                                <option value="lines">Linhas</option>
+                                <option value="squares">Quadrados</option>
+                              </select>
+                            </div>
+                            <div>
+                              <Label className="text-xs">Tema do Carrossel</Label>
+                              <select 
+                                className="w-full px-2 py-1 border rounded text-xs"
+                                value={selectedElementData.carouselTheme || "default"}
+                                onChange={(e) => updateElement(selectedElementData.id, { carouselTheme: e.target.value })}
+                              >
+                                <option value="default">Padrão</option>
+                                <option value="dark">Escuro</option>
+                                <option value="minimal">Minimalista</option>
+                                <option value="colorful">Colorido</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="carousel-show-thumbnails"
+                              checked={selectedElementData.carouselShowThumbnails || false}
+                              onChange={(e) => updateElement(selectedElementData.id, { carouselShowThumbnails: e.target.checked })}
+                              className="rounded"
+                            />
+                            <Label htmlFor="carousel-show-thumbnails" className="text-xs">Mostrar miniaturas</Label>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="carousel-show-progress"
+                              checked={selectedElementData.carouselShowProgress || false}
+                              onChange={(e) => updateElement(selectedElementData.id, { carouselShowProgress: e.target.checked })}
+                              className="rounded"
+                            />
+                            <Label htmlFor="carousel-show-progress" className="text-xs">Mostrar barra de progresso</Label>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="carousel-pause-on-hover"
+                              checked={selectedElementData.carouselPauseOnHover !== false}
+                              onChange={(e) => updateElement(selectedElementData.id, { carouselPauseOnHover: e.target.checked })}
+                              className="rounded"
+                            />
+                            <Label htmlFor="carousel-pause-on-hover" className="text-xs">Pausar ao passar o mouse</Label>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Configurações de Responsividade */}
+                      <div className="border-b pb-4">
+                        <h5 className="font-semibold text-sm mb-3">📱 Responsividade</h5>
+                        
+                        <div className="space-y-3">
+                          <div>
+                            <Label className="text-xs">Slides por visualização (Desktop)</Label>
+                            <select 
+                              className="w-full px-2 py-1 border rounded text-xs"
+                              value={selectedElementData.carouselSlidesToShow || "1"}
+                              onChange={(e) => updateElement(selectedElementData.id, { carouselSlidesToShow: parseInt(e.target.value) })}
+                            >
+                              <option value="1">1 slide</option>
+                              <option value="2">2 slides</option>
+                              <option value="3">3 slides</option>
+                              <option value="4">4 slides</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <Label className="text-xs">Slides para rolar</Label>
+                            <select 
+                              className="w-full px-2 py-1 border rounded text-xs"
+                              value={selectedElementData.carouselSlidesToScroll || "1"}
+                              onChange={(e) => updateElement(selectedElementData.id, { carouselSlidesToScroll: parseInt(e.target.value) })}
+                            >
+                              <option value="1">1 slide por vez</option>
+                              <option value="2">2 slides por vez</option>
+                              <option value="3">3 slides por vez</option>
+                            </select>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="carousel-swipe-enabled"
+                              checked={selectedElementData.carouselSwipeEnabled !== false}
+                              onChange={(e) => updateElement(selectedElementData.id, { carouselSwipeEnabled: e.target.checked })}
+                              className="rounded"
+                            />
+                            <Label htmlFor="carousel-swipe-enabled" className="text-xs">Permitir deslizar (touch/swipe)</Label>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="carousel-keyboard-nav"
+                              checked={selectedElementData.carouselKeyboardNav !== false}
+                              onChange={(e) => updateElement(selectedElementData.id, { carouselKeyboardNav: e.target.checked })}
+                              className="rounded"
+                            />
+                            <Label htmlFor="carousel-keyboard-nav" className="text-xs">Navegação por teclado (setas)</Label>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Gerenciar Imagens */}
+                      <div>
+                        <h5 className="font-semibold text-sm mb-3">🖼️ Gerenciar Imagens</h5>
+                        
+                        <div className="space-y-3">
+                          {(selectedElementData.carouselImages || []).map((image: any, index: number) => (
+                            <div key={index} className="border rounded p-3 bg-white">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-medium">Imagem {index + 1}</span>
+                                <button
+                                  onClick={() => {
+                                    const currentImages = selectedElementData.carouselImages || [];
+                                    const newImages = currentImages.filter((_: any, i: number) => i !== index);
+                                    updateElement(selectedElementData.id, { carouselImages: newImages });
+                                  }}
+                                  className="text-red-500 hover:text-red-700 text-xs font-bold"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <div>
+                                  <Label className="text-xs">URL da Imagem</Label>
+                                  <Input
+                                    type="text"
+                                    value={image.url || ""}
+                                    onChange={(e) => {
+                                      const currentImages = [...(selectedElementData.carouselImages || [])];
+                                      currentImages[index] = { ...currentImages[index], url: e.target.value };
+                                      updateElement(selectedElementData.id, { carouselImages: currentImages });
+                                    }}
+                                    placeholder="https://exemplo.com/imagem.jpg"
+                                    className="text-xs"
+                                  />
+                                </div>
+                                
+                                <div>
+                                  <Label className="text-xs">Título</Label>
+                                  <Input
+                                    type="text"
+                                    value={image.title || ""}
+                                    onChange={(e) => {
+                                      const currentImages = [...(selectedElementData.carouselImages || [])];
+                                      currentImages[index] = { ...currentImages[index], title: e.target.value };
+                                      updateElement(selectedElementData.id, { carouselImages: currentImages });
+                                    }}
+                                    placeholder="Título da imagem"
+                                    className="text-xs"
+                                  />
+                                </div>
+                                
+                                <div>
+                                  <Label className="text-xs">Legenda</Label>
+                                  <Input
+                                    type="text"
+                                    value={image.caption || ""}
+                                    onChange={(e) => {
+                                      const currentImages = [...(selectedElementData.carouselImages || [])];
+                                      currentImages[index] = { ...currentImages[index], caption: e.target.value };
+                                      updateElement(selectedElementData.id, { carouselImages: currentImages });
+                                    }}
+                                    placeholder="Legenda da imagem"
+                                    className="text-xs"
+                                  />
+                                </div>
+                                
+                                <div>
+                                  <Label className="text-xs">Texto Alternativo (Alt)</Label>
+                                  <Input
+                                    type="text"
+                                    value={image.alt || ""}
+                                    onChange={(e) => {
+                                      const currentImages = [...(selectedElementData.carouselImages || [])];
+                                      currentImages[index] = { ...currentImages[index], alt: e.target.value };
+                                      updateElement(selectedElementData.id, { carouselImages: currentImages });
+                                    }}
+                                    placeholder="Descrição para acessibilidade"
+                                    className="text-xs"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          <button
+                            onClick={() => {
+                              const currentImages = selectedElementData.carouselImages || [];
+                              const newImage = {
+                                id: `img-${Date.now()}`,
+                                url: "https://via.placeholder.com/600x300/3b82f6/white?text=Nova+Imagem",
+                                alt: "Nova imagem",
+                                caption: "Legenda da nova imagem",
+                                title: "Título da Nova Imagem"
+                              };
+                              updateElement(selectedElementData.id, { carouselImages: [...currentImages, newImage] });
+                            }}
+                            className="w-full px-3 py-2 bg-green-500 text-white rounded text-xs hover:bg-green-600"
+                          >
+                            + Adicionar Nova Imagem
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
