@@ -7925,64 +7925,218 @@ const gameElementCategories = [
 
               {/* Propriedades para Lista de Ícones */}
               {selectedElementData.type === "icon_list" && (
-                <div className="space-y-4">
+                <div className="space-y-4 max-h-96 overflow-y-auto">
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <Star className="w-4 h-4 text-blue-600" />
                       <span className="font-medium text-blue-800">Lista de Ícones - Configurações</span>
                     </div>
                     <div className="text-xs text-blue-700">
-                      Exiba benefícios, características ou pontos importantes com ícones visuais
+                      Edite, adicione ou remova ícones individualmente da sua lista
                     </div>
                   </div>
 
-                  <div>
-                    <Label>Layout</Label>
-                    <select 
-                      className="w-full px-3 py-2 border rounded-md mt-1"
-                      value={selectedElementData.iconListLayout || "vertical"}
-                      onChange={(e) => updateElement(selectedElementData.id, { iconListLayout: e.target.value })}
-                    >
-                      <option value="vertical">Vertical</option>
-                      <option value="grid">Grade</option>
-                    </select>
-                  </div>
-
-                  {selectedElementData.iconListLayout === "grid" && (
+                  <div className="border-b pb-4">
+                    <h5 className="font-semibold text-sm mb-3">📝 Configurações Gerais</h5>
+                    
                     <div>
-                      <Label>Colunas</Label>
+                      <Label>Layout</Label>
                       <select 
                         className="w-full px-3 py-2 border rounded-md mt-1"
-                        value={selectedElementData.iconListColumns || 2}
-                        onChange={(e) => updateElement(selectedElementData.id, { iconListColumns: parseInt(e.target.value) })}
+                        value={selectedElementData.iconListLayout || "vertical"}
+                        onChange={(e) => updateElement(selectedElementData.id, { iconListLayout: e.target.value })}
                       >
-                        <option value={1}>1 Coluna</option>
-                        <option value={2}>2 Colunas</option>
-                        <option value={3}>3 Colunas</option>
+                        <option value="vertical">Vertical</option>
+                        <option value="grid">Grade</option>
                       </select>
                     </div>
-                  )}
 
-                  <div>
-                    <Label>Posição do Ícone</Label>
-                    <select 
-                      className="w-full px-3 py-2 border rounded-md mt-1"
-                      value={selectedElementData.iconListIconPosition || "left"}
-                      onChange={(e) => updateElement(selectedElementData.id, { iconListIconPosition: e.target.value })}
-                    >
-                      <option value="left">Esquerda</option>
-                      <option value="top">Topo</option>
-                    </select>
+                    {selectedElementData.iconListLayout === "grid" && (
+                      <div className="mt-3">
+                        <Label>Colunas</Label>
+                        <select 
+                          className="w-full px-3 py-2 border rounded-md mt-1"
+                          value={selectedElementData.iconListColumns || 2}
+                          onChange={(e) => updateElement(selectedElementData.id, { iconListColumns: parseInt(e.target.value) })}
+                        >
+                          <option value={1}>1 Coluna</option>
+                          <option value={2}>2 Colunas</option>
+                          <option value={3}>3 Colunas</option>
+                        </select>
+                      </div>
+                    )}
+
+                    <div className="mt-3">
+                      <Label>Posição do Ícone</Label>
+                      <select 
+                        className="w-full px-3 py-2 border rounded-md mt-1"
+                        value={selectedElementData.iconListIconPosition || "left"}
+                        onChange={(e) => updateElement(selectedElementData.id, { iconListIconPosition: e.target.value })}
+                      >
+                        <option value="left">Esquerda</option>
+                        <option value="top">Topo</option>
+                      </select>
+                    </div>
+
+                    <div className="mt-3">
+                      <Label>Cor de Fundo</Label>
+                      <Input
+                        type="color"
+                        value={selectedElementData.iconListBackgroundColor || "#f8fafc"}
+                        onChange={(e) => updateElement(selectedElementData.id, { iconListBackgroundColor: e.target.value })}
+                        className="mt-1 h-10"
+                      />
+                    </div>
                   </div>
 
                   <div>
-                    <Label>Cor de Fundo</Label>
-                    <Input
-                      type="color"
-                      value={selectedElementData.iconListBackgroundColor || "#f8fafc"}
-                      onChange={(e) => updateElement(selectedElementData.id, { iconListBackgroundColor: e.target.value })}
-                      className="mt-1 h-10"
-                    />
+                    <h5 className="font-semibold text-sm mb-3">🔧 Editar Ícones</h5>
+                    
+                    <div className="space-y-3">
+                      {((selectedElementData.iconListData || [
+                        { id: "1", icon: "CheckCircle", iconColor: "#10b981", mainText: "Benefício 1", subText: "Descrição do benefício" },
+                        { id: "2", icon: "Star", iconColor: "#f59e0b", mainText: "Benefício 2", subText: "Descrição do benefício" },
+                        { id: "3", icon: "Shield", iconColor: "#3b82f6", mainText: "Benefício 3", subText: "Descrição do benefício" }
+                      ])).map((iconItem, index) => (
+                        <div key={iconItem.id} className="p-3 border rounded-lg bg-gray-50">
+                          <div className="flex justify-between items-start mb-3">
+                            <h6 className="text-sm font-semibold">Ícone {index + 1}</h6>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const currentData = selectedElementData.iconListData || [
+                                  { id: "1", icon: "CheckCircle", iconColor: "#10b981", mainText: "Benefício 1", subText: "Descrição do benefício" },
+                                  { id: "2", icon: "Star", iconColor: "#f59e0b", mainText: "Benefício 2", subText: "Descrição do benefício" },
+                                  { id: "3", icon: "Shield", iconColor: "#3b82f6", mainText: "Benefício 3", subText: "Descrição do benefício" }
+                                ];
+                                const filteredData = currentData.filter(item => item.id !== iconItem.id);
+                                updateElement(selectedElementData.id, { iconListData: filteredData });
+                              }}
+                              className="p-2 text-red-600 hover:text-red-800"
+                            >
+                              ×
+                            </Button>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <div>
+                              <Label className="text-xs">Ícone</Label>
+                              <select
+                                className="w-full px-2 py-1 border rounded text-xs mt-1"
+                                value={iconItem.icon}
+                                onChange={(e) => {
+                                  const currentData = selectedElementData.iconListData || [
+                                    { id: "1", icon: "CheckCircle", iconColor: "#10b981", mainText: "Benefício 1", subText: "Descrição do benefício" },
+                                    { id: "2", icon: "Star", iconColor: "#f59e0b", mainText: "Benefício 2", subText: "Descrição do benefício" },
+                                    { id: "3", icon: "Shield", iconColor: "#3b82f6", mainText: "Benefício 3", subText: "Descrição do benefício" }
+                                  ];
+                                  const updatedData = currentData.map(item => 
+                                    item.id === iconItem.id ? { ...item, icon: e.target.value } : item
+                                  );
+                                  updateElement(selectedElementData.id, { iconListData: updatedData });
+                                }}
+                              >
+                                <option value="CheckCircle">✓ Check</option>
+                                <option value="Star">⭐ Estrela</option>
+                                <option value="Shield">🛡️ Escudo</option>
+                                <option value="Heart">❤️ Coração</option>
+                                <option value="Zap">⚡ Raio</option>
+                                <option value="Trophy">🏆 Troféu</option>
+                                <option value="Target">🎯 Alvo</option>
+                                <option value="Gift">🎁 Presente</option>
+                                <option value="Crown">👑 Coroa</option>
+                                <option value="Gem">💎 Diamante</option>
+                                <option value="Rocket">🚀 Foguete</option>
+                                <option value="Sparkles">✨ Brilho</option>
+                              </select>
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs">Cor do Ícone</Label>
+                              <Input
+                                type="color"
+                                value={iconItem.iconColor}
+                                onChange={(e) => {
+                                  const currentData = selectedElementData.iconListData || [
+                                    { id: "1", icon: "CheckCircle", iconColor: "#10b981", mainText: "Benefício 1", subText: "Descrição do benefício" },
+                                    { id: "2", icon: "Star", iconColor: "#f59e0b", mainText: "Benefício 2", subText: "Descrição do benefício" },
+                                    { id: "3", icon: "Shield", iconColor: "#3b82f6", mainText: "Benefício 3", subText: "Descrição do benefício" }
+                                  ];
+                                  const updatedData = currentData.map(item => 
+                                    item.id === iconItem.id ? { ...item, iconColor: e.target.value } : item
+                                  );
+                                  updateElement(selectedElementData.id, { iconListData: updatedData });
+                                }}
+                                className="mt-1 h-8 w-full"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs">Texto Principal</Label>
+                              <Input
+                                value={iconItem.mainText}
+                                onChange={(e) => {
+                                  const currentData = selectedElementData.iconListData || [
+                                    { id: "1", icon: "CheckCircle", iconColor: "#10b981", mainText: "Benefício 1", subText: "Descrição do benefício" },
+                                    { id: "2", icon: "Star", iconColor: "#f59e0b", mainText: "Benefício 2", subText: "Descrição do benefício" },
+                                    { id: "3", icon: "Shield", iconColor: "#3b82f6", mainText: "Benefício 3", subText: "Descrição do benefício" }
+                                  ];
+                                  const updatedData = currentData.map(item => 
+                                    item.id === iconItem.id ? { ...item, mainText: e.target.value } : item
+                                  );
+                                  updateElement(selectedElementData.id, { iconListData: updatedData });
+                                }}
+                                placeholder="Texto principal"
+                                className="mt-1 text-xs"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs">Texto Secundário</Label>
+                              <Input
+                                value={iconItem.subText}
+                                onChange={(e) => {
+                                  const currentData = selectedElementData.iconListData || [
+                                    { id: "1", icon: "CheckCircle", iconColor: "#10b981", mainText: "Benefício 1", subText: "Descrição do benefício" },
+                                    { id: "2", icon: "Star", iconColor: "#f59e0b", mainText: "Benefício 2", subText: "Descrição do benefício" },
+                                    { id: "3", icon: "Shield", iconColor: "#3b82f6", mainText: "Benefício 3", subText: "Descrição do benefício" }
+                                  ];
+                                  const updatedData = currentData.map(item => 
+                                    item.id === iconItem.id ? { ...item, subText: e.target.value } : item
+                                  );
+                                  updateElement(selectedElementData.id, { iconListData: updatedData });
+                                }}
+                                placeholder="Descrição"
+                                className="mt-1 text-xs"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <Button
+                      onClick={() => {
+                        const currentData = selectedElementData.iconListData || [
+                          { id: "1", icon: "CheckCircle", iconColor: "#10b981", mainText: "Benefício 1", subText: "Descrição do benefício" },
+                          { id: "2", icon: "Star", iconColor: "#f59e0b", mainText: "Benefício 2", subText: "Descrição do benefício" },
+                          { id: "3", icon: "Shield", iconColor: "#3b82f6", mainText: "Benefício 3", subText: "Descrição do benefício" }
+                        ];
+                        const newIcon = {
+                          id: Date.now().toString(),
+                          icon: "CheckCircle",
+                          iconColor: "#10b981",
+                          mainText: `Benefício ${currentData.length + 1}`,
+                          subText: "Descrição do benefício"
+                        };
+                        updateElement(selectedElementData.id, { iconListData: [...currentData, newIcon] });
+                      }}
+                      className="w-full mt-3"
+                      size="sm"
+                    >
+                      + Adicionar Ícone
+                    </Button>
                   </div>
                 </div>
               )}
