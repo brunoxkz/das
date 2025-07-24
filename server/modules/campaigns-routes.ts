@@ -3,6 +3,7 @@
 
 import { Router } from 'express';
 import { verifyJWT } from '../auth-sqlite';
+import { sql } from 'drizzle-orm';
 import { db } from '../db-sqlite';
 
 const campaignsRouter = Router();
@@ -18,16 +19,16 @@ campaignsRouter.get('/sms-campaigns', async (req: any, res) => {
     const limit = parseInt(req.query.limit as string) || 10;
     const offset = (page - 1) * limit;
 
-    const campaigns = db.prepare(`
+    const campaigns = await db.execute(sql`
       SELECT id, name, message, status, created_at, 
              (SELECT COUNT(*) FROM sms_logs WHERE campaign_id = sms_campaigns.id) as message_count
       FROM sms_campaigns 
-      WHERE user_id = ? 
+      WHERE user_id = ${userId} 
       ORDER BY created_at DESC 
-      LIMIT ? OFFSET ?
-    `).all(userId, limit, offset);
+      LIMIT ${limit} OFFSET ${offset}
+    `).then(result => result.rows);
 
-    const total = db.prepare('SELECT COUNT(*) as count FROM sms_campaigns WHERE user_id = ?').get(userId);
+    const total = await db.execute(sql`SELECT COUNT(*) as count FROM sms_campaigns WHERE user_id = ${userId}`).then(result => result.rows[0]);
 
     res.json({
       success: true,

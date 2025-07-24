@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from "react";
+import React, { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -476,8 +476,8 @@ export default function Dashboard() {
     return map;
   }, [userQuizzes, allAnalytics]);
 
-  // Funções dos botões
-  const handleDuplicateQuiz = async (quiz: any) => {
+  // OTIMIZAÇÃO: useCallback optimization em handlers para reduzir re-renderizações
+  const handleDuplicateQuiz = useCallback(async (quiz: any) => {
     try {
       const response = await apiRequest(`/api/quizzes/${quiz.id}/duplicate`, {
         method: 'POST'
@@ -500,14 +500,14 @@ export default function Dashboard() {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
 
-  const handlePreviewQuiz = (quiz: any) => {
+  const handlePreviewQuiz = useCallback((quiz: any) => {
     setPreviewQuiz(quiz);
     setShowQuizPreview(true);
-  };
+  }, []);
 
-  const handlePublicUrl = (quiz: any) => {
+  const handlePublicUrl = useCallback((quiz: any) => {
     if (!quiz.isPublished) {
       toast({
         title: "Quiz não publicado",
@@ -523,6 +523,15 @@ export default function Dashboard() {
         title: "URL Copiada",
         description: "A URL pública do quiz foi copiada para a área de transferência.",
       });
+    }).catch((error) => {
+      console.error('Erro ao copiar URL:', error);
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar a URL. Tente novamente.",
+        variant: "destructive",
+      });
+    });
+  }, [toast]);
     }).catch((error) => {
       console.error('Erro ao copiar URL:', error);
       toast({
