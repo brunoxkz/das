@@ -785,6 +785,7 @@ export function PageEditorHorizontal({
     buttonColors: false
   });
   const [previewDevice, setPreviewDevice] = useState<'mobile' | 'desktop'>('mobile'); // Mobile-first como solicitado
+  const [multipleChoiceMode, setMultipleChoiceMode] = useState<'simple' | 'advanced'>('simple');
 
   // Função para calcular cor de fundo baseada no tema
   const getBackgroundColor = () => {
@@ -6693,9 +6694,141 @@ const gameElementCategories = [
                     />
                   </div>
 
-                  {/* Formatação de Texto */}
-                  <div className="border rounded-lg p-4 bg-gray-50">
-                    <h4 className="font-semibold text-sm mb-3">Formatação de Texto</h4>
+                  {/* Controle de Modo */}
+                  <div className="border-2 border-blue-200 rounded-lg p-4 bg-blue-50">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-semibold text-sm text-blue-800">⚙️ Modo de Configuração</h4>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          size="sm"
+                          variant={multipleChoiceMode === 'simple' ? 'default' : 'outline'}
+                          onClick={() => setMultipleChoiceMode('simple')}
+                          className="text-xs"
+                        >
+                          🔧 Simples
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={multipleChoiceMode === 'advanced' ? 'default' : 'outline'}
+                          onClick={() => setMultipleChoiceMode('advanced')}
+                          className="text-xs"
+                        >
+                          ⚡ Avançado
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-blue-600">
+                      {multipleChoiceMode === 'simple' 
+                        ? "🔧 Modo simples: Apenas configurações essenciais - cores, título e opções de resposta"
+                        : "⚡ Modo avançado: Todas as configurações disponíveis - formatação, comportamento, indicadores e mais"
+                      }
+                    </p>
+                  </div>
+
+                  {/* MODO SIMPLES */}
+                  {multipleChoiceMode === 'simple' && (
+                    <div className="space-y-4">
+                      {/* Configurações Simples */}
+                      <div className="border rounded-lg p-4 bg-green-50">
+                        <h4 className="font-semibold text-sm mb-3 text-green-800">🎨 Configurações Essenciais</h4>
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                          {/* Cor do Título */}
+                          <div>
+                            <Label className="text-xs">Cor do Título</Label>
+                            <input
+                              type="color"
+                              value={selectedElementData.textColor || "#374151"}
+                              onChange={(e) => updateElement(selectedElementData.id, { textColor: e.target.value })}
+                              className="w-full h-8 border rounded"
+                            />
+                          </div>
+
+                          {/* Cor das Respostas */}
+                          <div>
+                            <Label className="text-xs">Cor das Respostas</Label>
+                            <input
+                              type="color"
+                              value={selectedElementData.optionTextColor || "#374151"}
+                              onChange={(e) => updateElement(selectedElementData.id, { optionTextColor: e.target.value })}
+                              className="w-full h-8 border rounded"
+                            />
+                          </div>
+
+                          {/* Cor de Fundo */}
+                          <div>
+                            <Label className="text-xs">Cor de Fundo</Label>
+                            <input
+                              type="color"
+                              value={selectedElementData.backgroundColor || "#ffffff"}
+                              onChange={(e) => updateElement(selectedElementData.id, { backgroundColor: e.target.value })}
+                              className="w-full h-8 border rounded"
+                            />
+                          </div>
+
+                          {/* Cor do Botão */}
+                          <div>
+                            <Label className="text-xs">Cor do Botão</Label>
+                            <input
+                              type="color"
+                              value={selectedElementData.checkboxColor || "#374151"}
+                              onChange={(e) => updateElement(selectedElementData.id, { checkboxColor: e.target.value })}
+                              className="w-full h-8 border rounded"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Opções de Resposta */}
+                        <div className="mt-4">
+                          <Label className="text-xs">Opções de Resposta</Label>
+                          <div className="space-y-2 mt-2">
+                            {(selectedElementData.options || []).map((option, index) => (
+                              <div key={index} className="flex gap-2">
+                                <Input
+                                  value={option}
+                                  onChange={(e) => {
+                                    const newOptions = [...(selectedElementData.options || [])];
+                                    newOptions[index] = e.target.value;
+                                    updateElement(selectedElementData.id, { options: newOptions });
+                                  }}
+                                  className="flex-1 text-xs"
+                                  placeholder={`Opção ${index + 1}`}
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const newOptions = (selectedElementData.options || []).filter((_, i) => i !== index);
+                                    updateElement(selectedElementData.id, { options: newOptions });
+                                  }}
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  ×
+                                </Button>
+                              </div>
+                            ))}
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                const newOptions = [...(selectedElementData.options || []), `Opção ${(selectedElementData.options || []).length + 1}`];
+                                updateElement(selectedElementData.id, { options: newOptions });
+                              }}
+                              className="w-full mt-2"
+                            >
+                              + Adicionar Opção
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* MODO AVANÇADO */}
+                  {multipleChoiceMode === 'advanced' && (
+                    <div className="space-y-4">
+                      {/* Formatação de Texto */}
+                      <div className="border rounded-lg p-4 bg-gray-50">
+                        <h4 className="font-semibold text-sm mb-3">Formatação de Texto</h4>
                     
                     <div className="grid grid-cols-2 gap-3">
                       {/* Tamanho da fonte */}
@@ -7247,6 +7380,8 @@ const gameElementCategories = [
                       </div>
                     </div>
                   </div>
+                    </div>
+                  )}
                 </div>
               )}
 
