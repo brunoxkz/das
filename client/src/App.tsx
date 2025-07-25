@@ -126,6 +126,7 @@ import AoVivoQuantum from "@/pages/ao-vivo-quantum";
 import QuantumMembers from "@/pages/quantum-members";
 import QuantumCourseManage from "@/pages/quantum-course-manage";
 import QuantumTasksPage from "@/pages/quantum-tasks";
+import QuantumTasksModern from "@/pages/quantum-modern";
 
 
 function App() {
@@ -184,8 +185,8 @@ function App() {
         <Route path="/test" component={TestPage} />
         
         {/* Quantum Tasks - Public access without authentication - All sub-routes */}
-        <Route path="/quantum-tasks" component={QuantumTasksPage} />
-        <Route path="/quantum-tasks/*" component={QuantumTasksPage} />
+        <Route path="/quantum-tasks" component={QuantumTasksModern} />
+        <Route path="/quantum-tasks/*" component={QuantumTasksModern} />
 
 
         {/* Authenticated routes with sidebar */}

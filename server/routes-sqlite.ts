@@ -27498,6 +27498,234 @@ export function registerCheckoutRoutes(app: Express) {
   
   console.log('ℹ️  PUSH NOTIFICATIONS ENDPOINTS já registrados no index.ts antes do Vite');
 
+  // ============================================================================
+  // QUANTUM TASKS - ENDPOINTS PARA DADOS REAIS
+  // ============================================================================
+  
+  console.log('🚀 REGISTRANDO ENDPOINTS QUANTUM TASKS...');
+
+  // Dashboard stats - dados reais com auto-atualização
+  app.get('/api/dashboard-stats', async (req, res) => {
+    try {
+      // Buscar dados reais do banco
+      const tasksToday = sqlite.prepare(`
+        SELECT COUNT(*) as count FROM tasks 
+        WHERE date(created_at) = date('now') AND completed = 0
+      `).get()?.count || 0;
+      
+      const emailsUnread = sqlite.prepare(`
+        SELECT COUNT(*) as count FROM emails 
+        WHERE read_status = 0
+      `).get()?.count || 0;
+      
+      const activeProjects = sqlite.prepare(`
+        SELECT COUNT(*) as count FROM projects 
+        WHERE status = 'active'
+      `).get()?.count || 0;
+      
+      // Calcular produtividade baseada em tarefas completadas hoje
+      const completedToday = sqlite.prepare(`
+        SELECT COUNT(*) as count FROM tasks 
+        WHERE date(completed_at) = date('now') AND completed = 1
+      `).get()?.count || 0;
+      
+      const totalToday = tasksToday + completedToday;
+      const productivity = totalToday > 0 ? Math.round((completedToday / totalToday) * 100) : 0;
+      
+      // Crescimento semanal (comparação com semana passada)
+      const thisWeekTasks = sqlite.prepare(`
+        SELECT COUNT(*) as count FROM tasks 
+        WHERE date(created_at) >= date('now', '-7 days')
+      `).get()?.count || 0;
+      
+      const lastWeekTasks = sqlite.prepare(`
+        SELECT COUNT(*) as count FROM tasks 
+        WHERE date(created_at) >= date('now', '-14 days') 
+        AND date(created_at) < date('now', '-7 days')
+      `).get()?.count || 0;
+      
+      const weeklyGrowth = lastWeekTasks > 0 ? 
+        Math.round(((thisWeekTasks - lastWeekTasks) / lastWeekTasks) * 100) : 0;
+
+      res.json({
+        tasksToday,
+        emailsUnread,
+        activeProjects,
+        productivity,
+        weeklyGrowth,
+        completionRate: productivity
+      });
+    } catch (error) {
+      console.error('Erro ao buscar dashboard stats:', error);
+      res.json({
+        tasksToday: 0,
+        emailsUnread: 0,
+        activeProjects: 0,
+        productivity: 0,
+        weeklyGrowth: 0,
+        completionRate: 0
+      });
+    }
+  });
+
+  // Tasks reais
+  app.get('/api/tasks', async (req, res) => {
+    try {
+      const tasks = sqlite.prepare(`
+        SELECT * FROM tasks 
+        ORDER BY priority DESC, created_at DESC 
+        LIMIT 50
+      `).all();
+      
+      res.json(tasks || []);
+    } catch (error) {
+      console.error('Erro ao buscar tasks:', error);
+      res.json([]);
+    }
+  });
+
+  // Projects reais
+  app.get('/api/projects', async (req, res) => {
+    try {
+      const projects = sqlite.prepare(`
+        SELECT * FROM projects 
+        WHERE status != 'archived'
+        ORDER BY updated_at DESC 
+        LIMIT 20
+      `).all();
+      
+      res.json(projects || []);
+    } catch (error) {
+      console.error('Erro ao buscar projects:', error);
+      res.json([]);
+    }
+  });
+
+  // Emails reais
+  app.get('/api/emails', async (req, res) => {
+    try {
+      const emails = sqlite.prepare(`
+        SELECT * FROM emails 
+        ORDER BY received_at DESC 
+        LIMIT 30
+      `).all();
+      
+      res.json(emails || []);
+    } catch (error) {
+      console.error('Erro ao buscar emails:', error);
+      res.json([]);
+    }
+  });
+
+  // Recurring tasks reais
+  app.get('/api/recurring-tasks', async (req, res) => {
+    try {
+      const recurring = sqlite.prepare(`
+        SELECT * FROM recurring_tasks 
+        WHERE active = 1
+        ORDER BY next_occurrence ASC 
+        LIMIT 10
+      `).all();
+      
+      res.json(recurring || []);
+    } catch (error) {
+      console.error('Erro ao buscar recurring tasks:', error);
+      res.json([]);
+    }
+  });
+
+  // Criar tabelas se não existirem
+  try {
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        priority TEXT DEFAULT 'media',
+        project TEXT,
+        completed INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        completed_at DATETIME,
+        due_date DATETIME
+      );
+
+      CREATE TABLE IF NOT EXISTS projects (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        status TEXT DEFAULT 'active',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS emails (
+        id TEXT PRIMARY KEY,
+        subject TEXT,
+        sender TEXT,
+        content TEXT,
+        read_status INTEGER DEFAULT 0,
+        received_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        account TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS recurring_tasks (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        frequency TEXT NOT NULL,
+        next_occurrence DATETIME,
+        active INTEGER DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    
+    // Inserir dados iniciais se tabelas estiverem vazias
+    const taskCount = sqlite.prepare('SELECT COUNT(*) as count FROM tasks').get()?.count || 0;
+    if (taskCount === 0) {
+      const insertTask = sqlite.prepare(`
+        INSERT INTO tasks (id, title, description, priority, project) 
+        VALUES (?, ?, ?, ?, ?)
+      `);
+      
+      insertTask.run(nanoid(), 'Finalizar relatório mensal', 'Completar análise de produtividade', 'alta', 'Projeto Quantum');
+      insertTask.run(nanoid(), 'Revisar emails importantes', 'Verificar inbox e responder pendências', 'alta', 'Administração');
+      insertTask.run(nanoid(), 'Planejar sprint da próxima semana', 'Definir prioridades e metas', 'media', 'Desenvolvimento');
+    }
+
+    const projectCount = sqlite.prepare('SELECT COUNT(*) as count FROM projects').get()?.count || 0;
+    if (projectCount === 0) {
+      const insertProject = sqlite.prepare(`
+        INSERT INTO projects (id, name, description, status) 
+        VALUES (?, ?, ?, ?)
+      `);
+      
+      insertProject.run(nanoid(), 'Projeto Quantum', 'Sistema revolucionário de tarefas', 'active');
+      insertProject.run(nanoid(), 'Marketing Digital', 'Campanhas e automações', 'active');
+      insertProject.run(nanoid(), 'Desenvolvimento Web', 'Aplicações e interfaces', 'active');
+    }
+
+    const recurringCount = sqlite.prepare('SELECT COUNT(*) as count FROM recurring_tasks').get()?.count || 0;
+    if (recurringCount === 0) {
+      const insertRecurring = sqlite.prepare(`
+        INSERT INTO recurring_tasks (id, title, frequency, next_occurrence) 
+        VALUES (?, ?, ?, ?)
+      `);
+      
+      const now = new Date();
+      const in30min = new Date(now.getTime() + 30 * 60000);
+      const in2hours = new Date(now.getTime() + 2 * 60 * 60000);
+      
+      insertRecurring.run(nanoid(), 'Backup automático', 'diário', in30min.toISOString());
+      insertRecurring.run(nanoid(), 'Revisão semanal', 'semanal', in2hours.toISOString());
+      insertRecurring.run(nanoid(), 'Check-up mensal', 'mensal', in2hours.toISOString());
+    }
+
+    console.log('✅ Tabelas Quantum Tasks criadas e dados iniciais inseridos');
+  } catch (error) {
+    console.error('Erro ao criar tabelas Quantum Tasks:', error);
+  }
+
+  console.log('✅ ENDPOINTS QUANTUM TASKS REGISTRADOS COM SUCESSO');
+
   // Inicializar sistema automático de regressão de planos
   console.log('🚀 INICIANDO PLAN MANAGER...');
   planManager.startAutomaticPlanRegression();
