@@ -269,12 +269,18 @@ interface CampaignForm {
   ageMax?: number;
   gender?: 'male' | 'female' | 'all';
   responseFilter?: {
-    field: string;
-    value: string;
+    field?: string;
+    value?: string;
   };
   // Upload CSV
   csvFile?: File;
   csvData?: any[];
+  // Campos adicionais para diferentes tipos
+  dateFrom?: string;
+  dateTo?: string;
+  dispatchTiming?: 'immediate' | 'delayed' | 'scheduled';
+  dispatchDelayValue?: number;
+  dispatchDelayUnit?: 'minutes' | 'hours' | 'days';
 }
 
 export default function SMSCampaignsAdvanced() {
@@ -311,29 +317,12 @@ export default function SMSCampaignsAdvanced() {
   const [quizVariables, setQuizVariables] = useState<string[]>([]);
   
   // Queries
-  const { data: quizzes = [], isLoading: loadingQuizzes, error: quizzesError } = useQuery({
+  const { data: quizzes = [], isLoading: loadingQuizzes, error: quizzesError } = useQuery<Quiz[]>({
     queryKey: ['/api/quizzes'],
     enabled: !!user,
-    retry: (failureCount, error) => {
-      console.error(`❌ QUIZ LOADING FAILED (Attempt ${failureCount + 1}):`, error);
-      console.log("📋 Debug Info:", {
-        user: user ? { id: user.id, email: user.email } : null,
-        accessToken: localStorage.getItem("accessToken") ? "Present" : "Missing",
-        refreshToken: localStorage.getItem("refreshToken") ? "Present" : "Missing",
-        error: error.message
-      });
+    retry: (failureCount) => {
+      console.error(`❌ QUIZ LOADING FAILED (Attempt ${failureCount + 1})`);
       return failureCount < 2;
-    },
-    onError: (error) => {
-      console.error("❌ QUIZ QUERY ERROR:", error);
-      toast({
-        title: "Erro ao carregar quizzes",
-        description: `Falha na autenticação: ${error.message}`,
-        variant: "destructive",
-      });
-    },
-    onSuccess: (data) => {
-      console.log("✅ QUIZZES LOADED SUCCESSFULLY:", data.length, "quizzes found");
     }
   });
 
@@ -345,7 +334,7 @@ export default function SMSCampaignsAdvanced() {
     }
   }, [quizzes]);
   
-  const { data: credits = { remaining: 0 } } = useQuery({
+  const { data: credits = { remaining: 0 } } = useQuery<{ remaining: number }>({
     queryKey: ['/api/sms-credits'],
     enabled: !!user
   });
@@ -372,7 +361,7 @@ export default function SMSCampaignsAdvanced() {
   });
 
   // Query para buscar campanhas existentes
-  const { data: campaigns = [], isLoading: loadingCampaigns } = useQuery({
+  const { data: campaigns = [], isLoading: loadingCampaigns } = useQuery<any[]>({
     queryKey: ['/api/sms-campaigns'],
     enabled: !!user
   });
@@ -431,7 +420,7 @@ export default function SMSCampaignsAdvanced() {
   };
   
   const getExampleValue = (key: string) => {
-    const examples = {
+    const examples: Record<string, string> = {
       '{{nome}}': 'João Silva',
       '{{telefone}}': '(11) 99999-9999',
       '{{email}}': 'joao@email.com',
