@@ -1444,7 +1444,22 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
             </h3>
             <RadioGroup 
               value={answer} 
-              onValueChange={(value) => handleElementAnswer(id, type, value, element.fieldId || properties?.fieldId)}
+              onValueChange={async (value) => {
+                // Responder à pergunta
+                handleElementAnswer(id, type, value, element.fieldId || properties?.fieldId);
+                
+                // Auto-advance: avançar automaticamente para próxima página após 1 segundo
+                // apenas se não houver botão de continuar na página
+                const hasContinueButton = currentPage.elements.some(el => 
+                  el.type === 'continue_button' || el.type === 'submit_button'
+                );
+                
+                if (!hasContinueButton && !isLastPage) {
+                  setTimeout(async () => {
+                    await goToNextPage();
+                  }, 1000);
+                }
+              }}
               className="space-y-2"
             >
               {Array.isArray(multipleChoiceOptions) && multipleChoiceOptions.length > 0 ? (
@@ -1710,6 +1725,11 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
                             ? [...currentAnswers, optionValue]
                             : currentAnswers.filter((a: string) => a !== optionValue);
                           handleElementAnswer(id, type, newAnswers, element.fieldId || properties?.fieldId);
+                        }}
+                        className="bg-white border-gray-300 data-[state=checked]:bg-white data-[state=checked]:border-green-500"
+                        style={{ 
+                          backgroundColor: 'white',
+                          borderColor: Array.isArray(answer) && answer.includes(optionValue) ? '#10b981' : '#d1d5db'
                         }}
                       />
                       <Label htmlFor={`${id}-${index}`}>{optionValue}</Label>
@@ -3413,6 +3433,23 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
         info.name = value;
       }
       
+      // Detectar data de nascimento
+      if ((fieldId.includes('date') || fieldId.includes('data') || fieldId.includes('nascimento') || fieldId.includes('birth')) && quiz.settings?.dynamicShowDate !== false) {
+        // Converter data para formato brasileiro se necessário
+        if (value) {
+          try {
+            const date = new Date(value);
+            if (!isNaN(date.getTime())) {
+              info.birthDate = date.toLocaleDateString('pt-BR');
+            } else {
+              info.birthDate = value; // Usar valor original se não conseguir converter
+            }
+          } catch {
+            info.birthDate = value;
+          }
+        }
+      }
+      
       // Detectar email
       if (fieldId.includes('email') && quiz.settings?.dynamicShowEmail) {
         info.email = value;
@@ -3490,9 +3527,9 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
                   </span>
                 )}
                 
-                {dynamicInfo.date && (
+                {(dynamicInfo.date || dynamicInfo.birthDate) && (
                   <span className="bg-white/50 px-3 py-1 rounded-full text-xs font-medium border">
-                    📅 {dynamicInfo.date}
+                    📅 {dynamicInfo.birthDate || dynamicInfo.date}
                   </span>
                 )}
                 
