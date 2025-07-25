@@ -144,7 +144,7 @@ function App() {
   }
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/", "/dark", "/modern", "/login", "/pwa-login", "/payment-success", "/payment-cancel"];
+  const publicRoutes = ["/", "/dark", "/modern", "/login", "/pwa-login", "/payment-success", "/payment-cancel", "/quantum-tasks"];
   const isQuizRoute = location.startsWith("/quiz/");
   const isCheckoutRoute = location.startsWith("/checkout/");
   const isStripeCheckoutLink = location.startsWith("/stripe-checkout-link/");
@@ -181,6 +181,9 @@ function App() {
         <Route path="/payment-cancel" component={PaymentSuccess} />
         <Route path="/stripe-checkout-link/:linkId" component={StripeCheckoutLink} />
         <Route path="/test" component={TestPage} />
+        
+        {/* Quantum Tasks - Public access without authentication */}
+        <Route path="/quantum-tasks" component={QuantumTasksPage} />
 
 
         {/* Authenticated routes with sidebar */}
@@ -226,11 +229,6 @@ function App() {
         <Route path="/sistema-ultra-demo">
           <Layout>
             <SistemaUltraDemo />
-          </Layout>
-        </Route>
-        <Route path="/quantum-tasks">
-          <Layout>
-            <QuantumTasksPage />
           </Layout>
         </Route>
         <Route path="/seus-afiliados">
