@@ -83,6 +83,7 @@ const QuantumTasksModern = () => {
   const [selectedEmail, setSelectedEmail] = useState(null);
   const [composing, setComposing] = useState(false);
   const [emailFilter, setEmailFilter] = useState('all');
+  const [showEmailConfig, setShowEmailConfig] = useState(false);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
   
@@ -109,6 +110,83 @@ const QuantumTasksModern = () => {
   const handleTouchMove = (e: React.TouchEvent) => {
     setTouchEnd(e.targetTouches[0].clientX);
   };
+
+  // Estados para configuração de email
+  const [emailConfig, setEmailConfig] = useState({
+    email: '',
+    password: '',
+    isConfiguring: false,
+    isConnected: false,
+    lastSync: null
+  });
+
+  // Configurar email em tempo real
+  const configureEmailSync = async () => {
+    if (!emailConfig.email || !emailConfig.password) {
+      alert('Por favor, preencha email e senha');
+      return;
+    }
+
+    setEmailConfig(prev => ({ ...prev, isConfiguring: true }));
+
+    try {
+      const response = await fetch('/api/email/configure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: emailConfig.email,
+          password: emailConfig.password
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setEmailConfig(prev => ({ 
+          ...prev, 
+          isConnected: true, 
+          lastSync: new Date().toLocaleTimeString() 
+        }));
+        
+        // Recarregar emails após configuração
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+        
+        alert('✅ Email sincronizado com sucesso! Recarregando...');
+      } else {
+        alert('❌ Erro: ' + result.error);
+      }
+    } catch (error) {
+      alert('❌ Erro na configuração: ' + error.message);
+    } finally {
+      setEmailConfig(prev => ({ ...prev, isConfiguring: false }));
+    }
+  };
+
+  // Verificar status da sincronização
+  const checkEmailStatus = async () => {
+    try {
+      const response = await fetch('/api/email/status');
+      const status = await response.json();
+      
+      setEmailConfig(prev => ({ 
+        ...prev, 
+        isConnected: status.connected,
+        lastSync: status.connected ? new Date().toLocaleTimeString() : null
+      }));
+    } catch (error) {
+      console.error('Erro ao verificar status:', error);
+    }
+  };
+
+  // Verificar status ao carregar
+  useEffect(() => {
+    checkEmailStatus();
+    // Verificar status a cada 30 segundos
+    const interval = setInterval(checkEmailStatus, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
@@ -379,13 +457,24 @@ const QuantumTasksModern = () => {
                 {Array.isArray(realEmails) ? realEmails.filter((e: any) => !e.read).length : 0} não lidas
               </Badge>
             </div>
-            <Button 
-              onClick={() => setComposing(true)}
-              className="bg-gradient-to-r from-red-500 to-pink-600"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Compor
-            </Button>
+            <div className="flex space-x-2">
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => setShowEmailConfig(true)}
+                className="border-blue-200 text-blue-700 hover:bg-blue-50"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Config Email
+              </Button>
+              <Button 
+                onClick={() => setComposing(true)}
+                className="bg-gradient-to-r from-red-500 to-pink-600"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Compor
+              </Button>
+            </div>
           </div>
 
           {/* Filtros do Inbox */}
@@ -556,6 +645,68 @@ const QuantumTasksModern = () => {
     );
   }
 
+  // Modal de Configuração de Email
+  const EmailConfigModal = () => (
+    showEmailConfig && (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold">Configurar Email @zynt.com.br</h3>
+            <Button variant="ghost" size="sm" onClick={() => setShowEmailConfig(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Email</label>
+              <input
+                type="email"
+                placeholder="seu-email@zynt.com.br"
+                className="w-full px-3 py-2 border rounded-md"
+                value={emailConfig.email}
+                onChange={(e) => setEmailConfig(prev => ({ ...prev, email: e.target.value }))}
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">Senha</label>
+              <input
+                type="password"
+                placeholder="Sua senha de email"
+                className="w-full px-3 py-2 border rounded-md"
+                value={emailConfig.password}
+                onChange={(e) => setEmailConfig(prev => ({ ...prev, password: e.target.value }))}
+              />
+            </div>
+            
+            {emailConfig.isConnected && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                <div className="flex items-center text-green-700">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                  Conectado - Última sincronização: {emailConfig.lastSync}
+                </div>
+              </div>
+            )}
+            
+            <div className="flex space-x-2">
+              <Button
+                onClick={configureEmailSync}
+                disabled={emailConfig.isConfiguring}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+              >
+                {emailConfig.isConfiguring ? 'Conectando...' : 'Conectar & Sincronizar'}
+              </Button>
+              <Button variant="outline" onClick={() => setShowEmailConfig(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  );
+
   return (
     <QueryClientProvider client={quantumQueryClient}>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
@@ -596,6 +747,9 @@ const QuantumTasksModern = () => {
             renderContent()
           )}
         </main>
+
+        {/* Modal de configuração de email */}
+        <EmailConfigModal />
       </div>
     </QueryClientProvider>
   );

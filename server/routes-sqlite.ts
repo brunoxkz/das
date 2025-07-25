@@ -27504,6 +27504,10 @@ export function registerCheckoutRoutes(app: Express) {
   
   console.log('🚀 REGISTRANDO ENDPOINTS QUANTUM TASKS...');
 
+  // Importar serviço de sincronização de email
+  const EmailSyncService = require('./email-sync').default;
+  const emailSync = new EmailSyncService(sqlite);
+
   // Dashboard stats - dados reais com auto-atualização
   app.get('/api/dashboard-stats', async (req, res) => {
     try {
@@ -27647,6 +27651,149 @@ export function registerCheckoutRoutes(app: Express) {
     } catch (error) {
       console.error('Erro ao buscar recurring tasks:', error);
       res.json([]);
+    }
+  });
+
+  // ============================================================================
+  // ENDPOINTS DE SINCRONIZAÇÃO DE EMAIL EM TEMPO REAL
+  // ============================================================================
+
+  // Configurar email @zynt.com.br
+  app.post('/api/email/configure', async (req, res) => {
+    try {
+      const { email, password, host, port, secure } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Email e senha são obrigatórios' 
+        });
+      }
+
+      // Configurar com dados padrão para @zynt.com.br se não fornecidos
+      const config = {
+        user: email,
+        password: password,
+        host: host || 'mail.zynt.com.br', // Servidor IMAP padrão
+        port: port || 993, // Porta IMAP SSL
+        secure: secure !== undefined ? secure : true
+      };
+
+      const result = await emailSync.configure(config);
+      
+      if (result.success) {
+        // Iniciar sincronização automática
+        try {
+          await emailSync.startSync();
+          res.json({ 
+            success: true, 
+            message: 'Email configurado e sincronização iniciada com sucesso!',
+            account: email 
+          });
+        } catch (syncError) {
+          console.error('❌ Erro ao iniciar sincronização:', syncError);
+          res.json({ 
+            success: true, 
+            message: 'Email configurado, mas erro na sincronização. Verifique as credenciais.',
+            warning: syncError.message,
+            account: email 
+          });
+        }
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao configurar email:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message 
+      });
+    }
+  });
+
+  // Status da sincronização
+  app.get('/api/email/status', (req, res) => {
+    const status = emailSync.getStatus();
+    res.json({
+      ...status,
+      message: status.connected ? 'Conectado e sincronizando' : 'Desconectado'
+    });
+  });
+
+  // Iniciar sincronização manual
+  app.post('/api/email/sync', async (req, res) => {
+    try {
+      const result = await emailSync.startSync();
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        error: error.message 
+      });
+    }
+  });
+
+  // Enviar email
+  app.post('/api/email/send', async (req, res) => {
+    try {
+      const { to, subject, content } = req.body;
+
+      if (!to || !subject || !content) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Destinatário, assunto e conteúdo são obrigatórios' 
+        });
+      }
+
+      const result = await emailSync.sendEmail(to, subject, content);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        error: error.message 
+      });
+    }
+  });
+
+  // Marcar email como lido
+  app.patch('/api/emails/:id/read', (req, res) => {
+    try {
+      const { id } = req.params;
+      const { read } = req.body;
+
+      sqlite.prepare(`
+        UPDATE emails 
+        SET read_status = ? 
+        WHERE id = ?
+      `).run(read ? 1 : 0, id);
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        error: error.message 
+      });
+    }
+  });
+
+  // Marcar email como importante/favorito
+  app.patch('/api/emails/:id/star', (req, res) => {
+    try {
+      const { id } = req.params;
+      const { starred } = req.body;
+
+      sqlite.prepare(`
+        UPDATE emails 
+        SET starred = ? 
+        WHERE id = ?
+      `).run(starred ? 1 : 0, id);
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        error: error.message 
+      });
     }
   });
 
