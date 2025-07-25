@@ -3,8 +3,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useQuantumAuth } from '@/hooks/useQuantumAuth';
+import quantumQueryClient from '@/lib/quantumQueryClient';
 import QuantumLogin from '@/components/QuantumLogin';
 import { 
   Plus, CheckCircle, Mail, Settings, Brain, Clock, Users, Target, Calendar,
@@ -16,9 +17,8 @@ import {
   FileText, Briefcase, Calendar as CalendarIcon, Clipboard, LogOut
 } from 'lucide-react';
 
-// Hook para dados reais com auto-atualização
+// Hook para dados reais com auto-atualização usando QueryClient independente
 const useRealTimeData = () => {
-  const queryClient = useQueryClient();
   
   // Dashboard metrics que atualizam automaticamente
   const { data: dashboardStats, isLoading } = useQuery({
@@ -445,13 +445,15 @@ const QuantumTasksModern = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900">
-      <TabHeader />
-      <main className="transition-all duration-300">
-        {renderActiveTab()}
-      </main>
-      {showCreateModal && <CreateModal />}
-    </div>
+    <QueryClientProvider client={quantumQueryClient}>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900">
+        <TabHeader />
+        <main className="transition-all duration-300">
+          {renderActiveTab()}
+        </main>
+        {showCreateModal && <CreateModal />}
+      </div>
+    </QueryClientProvider>
   );
 };
 
