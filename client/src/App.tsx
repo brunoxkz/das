@@ -125,7 +125,6 @@ import RemarketingQuantum from "@/pages/remarketing-quantum";
 import AoVivoQuantum from "@/pages/ao-vivo-quantum";
 import QuantumMembers from "@/pages/quantum-members";
 import QuantumCourseManage from "@/pages/quantum-course-manage";
-import QuantumTasksPage from "@/pages/quantum-tasks";
 import QuantumTasksModern from "@/pages/quantum-modern";
 
 
