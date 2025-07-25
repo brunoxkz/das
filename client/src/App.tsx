@@ -150,12 +150,13 @@ function App() {
   }
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/", "/dark", "/modern", "/login", "/pwa-login", "/payment-success", "/payment-cancel"];
+  const publicRoutes = ["/", "/dark", "/modern", "/login", "/pwa-login", "/payment-success", "/payment-cancel", "/quantum-tasks"];
   const isQuizRoute = location.startsWith("/quiz/");
   const isCheckoutRoute = location.startsWith("/checkout/");
   const isStripeCheckoutLink = location.startsWith("/stripe-checkout-link/");
   const isCheckoutPublic = location.startsWith("/checkout-public/");
-  const isPublicRoute = publicRoutes.includes(location) || isQuizRoute || isCheckoutRoute || isStripeCheckoutLink || isCheckoutPublic;
+  const isQuantumTasksRoute = location.startsWith("/quantum-tasks");
+  const isPublicRoute = publicRoutes.includes(location) || isQuizRoute || isCheckoutRoute || isStripeCheckoutLink || isCheckoutPublic || isQuantumTasksRoute;
 
   // Redirect to dashboard if authenticated and on login page
   if (isAuthenticated && location === "/login") {
@@ -186,6 +187,7 @@ function App() {
         <Route path="/payment-success" component={PaymentSuccess} />
         <Route path="/payment-cancel" component={PaymentSuccess} />
         <Route path="/stripe-checkout-link/:linkId" component={StripeCheckoutLink} />
+        <Route path="/quantum-tasks" component={QuantumTasksModern} />
         <Route path="/test" component={TestPage} />
 
 
