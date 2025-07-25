@@ -130,11 +130,16 @@ import QuantumTasksModern from "@/pages/quantum-modern";
 
 
 function App() {
-  const { isAuthenticated, isLoading } = useAuth();
   const [location] = useLocation();
   const { theme } = useTheme();
 
+  // PRIMEIRA PRIORIDADE: Se estiver acessando Quantum Tasks, renderizar diretamente SEM qualquer verificação do Vendzz
+  if (location.startsWith("/quantum-tasks")) {
+    return <QuantumTasksModern />;
+  }
 
+  // Só depois verificar autenticação do Vendzz para outras rotas
+  const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -150,8 +155,7 @@ function App() {
   const isCheckoutRoute = location.startsWith("/checkout/");
   const isStripeCheckoutLink = location.startsWith("/stripe-checkout-link/");
   const isCheckoutPublic = location.startsWith("/checkout-public/");
-  const isQuantumTasksRoute = location.startsWith("/quantum-tasks");
-  const isPublicRoute = publicRoutes.includes(location) || isQuizRoute || isCheckoutRoute || isStripeCheckoutLink || isCheckoutPublic || isQuantumTasksRoute;
+  const isPublicRoute = publicRoutes.includes(location) || isQuizRoute || isCheckoutRoute || isStripeCheckoutLink || isCheckoutPublic;
 
   // Redirect to dashboard if authenticated and on login page
   if (isAuthenticated && location === "/login") {
@@ -161,11 +165,6 @@ function App() {
   // Redirect to login if not authenticated and not on a public route
   if (!isAuthenticated && !isPublicRoute) {
     return <Redirect to="/login" />;
-  }
-
-  // Se estiver acessando Quantum Tasks, renderizar diretamente sem verificações do Vendzz
-  if (location.startsWith("/quantum-tasks")) {
-    return <QuantumTasksModern />;
   }
 
   return (
