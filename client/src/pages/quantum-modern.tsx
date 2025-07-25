@@ -74,10 +74,20 @@ const useRealTimeData = () => {
 
 // Interface principal do Quantum Tasks
 const QuantumTasksModern = () => {
+  // TODOS os hooks devem ser chamados SEMPRE, no topo do componente
   const { user, isLoading: authLoading, isAuthenticated, login, logout } = useQuantumAuth();
   const [activeTab, setActiveTab] = useState('inicio');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const { dashboardStats, realTasks, realProjects, realEmails, realRecurring, isLoading } = useRealTimeData();
 
-  // Se não estiver autenticado, mostrar tela de login
+  // Atualização automática visual do time
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Lógica de autenticação após todos os hooks
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
@@ -92,15 +102,6 @@ const QuantumTasksModern = () => {
   if (!isAuthenticated) {
     return <QuantumLogin onLogin={login} isLoading={authLoading} />;
   }
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const { dashboardStats, realTasks, realProjects, realEmails, realRecurring, isLoading } = useRealTimeData();
-
-  // Atualização automática visual do time
-  const [currentTime, setCurrentTime] = useState(new Date());
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const tabs = [
     { id: 'inicio', label: 'INICIO', icon: Home, color: 'from-blue-500 to-purple-600' },
