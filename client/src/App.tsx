@@ -163,6 +163,11 @@ function App() {
     return <Redirect to="/login" />;
   }
 
+  // Se estiver acessando Quantum Tasks, renderizar diretamente sem verificações do Vendzz
+  if (location.startsWith("/quantum-tasks")) {
+    return <QuantumTasksModern />;
+  }
+
   return (
     <SidebarProvider>
       <div className={theme === 'dark' ? 'dark' : ''}>
@@ -183,10 +188,6 @@ function App() {
         <Route path="/payment-cancel" component={PaymentSuccess} />
         <Route path="/stripe-checkout-link/:linkId" component={StripeCheckoutLink} />
         <Route path="/test" component={TestPage} />
-        
-        {/* Quantum Tasks - Public access without authentication - All sub-routes */}
-        <Route path="/quantum-tasks" component={QuantumTasksModern} />
-        <Route path="/quantum-tasks/*" component={QuantumTasksModern} />
 
 
         {/* Authenticated routes with sidebar */}
