@@ -27601,11 +27601,27 @@ export function registerCheckoutRoutes(app: Express) {
     }
   });
 
-  // Emails reais
+  // Emails reais - Sistema Spark-like completo
   app.get('/api/emails', async (req, res) => {
     try {
       const emails = sqlite.prepare(`
-        SELECT * FROM emails 
+        SELECT 
+          id,
+          subject,
+          sender,
+          sender_email,
+          content,
+          preview,
+          read_status as read,
+          important,
+          starred,
+          has_attachment as hasAttachment,
+          time,
+          date,
+          account,
+          folder,
+          labels
+        FROM emails 
         ORDER BY received_at DESC 
         LIMIT 30
       `).all();
@@ -27662,10 +27678,20 @@ export function registerCheckoutRoutes(app: Express) {
         id TEXT PRIMARY KEY,
         subject TEXT,
         sender TEXT,
+        sender_email TEXT,
         content TEXT,
+        preview TEXT,
         read_status INTEGER DEFAULT 0,
+        important INTEGER DEFAULT 0,
+        starred INTEGER DEFAULT 0,
+        has_attachment INTEGER DEFAULT 0,
         received_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        account TEXT
+        account TEXT,
+        thread_id TEXT,
+        folder TEXT DEFAULT 'inbox',
+        labels TEXT,
+        time TEXT,
+        date TEXT
       );
 
       CREATE TABLE IF NOT EXISTS recurring_tasks (
@@ -27717,6 +27743,123 @@ export function registerCheckoutRoutes(app: Express) {
       insertRecurring.run(nanoid(), 'Backup automático', 'diário', in30min.toISOString());
       insertRecurring.run(nanoid(), 'Revisão semanal', 'semanal', in2hours.toISOString());
       insertRecurring.run(nanoid(), 'Check-up mensal', 'mensal', in2hours.toISOString());
+    }
+
+    // Inserir dados de email completos (Spark-like)
+    const emailCount = sqlite.prepare('SELECT COUNT(*) as count FROM emails').get()?.count || 0;
+    if (emailCount === 0) {
+      const insertEmail = sqlite.prepare(`
+        INSERT INTO emails (
+          id, subject, sender, sender_email, content, preview, 
+          read_status, important, starred, has_attachment, 
+          time, date, account, folder, labels
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      // Emails não lidos importantes
+      insertEmail.run(
+        nanoid(), 
+        'Reunião estratégica - Quantum Tasks', 
+        'João Silva', 
+        'joao.silva@empresa.com',
+        'Olá! Preciso marcar uma reunião para discutir os próximos passos do projeto Quantum Tasks. Temos algumas questões importantes sobre a arquitetura e roadmap que precisam ser alinhadas com urgência.\n\nQuando você tem disponibilidade esta semana?',
+        'Olá! Preciso marcar uma reunião para discutir os próximos passos...',
+        0, 1, 1, 0, '09:30', 'Hoje', 'trabalho@quantum.com', 'inbox', 'urgente,trabalho'
+      );
+
+      insertEmail.run(
+        nanoid(), 
+        'Proposta de Partnership - Sistema Revolucionário', 
+        'Maria Santos', 
+        'maria@techstartup.com',
+        'Boa tarde,\n\nVi sua apresentação sobre o Quantum Tasks e fiquei impressionada com a inovação. Nossa startup tem interesse em uma parceria estratégica.\n\nPodemos agendar uma call para discutir possibilidades de colaboração?',
+        'Boa tarde, Vi sua apresentação sobre o Quantum Tasks e fiquei...',
+        0, 1, 0, 1, '14:22', 'Hoje', 'trabalho@quantum.com', 'inbox', 'negócios,parceria'
+      );
+
+      insertEmail.run(
+        nanoid(), 
+        'Feedback do Cliente - Sistema Ultra-Moderno', 
+        'Carlos Mendes', 
+        'carlos@clientevip.com',
+        'Excelente trabalho no sistema! A interface está revolucionária.\n\nApenas alguns ajustes menores:\n- O sistema de notificações está perfeito\n- A responsividade mobile superou expectativas\n- Sugestão: adicionar mais filtros no inbox\n\nParabéns pela qualidade!',
+        'Excelente trabalho no sistema! A interface está revolucionária...',
+        0, 0, 1, 0, '16:45', 'Hoje', 'suporte@quantum.com', 'inbox', 'feedback,cliente'
+      );
+
+      // Emails lidos
+      insertEmail.run(
+        nanoid(), 
+        'Newsletter Tech Weekly', 
+        'Tech News', 
+        'newsletter@technews.com',
+        'Esta semana em tecnologia:\n\n🚀 IA revoluciona desenvolvimento\n📱 Apps mobile trend 2025\n💼 Startups que você precisa conhecer\n\nLeia mais em nosso site...',
+        'Esta semana em tecnologia: IA revoluciona desenvolvimento...',
+        1, 0, 0, 0, '08:15', 'Ontem', 'pessoal@quantum.com', 'inbox', 'newsletter,tech'
+      );
+
+      insertEmail.run(
+        nanoid(), 
+        'Relatório de Performance - Janeiro', 
+        'Sistema Quantum', 
+        'reports@quantum-system.com',
+        'Relatório automático de performance:\n\n📊 Uptime: 99.9%\n⚡ Response time: 120ms\n👥 Usuários ativos: 1.2K\n🔥 Features mais usadas: Inbox, Tasks, Analytics\n\nSistema funcionando perfeitamente!',
+        'Relatório automático de performance: Uptime: 99.9%...',
+        1, 0, 0, 1, '23:30', 'Ontem', 'system@quantum.com', 'inbox', 'relatório,sistema'
+      );
+
+      insertEmail.run(
+        nanoid(), 
+        'Convite: DevConf 2025', 
+        'DevConf Organization', 
+        'invite@devconf2025.com',
+        'Você foi convidado para palestrar na DevConf 2025!\n\nTema sugerido: "Quantum Tasks - O Futuro da Produtividade"\n\nData: 15-17 de março\nLocal: São Paulo Convention Center\n\nConfirme sua participação até 31/01.',
+        'Você foi convidado para palestrar na DevConf 2025!...',
+        1, 1, 0, 1, '11:20', 'Anteontem', 'eventos@quantum.com', 'inbox', 'convite,evento'
+      );
+
+      // Emails com anexos
+      insertEmail.run(
+        nanoid(), 
+        'Documentação Técnica - API v2.0', 
+        'Equipe Desenvolvimento', 
+        'dev@quantum.com',
+        'Segue documentação completa da nova API v2.0.\n\nPrincipais mudanças:\n- Novos endpoints para emails\n- Autenticação melhorada\n- Rate limiting inteligente\n\nAnexo: api-v2-docs.pdf (2.5MB)',
+        'Segue documentação completa da nova API v2.0...',
+        1, 0, 0, 1, '15:30', '2 dias atrás', 'trabalho@quantum.com', 'inbox', 'documentação,api'
+      );
+
+      insertEmail.run(
+        nanoid(), 
+        'Contrato Assinado - Cliente Premium', 
+        'Jurídico', 
+        'juridico@quantum.com',
+        'Contrato com cliente premium foi assinado com sucesso!\n\nDetalhes:\n- Valor: R$ 50.000/mês\n- Duração: 12 meses\n- SLA: 99.95%\n\nAnexos: contrato-assinado.pdf, sla-detalhes.pdf',
+        'Contrato com cliente premium foi assinado com sucesso!...',
+        1, 1, 1, 1, '09:45', '3 dias atrás', 'contratos@quantum.com', 'inbox', 'contrato,cliente-premium'
+      );
+
+      // Emails no spam/lixeira para testar filtros
+      insertEmail.run(
+        nanoid(), 
+        'Oportunidade Imperdível - Ganhe Dinheiro', 
+        'Spam Sender', 
+        'spam@fake.com',
+        'GANHE R$ 5000 POR DIA TRABALHANDO EM CASA...',
+        'GANHE R$ 5000 POR DIA TRABALHANDO EM CASA...',
+        0, 0, 0, 0, '20:15', '1 semana atrás', 'pessoal@quantum.com', 'spam', 'spam'
+      );
+
+      // Emails importantes anteriores
+      insertEmail.run(
+        nanoid(), 
+        'Aprovação Final - Lançamento Quantum', 
+        'CEO', 
+        'ceo@quantum.com',
+        'Parabéns equipe!\n\nO Quantum Tasks foi aprovado para lançamento oficial. Vocês criaram algo realmente revolucionário.\n\nO sistema de inbox Spark-like está impressionante, a responsividade mobile perfeita e a UX é de outro nível.\n\nLançamento: 1º de fevereiro\nMarketing: Campanha massiva preparada\n\nVamos fazer história!',
+        'Parabéns equipe! O Quantum Tasks foi aprovado para lançamento...',
+        1, 1, 1, 0, '18:30', '1 semana atrás', 'executivo@quantum.com', 'inbox', 'aprovação,lançamento'
+      );
     }
 
     console.log('✅ Tabelas Quantum Tasks criadas e dados iniciais inseridos');

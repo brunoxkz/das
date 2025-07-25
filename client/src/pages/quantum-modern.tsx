@@ -3,6 +3,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useQuery, useQueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useQuantumAuth } from '@/hooks/useQuantumAuth';
 import quantumQueryClient from '@/lib/quantumQueryClient';
@@ -14,7 +16,8 @@ import {
   Repeat, RefreshCw, Home, User, Hash, Layers, Grid, List, LayoutGrid,
   X, Menu, Timer, Inbox, FolderOpen, Lightbulb, Sparkles, Flame, 
   ArrowUp, ArrowDown, Pause, Play, SkipForward, MessageCircle,
-  FileText, Briefcase, Calendar as CalendarIcon, Clipboard, LogOut
+  FileText, Briefcase, Calendar as CalendarIcon, Clipboard, LogOut,
+  Reply, Forward, Paperclip, Send, ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 // Hook para dados reais com auto-atualização usando QueryClient independente
@@ -74,108 +77,118 @@ const useRealTimeData = () => {
 
 // Interface principal do Quantum Tasks
 const QuantumTasksModern = () => {
-  // TODOS os hooks devem ser chamados SEMPRE, no topo do componente
-  const { user, isLoading: authLoading, isAuthenticated, login, logout } = useQuantumAuth();
+  const { isAuthenticated } = useQuantumAuth();
   const [activeTab, setActiveTab] = useState('inicio');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedEmail, setSelectedEmail] = useState(null);
+  const [composing, setComposing] = useState(false);
+  const [emailFilter, setEmailFilter] = useState('all');
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+  
   const { dashboardStats, realTasks, realProjects, realEmails, realRecurring, isLoading } = useRealTimeData();
 
-  // Atualização automática visual do time
+  // Sistema de detecção de dispositivo móvel
+  const [isMobile, setIsMobile] = useState(false);
+  
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Lógica de autenticação após todos os hooks
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <div className="flex items-center space-x-2 text-white">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent"></div>
-          <span>Carregando Quantum Tasks...</span>
-        </div>
-      </div>
-    );
-  }
+  // Sistema de swipe para mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
 
-  if (!isAuthenticated) {
-    return <QuantumLogin onLogin={login} isLoading={authLoading} />;
-  }
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
 
-  const tabs = [
-    { id: 'inicio', label: 'INICIO', icon: Home, color: 'from-blue-500 to-purple-600' },
-    { id: 'tarefas', label: 'Tarefas', icon: CheckCircle, color: 'from-green-500 to-emerald-600' },
-    { id: 'projetos', label: 'Projetos', icon: FolderOpen, color: 'from-purple-500 to-pink-600' },
-    { id: 'lembretes', label: 'Lembretes', icon: Timer, color: 'from-orange-500 to-red-600' },
-    { id: 'inbox', label: 'Inbox', icon: Inbox, color: 'from-cyan-500 to-blue-600' },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3, color: 'from-indigo-500 to-purple-600' },
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    const tabs = ['inicio', 'tarefas', 'inbox', 'projetos', 'lembretes', 'analytics'];
+    const currentIndex = tabs.indexOf(activeTab);
+    
+    if (isLeftSwipe && currentIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentIndex + 1]);
+    }
+    if (isRightSwipe && currentIndex > 0) {
+      setActiveTab(tabs[currentIndex - 1]);
+    }
+  };
+
+  // Saudação inteligente baseada no horário
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Bom dia";
+    if (hour < 18) return "Boa tarde";
+    return "Boa noite";
+  };
+
+  // Menu items
+  const menuItems = [
+    { id: 'inicio', label: 'INÍCIO', icon: Home, gradient: 'from-blue-500 to-purple-600' },
+    { id: 'tarefas', label: 'TAREFAS', icon: CheckCircle, gradient: 'from-green-500 to-teal-600' },
+    { id: 'inbox', label: 'INBOX', icon: Mail, gradient: 'from-red-500 to-pink-600' },
+    { id: 'projetos', label: 'PROJETOS', icon: Briefcase, gradient: 'from-yellow-500 to-orange-600' },
+    { id: 'lembretes', label: 'LEMBRETES', icon: Bell, gradient: 'from-purple-500 to-indigo-600' },
+    { id: 'analytics', label: 'ANALYTICS', icon: BarChart3, gradient: 'from-cyan-500 to-blue-600' }
   ];
 
-  const TabHeader = () => (
-    <div className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50">
-      <div className="flex items-center justify-between px-6 py-4">
-        {/* Logo e Brand */}
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
-              <Brain className="w-6 h-6 text-white" />
-            </div>
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-          </div>
-          <div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
-              Quantum Tasks
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {currentTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-            </p>
-          </div>
+  // Sidebar para desktop
+  const Sidebar = () => (
+    <div className={`fixed left-0 top-0 h-full bg-gradient-to-b from-gray-900 to-black text-white z-30 transition-all duration-300 ${
+      isMobile ? (sidebarOpen ? 'w-64' : 'w-0 overflow-hidden') : 'w-64'
+    }`}>
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            Quantum Tasks
+          </h1>
+          {isMobile && (
+            <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
+              <X className="h-5 w-5" />
+            </Button>
+          )}
         </div>
-
-        {/* Navigation Tabs - Estilo TickTick moderno */}
-        <div className="flex items-center bg-slate-100/50 dark:bg-slate-800/50 rounded-xl p-1 backdrop-blur-sm">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                activeTab === tab.id
-                  ? 'text-white shadow-lg'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'
-              }`}
-            >
-              {activeTab === tab.id && (
-                <div className={`absolute inset-0 bg-gradient-to-r ${tab.color} rounded-lg shadow-lg`} />
-              )}
-              <tab.icon className="w-4 h-4 relative z-10" />
-              <span className="relative z-10">{tab.label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl px-6 py-2 shadow-lg hover:shadow-xl transition-all duration-300"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Criar
-          </Button>
-          <Button variant="outline" size="icon" className="rounded-xl">
-            <Search className="w-4 h-4" />
-          </Button>
-          <Button variant="outline" size="icon" className="rounded-xl">
-            <Bell className="w-4 h-4" />
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={logout}
-            className="rounded-xl text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 hover:border-red-300"
-            title="Sair do Quantum Tasks"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
+        
+        <nav className="space-y-2">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  if (isMobile) setSidebarOpen(false);
+                }}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                  activeTab === item.id 
+                    ? `bg-gradient-to-r ${item.gradient} text-white shadow-lg` 
+                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+                <span className="font-medium">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+        
+        <div className="absolute bottom-6 left-6 right-6">
+          <Button variant="ghost" className="w-full justify-start text-gray-400 hover:text-white">
+            <LogOut className="h-4 w-4 mr-3" />
             Sair
           </Button>
         </div>
@@ -183,275 +196,406 @@ const QuantumTasksModern = () => {
     </div>
   );
 
-  // Dashboard INICIO com dados reais e auto-atualização
-  const InicioTab = () => (
-    <div className="p-6 space-y-6">
-      {/* Header com saudação inteligente */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
-            {(() => {
-              const hour = currentTime.getHours();
-              if (hour < 12) return 'Bom dia! ☀️';
-              if (hour < 18) return 'Boa tarde! 🌤️';
-              return 'Boa noite! 🌙';
-            })()}
-          </h2>
-          <p className="text-slate-600 dark:text-slate-300">
-            {currentTime.toLocaleDateString('pt-BR', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </p>
-        </div>
-        <Button variant="outline" className="rounded-xl" disabled={isLoading}>
-          <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-          {isLoading ? 'Atualizando...' : 'Atualizar'}
+  // Abas horizontais para mobile
+  const MobileTabs = () => (
+    <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-gray-900 to-black text-white z-20 md:hidden">
+      <div 
+        className="flex overflow-x-auto scrollbar-hide py-3 px-4"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`flex-shrink-0 flex flex-col items-center space-y-1 px-4 py-2 mx-1 rounded-lg transition-all duration-200 ${
+                activeTab === item.id 
+                  ? `bg-gradient-to-r ${item.gradient} text-white` 
+                  : 'text-gray-400'
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+              <span className="text-xs font-medium">{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  // Componente de Email Compose (Spark-like)
+  const EmailCompose = () => (
+    <Card className="h-full">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="flex items-center space-x-2">
+          <Edit3 className="h-5 w-5" />
+          <span>Nova Mensagem</span>
+        </CardTitle>
+        <Button variant="ghost" size="sm" onClick={() => setComposing(false)}>
+          <X className="h-4 w-4" />
         </Button>
-      </div>
-
-      {/* Métricas principais - Dados reais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="relative overflow-hidden border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Tarefas Hoje</p>
-                <p className="text-3xl font-bold text-blue-900 dark:text-blue-100">{dashboardStats.tasksToday}</p>
-                <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3" />
-                  +{dashboardStats.weeklyGrowth}% esta semana
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="relative overflow-hidden border-0 shadow-lg bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Emails Não Lidos</p>
-                <p className="text-3xl font-bold text-purple-900 dark:text-purple-100">{dashboardStats.emailsUnread}</p>
-                <p className="text-xs text-purple-600 dark:text-purple-400">Gmail + Outlook</p>
-              </div>
-              <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center">
-                <Mail className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="relative overflow-hidden border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-green-700 dark:text-green-300">Projetos Ativos</p>
-                <p className="text-3xl font-bold text-green-900 dark:text-green-100">{dashboardStats.activeProjects}</p>
-                <p className="text-xs text-green-600 dark:text-green-400">2 finalizando</p>
-              </div>
-              <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
-                <FolderOpen className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="relative overflow-hidden border-0 shadow-lg bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-orange-700 dark:text-orange-300">Produtividade</p>
-                <p className="text-3xl font-bold text-orange-900 dark:text-orange-100">{dashboardStats.productivity}%</p>
-                <p className="text-xs text-orange-600 dark:text-orange-400 flex items-center gap-1">
-                  <Flame className="w-3 h-3" />
-                  Meta: 85%
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center">
-                <Zap className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Seções de conteúdo com dados reais */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Tarefas urgentes */}
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center justify-between text-lg">
-              <span className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
-                  <Flame className="w-4 h-4 text-red-600 dark:text-red-400" />
-                </div>
-                Tarefas Urgentes
-              </span>
-              <Badge variant="destructive" className="rounded-full">
-                {realTasks.filter(task => task.priority === 'alta').length} urgentes
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {realTasks.slice(0, 3).map((task, index) => (
-              <div key={index} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                <CheckCircle className="w-5 h-5 text-slate-400 hover:text-green-500 cursor-pointer transition-colors" />
-                <div className="flex-1">
-                  <p className="font-medium text-slate-900 dark:text-white">{task.title || `Tarefa prioritária ${index + 1}`}</p>
-                  <p className="text-sm text-slate-600 dark:text-slate-300">{task.project || 'Projeto Quantum'}</p>
-                </div>
-                <Badge variant="destructive" className="text-xs">
-                  {task.priority || 'alta'}
-                </Badge>
-              </div>
-            ))}
-            {realTasks.length === 0 && (
-              <div className="text-center py-4 text-slate-500 dark:text-slate-400">
-                <CheckCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>Nenhuma tarefa urgente</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Próximos lembretes */}
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center justify-between text-lg">
-              <span className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                  <Timer className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                </div>
-                Próximos Lembretes
-              </span>
-              <Badge className="rounded-full bg-blue-100 text-blue-700">
-                {realRecurring.length} ativos
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {realRecurring.slice(0, 3).map((reminder, index) => (
-              <div key={index} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
-                <Timer className="w-5 h-5 text-blue-500" />
-                <div className="flex-1">
-                  <p className="font-medium text-slate-900 dark:text-white">{reminder.title || `Lembrete ${index + 1}`}</p>
-                  <p className="text-sm text-slate-600 dark:text-slate-300">{reminder.nextOccurrence || 'Em alguns minutos'}</p>
-                </div>
-                <Badge variant="outline" className="text-xs">
-                  {reminder.frequency || 'diário'}
-                </Badge>
-              </div>
-            ))}
-            {realRecurring.length === 0 && (
-              <div className="text-center py-4 text-slate-500 dark:text-slate-400">
-                <Timer className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>Nenhum lembrete ativo</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-
-  // Outras abas simplificadas (a serem expandidas)
-  const TarefasTab = () => (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">Gerenciamento de Tarefas</h2>
-      <p className="text-slate-600 dark:text-slate-300">Sistema avançado de tarefas em desenvolvimento...</p>
-    </div>
-  );
-
-  const ProjetosTab = () => (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">Projetos Colaborativos</h2>
-      <p className="text-slate-600 dark:text-slate-300">Gerenciamento de projetos em desenvolvimento...</p>
-    </div>
-  );
-
-  const LembretesTab = () => (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">Lembretes Precisos</h2>
-      <p className="text-slate-600 dark:text-slate-300">Sistema de lembretes com precisão hora/minuto em desenvolvimento...</p>
-    </div>
-  );
-
-  const InboxTab = () => (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">Multi-Email Inbox</h2>
-      <p className="text-slate-600 dark:text-slate-300">Inbox inteligente em desenvolvimento...</p>
-    </div>
-  );
-
-  const AnalyticsTab = () => (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">Analytics Inteligente</h2>
-      <p className="text-slate-600 dark:text-slate-300">Relatórios de produtividade em desenvolvimento...</p>
-    </div>
-  );
-
-  // Modal de criação moderno
-  const CreateModal = () => (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-md border-0 shadow-2xl">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center justify-between">
-            <span>Criar Novo Item</span>
-            <Button variant="ghost" size="icon" onClick={() => setShowCreateModal(false)}>
-              <X className="w-4 h-4" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-3">
+          <Input placeholder="Para:" />
+          <Input placeholder="Assunto:" />
+          <Textarea 
+            placeholder="Escreva sua mensagem..." 
+            className="min-h-[300px] resize-none"
+          />
+        </div>
+        <div className="flex items-center justify-between pt-4 border-t">
+          <div className="flex items-center space-x-2">
+            <Button variant="ghost" size="sm">
+              <Paperclip className="h-4 w-4" />
             </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" className="h-20 flex-col gap-2 border-2 hover:border-green-300 hover:bg-green-50 dark:hover:bg-green-900/20">
-              <CheckCircle className="w-6 h-6 text-green-600" />
-              <span className="text-sm font-medium">Tarefa</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col gap-2 border-2 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20">
-              <FolderOpen className="w-6 h-6 text-purple-600" />
-              <span className="text-sm font-medium">Projeto</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col gap-2 border-2 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20">
-              <Timer className="w-6 h-6 text-blue-600" />
-              <span className="text-sm font-medium">Lembrete</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col gap-2 border-2 hover:border-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/20">
-              <Mail className="w-6 h-6 text-orange-600" />
-              <span className="text-sm font-medium">Email</span>
+            <Button variant="ghost" size="sm">
+              <Star className="h-4 w-4" />
             </Button>
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" onClick={() => setComposing(false)}>
+              Cancelar
+            </Button>
+            <Button className="bg-gradient-to-r from-blue-500 to-purple-600">
+              <Send className="h-4 w-4 mr-2" />
+              Enviar
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  // Componente de visualização de email (Spark-like)
+  const EmailView = ({ email }: { email: any }) => (
+    <Card className="h-full">
+      <CardHeader className="flex flex-row items-center justify-between border-b">
+        <div className="flex items-center space-x-3">
+          <Button variant="ghost" size="sm" onClick={() => setSelectedEmail(null)}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h3 className="font-semibold">{email.subject}</h3>
+            <p className="text-sm text-gray-500">{email.sender}</p>
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button variant="ghost" size="sm">
+            <Star className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="sm">
+            <Archive className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="sm">
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="flex-1 overflow-y-auto p-6">
+        <div className="prose max-w-none">
+          <p className="text-sm text-gray-500 mb-4">{email.date}</p>
+          <div className="whitespace-pre-wrap">
+            {email.content}
+          </div>
+        </div>
+      </CardContent>
+      <div className="border-t p-4">
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm">
+            <Reply className="h-4 w-4 mr-2" />
+            Responder
+          </Button>
+          <Button variant="outline" size="sm">
+            <Forward className="h-4 w-4 mr-2" />
+            Encaminhar
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+
+  // Lista de emails (Spark-like)
+  const EmailList = () => (
+    <div className="space-y-2">
+      {Array.isArray(realEmails) && realEmails.map((email: any, index: number) => (
+        <Card 
+          key={index} 
+          className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+            email.read ? 'bg-gray-50' : 'bg-white border-l-4 border-l-blue-500'
+          }`}
+          onClick={() => setSelectedEmail(email)}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center space-x-2 mb-1">
+                  <span className={`font-medium ${!email.read ? 'text-gray-900' : 'text-gray-600'}`}>
+                    {email.sender}
+                  </span>
+                  {email.important && <Star className="h-4 w-4 text-yellow-500 fill-current" />}
+                  {email.hasAttachment && <Paperclip className="h-4 w-4 text-gray-400" />}
+                </div>
+                <p className={`text-sm mb-1 ${!email.read ? 'font-medium text-gray-900' : 'text-gray-600'}`}>
+                  {email.subject}
+                </p>
+                <p className="text-sm text-gray-500 truncate">
+                  {email.preview}
+                </p>
+              </div>
+              <div className="flex flex-col items-end space-y-1 ml-4">
+                <span className="text-xs text-gray-500">{email.time}</span>
+                {!email.read && <div className="w-2 h-2 bg-blue-500 rounded-full"></div>}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 
-  const renderActiveTab = () => {
-    switch (activeTab) {
-      case 'inicio': return <InicioTab />;
-      case 'tarefas': return <TarefasTab />;
-      case 'projetos': return <ProjetosTab />;
-      case 'lembretes': return <LembretesTab />;
-      case 'inbox': return <InboxTab />;
-      case 'analytics': return <AnalyticsTab />;
-      default: return <InicioTab />;
+  // Renderização do conteúdo principal
+  const renderContent = () => {
+    if (activeTab === 'inbox') {
+      if (composing) {
+        return <EmailCompose />;
+      }
+      if (selectedEmail) {
+        return <EmailView email={selectedEmail} />;
+      }
+      
+      return (
+        <div className="space-y-6">
+          {/* Header do Inbox */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-pink-600 bg-clip-text text-transparent">
+                Inbox
+              </h2>
+              <Badge variant="secondary">
+                {Array.isArray(realEmails) ? realEmails.filter((e: any) => !e.read).length : 0} não lidas
+              </Badge>
+            </div>
+            <Button 
+              onClick={() => setComposing(true)}
+              className="bg-gradient-to-r from-red-500 to-pink-600"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Compor
+            </Button>
+          </div>
+
+          {/* Filtros do Inbox */}
+          <div className="flex items-center space-x-2 pb-4 border-b">
+            <div className="flex items-center space-x-2">
+              <Button 
+                variant={emailFilter === 'all' ? 'default' : 'ghost'} 
+                size="sm"
+                onClick={() => setEmailFilter('all')}
+              >
+                Todos
+              </Button>
+              <Button 
+                variant={emailFilter === 'unread' ? 'default' : 'ghost'} 
+                size="sm"
+                onClick={() => setEmailFilter('unread')}
+              >
+                Não lidos
+              </Button>
+              <Button 
+                variant={emailFilter === 'important' ? 'default' : 'ghost'} 
+                size="sm"
+                onClick={() => setEmailFilter('important')}
+              >
+                <Star className="h-4 w-4 mr-1" />
+                Importantes
+              </Button>
+            </div>
+            <div className="flex-1"></div>
+            <div className="flex items-center space-x-2">
+              <div className="relative">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input 
+                  placeholder="Buscar emails..." 
+                  className="pl-10 w-64"
+                />
+              </div>
+              <Button variant="ghost" size="sm">
+                <Filter className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Lista de emails */}
+          <EmailList />
+        </div>
+      );
     }
+
+    if (activeTab === 'inicio') {
+      return (
+        <div className="space-y-6">
+          {/* Saudação */}
+          <div className="text-center py-8">
+            <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+              {getGreeting()}! 👋
+            </h2>
+            <p className="text-gray-600">Bem-vindo ao seu espaço de produtividade ultra-moderno</p>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-blue-600 text-sm font-medium">Tarefas Hoje</p>
+                    <p className="text-3xl font-bold text-blue-700">{dashboardStats?.tasksToday || 0}</p>
+                  </div>
+                  <CheckCircle className="h-12 w-12 text-blue-500" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-red-600 text-sm font-medium">Emails Não Lidos</p>
+                    <p className="text-3xl font-bold text-red-700">{dashboardStats?.emailsUnread || 0}</p>
+                  </div>
+                  <Mail className="h-12 w-12 text-red-500" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-green-600 text-sm font-medium">Projetos Ativos</p>
+                    <p className="text-3xl font-bold text-green-700">{dashboardStats?.activeProjects || 0}</p>
+                  </div>
+                  <Briefcase className="h-12 w-12 text-green-500" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Progresso */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <TrendingUp className="h-5 w-5 text-blue-500" />
+                  <span>Produtividade Semanal</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span>Progresso</span>
+                    <span className="font-semibold">{dashboardStats?.productivity || 0}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div 
+                      className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500"
+                      style={{ width: `${dashboardStats?.productivity || 0}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Target className="h-5 w-5 text-green-500" />
+                  <span>Taxa de Conclusão</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span>Eficiência</span>
+                    <span className="font-semibold">{dashboardStats?.completionRate || 0}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div 
+                      className="bg-gradient-to-r from-green-500 to-teal-600 h-3 rounded-full transition-all duration-500"
+                      style={{ width: `${dashboardStats?.completionRate || 0}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      );
+    }
+
+    // Outras abas (implementação básica)
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-2xl font-bold mb-4">
+          {menuItems.find(item => item.id === activeTab)?.label}
+        </h2>
+        <p className="text-gray-600">Conteúdo em desenvolvimento...</p>
+      </div>
+    );
   };
+
+  if (!isAuthenticated) {
+    return (
+      <QueryClientProvider client={quantumQueryClient}>
+        <QuantumLogin onLogin={() => {}} isLoading={false} />
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <QueryClientProvider client={quantumQueryClient}>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900">
-        <TabHeader />
-        <main className="transition-all duration-300">
-          {renderActiveTab()}
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+        {/* Overlay para mobile quando sidebar está aberta */}
+        {isMobile && sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-20"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Sidebar Desktop / Mobile */}
+        <Sidebar />
+
+        {/* Abas Mobile */}
+        <MobileTabs />
+
+        {/* Botão de menu mobile */}
+        {isMobile && (
+          <Button
+            className="fixed top-4 left-4 z-30 md:hidden bg-gradient-to-r from-blue-500 to-purple-600"
+            size="sm"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="h-4 w-4" />
+          </Button>
+        )}
+
+        {/* Conteúdo principal */}
+        <main className={`transition-all duration-300 ${
+          isMobile ? 'pt-20 px-4 pb-4' : 'ml-64 p-8'
+        }`}>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+          ) : (
+            renderContent()
+          )}
         </main>
-        {showCreateModal && <CreateModal />}
       </div>
     </QueryClientProvider>
   );
