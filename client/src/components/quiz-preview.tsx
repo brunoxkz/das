@@ -1473,41 +1473,23 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
                 
               </h3>
             )}
-            <div className="space-y-3">
-              {element.options?.map((option: any, index: number) => (
-                <div
-                  key={index}
-                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                    responses[element.id] === option.text
-                      ? 'border-gray-400 bg-white'
-                      : 'border-gray-200 hover:border-gray-300 bg-white'
-                  }`}
-                  style={{
-                    borderColor: responses[element.id] === option.text 
-                      ? (element.textColor || '#6B7280') 
-                      : 'rgba(156, 163, 175, 0.5)',
-                    backgroundColor: 'white'
-                  }}
-                  onClick={() => handleAnswer(element.id, option.text, element)}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div 
-                      className={`w-4 h-4 rounded-full border-2 ${
-                        responses[element.id] === option.text
-                          ? ''
-                          : 'border-gray-300'
-                      }`}
-                      style={{
-                        borderColor: responses[element.id] === option.text 
-                          ? (element.checkboxColor || '#6B7280') 
-                          : 'rgba(156, 163, 175, 0.5)',
-                        backgroundColor: responses[element.id] === option.text 
-                          ? (element.checkboxColor || '#6B7280') 
-                          : 'transparent'
-                      }}
-                    />
+            <div className="space-y-2">
+              {element.options?.map((option: any, index: number) => {
+                const optionText = typeof option === 'string' ? option : option?.text || `Opção ${index + 1}`;
+                const isSelected = responses[element.id] === optionText;
+                
+                return (
+                  <div
+                    key={index}
+                    className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-all duration-150 ${
+                      isSelected 
+                        ? 'border-gray-400 bg-gray-50' 
+                        : 'border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50'
+                    }`}
+                    onClick={() => handleAnswer(element.id, optionText, element)}
+                  >
                     <span 
-                      className="text-gray-700"
+                      className="flex-1"
                       style={{ 
                         color: element.optionTextColor || '#374151',
                         fontSize: element.optionFontSize === 'xs' ? '0.75rem' :
@@ -1520,11 +1502,18 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
                                    element.optionFontWeight === 'bold' ? '700' : '400'
                       }}
                     >
-                      {typeof option === 'string' ? option : option?.text || `Opção ${index + 1}`}
+                      {optionText}
                     </span>
+                    {isSelected && (
+                      <div className="w-4 h-4 flex items-center justify-center">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-black">
+                          <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         );

@@ -1442,44 +1442,40 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
             >
               {element.content || properties?.question || properties?.content || 'Pergunta'}
             </h3>
-            <RadioGroup 
-              value={answer} 
-              onValueChange={async (value) => {
-                // Responder à pergunta
-                handleElementAnswer(id, type, value, element.fieldId || properties?.fieldId);
-                
-                // Auto-advance: avançar automaticamente para próxima página após 1 segundo
-                // apenas se não houver botão de continuar na página
-                const hasContinueButton = currentPage.elements.some(el => 
-                  el.type === 'continue_button' || el.type === 'submit_button'
-                );
-                
-                if (!hasContinueButton && !isLastPage) {
-                  setTimeout(async () => {
-                    await goToNextPage();
-                  }, 1000);
-                }
-              }}
-              className="space-y-2"
-            >
+            <div className="space-y-2">
               {Array.isArray(multipleChoiceOptions) && multipleChoiceOptions.length > 0 ? (
                 multipleChoiceOptions.map((option: any, index: number) => {
                   // Suporte para opções em string simples ou objeto {text: "..."}
                   const optionValue = typeof option === 'string' ? option : (option?.text || `Opção ${index + 1}`);
+                  const isSelected = answer === optionValue;
+                  
                   return (
-                    <div key={index} className="flex items-center space-x-2 p-3 border border-gray-200 hover:border-blue-500 rounded-lg cursor-pointer transition-all">
-                      <RadioGroupItem 
-                        value={optionValue} 
-                        id={`${id}-${index}`}
-                        style={{
-                          backgroundColor: 'transparent',
-                          borderColor: element.checkboxColor || properties?.checkboxColor || "#374151",
-                          accentColor: element.checkboxColor || properties?.checkboxColor || "#374151"
-                        }}
-                      />
-                      <Label 
-                        htmlFor={`${id}-${index}`} 
-                        className="flex-1 cursor-pointer"
+                    <div 
+                      key={index} 
+                      className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-all duration-150 ${
+                        isSelected 
+                          ? 'border-gray-400 bg-gray-50' 
+                          : 'border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50'
+                      }`}
+                      onClick={async () => {
+                        // Responder à pergunta instantaneamente
+                        handleElementAnswer(id, type, optionValue, element.fieldId || properties?.fieldId);
+                        
+                        // Auto-advance: avançar automaticamente para próxima página após 300ms
+                        // apenas se não houver botão de continuar na página
+                        const hasContinueButton = currentPage.elements.some(el => 
+                          el.type === 'continue_button' || el.type === 'submit_button'
+                        );
+                        
+                        if (!hasContinueButton && !isLastPage) {
+                          setTimeout(async () => {
+                            await goToNextPage();
+                          }, 300);
+                        }
+                      }}
+                    >
+                      <span 
+                        className="flex-1"
                         style={{
                           color: element.optionTextColor || properties?.optionTextColor || "#374151",
                           fontSize: element.optionFontSize === 'xs' ? '0.75rem' :
@@ -1493,7 +1489,14 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
                         }}
                       >
                         {optionValue}
-                      </Label>
+                      </span>
+                      {isSelected && (
+                        <div className="w-4 h-4 flex items-center justify-center">
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-black">
+                            <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                          </svg>
+                        </div>
+                      )}
                     </div>
                   );
                 })
@@ -1502,7 +1505,7 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
                   Nenhuma opção configurada
                 </div>
               )}
-            </RadioGroup>
+            </div>
           </div>
         );
 
