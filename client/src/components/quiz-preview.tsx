@@ -597,6 +597,79 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
   
   const { toast } = useToast();
 
+  // Função para extrair informações do MODO DINÂMICO das respostas no preview
+  const getDynamicModeInfo = () => {
+    if (!quiz.settings?.dynamicMode) return null;
+
+    const info: any = {};
+    
+    // Percorrer todas as respostas para encontrar informações
+    Object.entries(responses).forEach(([elementId, value]) => {
+      const fieldId = String(elementId || '').toLowerCase();
+      
+      if (!value || !fieldId) return;
+      
+      // Detectar nome
+      if ((fieldId.includes('nome') || fieldId.includes('name')) && quiz.settings?.dynamicShowName !== false) {
+        info.name = value;
+      }
+      
+      // Detectar data de nascimento
+      if ((fieldId.includes('date') || fieldId.includes('data') || fieldId.includes('nascimento') || fieldId.includes('birth')) && quiz.settings?.dynamicShowDate !== false) {
+        // Converter data para formato brasileiro se necessário
+        if (value) {
+          try {
+            const date = new Date(value as string);
+            if (!isNaN(date.getTime())) {
+              info.birthDate = date.toLocaleDateString('pt-BR');
+            } else {
+              info.birthDate = value; // Usar valor original se não conseguir converter
+            }
+          } catch {
+            info.birthDate = value;
+          }
+        }
+      }
+      
+      // Detectar email
+      if (fieldId.includes('email') && quiz.settings?.dynamicShowEmail) {
+        info.email = value;
+      }
+      
+      // Detectar telefone
+      if ((fieldId.includes('telefone') || fieldId.includes('phone') || fieldId.includes('whats')) && quiz.settings?.dynamicShowPhone) {
+        info.phone = value;
+      }
+      
+      // Detectar idade
+      if ((fieldId.includes('idade') || fieldId.includes('age')) && quiz.settings?.dynamicShowAge) {
+        info.age = value;
+      }
+      
+      // Detectar cidade
+      if ((fieldId.includes('cidade') || fieldId.includes('city')) && quiz.settings?.dynamicShowCity) {
+        info.city = value;
+      }
+      
+      // Detectar profissão
+      if ((fieldId.includes('profissao') || fieldId.includes('profession') || fieldId.includes('trabalha')) && quiz.settings?.dynamicShowProfession) {
+        info.profession = value;
+      }
+      
+      // Detectar objetivo
+      if ((fieldId.includes('objetivo') || fieldId.includes('goal') || fieldId.includes('meta')) && quiz.settings?.dynamicShowGoal) {
+        info.goal = value;
+      }
+    });
+    
+    // Detectar data atual se habilitado
+    if (quiz.settings?.dynamicShowDate !== false) {
+      info.date = new Date().toLocaleDateString('pt-BR');
+    }
+    
+    return Object.keys(info).length > 0 ? info : null;
+  };
+
   // Configurações de viewport para diferentes dispositivos
   const viewportConfig = {
     desktop: {
@@ -1755,6 +1828,7 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
                         : currentAnswers.filter((a: string) => a !== option.text);
                       handleAnswer(element.id, newAnswers, element);
                     }}
+                    className="bg-white border-2 border-gray-300 data-[state=checked]:bg-white data-[state=checked]:border-green-500"
                   />
                   <label 
                     htmlFor={`${element.id}-${index}`}
@@ -2817,6 +2891,85 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
               )}
               
               <div className="flex-1 overflow-y-auto" style={{ minHeight: '300px' }}>
+                {/* MODO DINÂMICO - Informações do usuário no topo */}
+                {(() => {
+                  const dynamicInfo = getDynamicModeInfo();
+                  return dynamicInfo && currentStep > 0 && (
+                    <div 
+                      className="mb-6 p-4 rounded-lg border-2 border-green-200 bg-green-50/80 backdrop-blur-sm"
+                      style={{
+                        backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                        borderColor: 'rgba(16, 185, 129, 0.2)'
+                      }}
+                    >
+                      <div className="flex items-center flex-wrap gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                          <span className="font-semibold text-green-700">
+                            Perfil em construção:
+                          </span>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-4">
+                          {dynamicInfo.name && (
+                            <span className="bg-white/50 px-3 py-1 rounded-full text-xs font-medium border">
+                              👤 {dynamicInfo.name}
+                            </span>
+                          )}
+                          
+                          {dynamicInfo.birthDate && (
+                            <span className="bg-white/50 px-3 py-1 rounded-full text-xs font-medium border">
+                              🎂 {dynamicInfo.birthDate}
+                            </span>
+                          )}
+                          
+                          {dynamicInfo.email && (
+                            <span className="bg-white/50 px-3 py-1 rounded-full text-xs font-medium border">
+                              📧 {dynamicInfo.email}
+                            </span>
+                          )}
+                          
+                          {dynamicInfo.phone && (
+                            <span className="bg-white/50 px-3 py-1 rounded-full text-xs font-medium border">
+                              📞 {dynamicInfo.phone}
+                            </span>
+                          )}
+                          
+                          {dynamicInfo.age && (
+                            <span className="bg-white/50 px-3 py-1 rounded-full text-xs font-medium border">
+                              🎯 {dynamicInfo.age} anos
+                            </span>
+                          )}
+                          
+                          {dynamicInfo.city && (
+                            <span className="bg-white/50 px-3 py-1 rounded-full text-xs font-medium border">
+                              🏙️ {dynamicInfo.city}
+                            </span>
+                          )}
+                          
+                          {dynamicInfo.profession && (
+                            <span className="bg-white/50 px-3 py-1 rounded-full text-xs font-medium border">
+                              💼 {dynamicInfo.profession}
+                            </span>
+                          )}
+                          
+                          {dynamicInfo.goal && (
+                            <span className="bg-white/50 px-3 py-1 rounded-full text-xs font-medium border">
+                              🎯 {dynamicInfo.goal}
+                            </span>
+                          )}
+                          
+                          {dynamicInfo.date && (
+                            <span className="bg-white/50 px-3 py-1 rounded-full text-xs font-medium border">
+                              📅 {dynamicInfo.date}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+                
                 {renderPage()}
               </div>
             </CardContent>
