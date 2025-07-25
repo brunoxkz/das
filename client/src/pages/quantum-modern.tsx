@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuantumAuth } from '@/hooks/useQuantumAuth';
+import QuantumLogin from '@/components/QuantumLogin';
 import { 
   Plus, CheckCircle, Mail, Settings, Brain, Clock, Users, Target, Calendar,
   Search, Filter, MoreHorizontal, Star, Flag, Tag, Bell, Zap, TrendingUp,
@@ -11,7 +13,7 @@ import {
   Repeat, RefreshCw, Home, User, Hash, Layers, Grid, List, LayoutGrid,
   X, Menu, Timer, Inbox, FolderOpen, Lightbulb, Sparkles, Flame, 
   ArrowUp, ArrowDown, Pause, Play, SkipForward, MessageCircle,
-  FileText, Briefcase, Calendar as CalendarIcon, Clipboard
+  FileText, Briefcase, Calendar as CalendarIcon, Clipboard, LogOut
 } from 'lucide-react';
 
 // Hook para dados reais com auto-atualização
@@ -72,7 +74,24 @@ const useRealTimeData = () => {
 
 // Interface principal do Quantum Tasks
 const QuantumTasksModern = () => {
+  const { user, isLoading: authLoading, isAuthenticated, login, logout } = useQuantumAuth();
   const [activeTab, setActiveTab] = useState('inicio');
+
+  // Se não estiver autenticado, mostrar tela de login
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="flex items-center space-x-2 text-white">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent"></div>
+          <span>Carregando Quantum Tasks...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <QuantumLogin onLogin={login} isLoading={authLoading} />;
+  }
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { dashboardStats, realTasks, realProjects, realEmails, realRecurring, isLoading } = useRealTimeData();
 
@@ -148,6 +167,15 @@ const QuantumTasksModern = () => {
           </Button>
           <Button variant="outline" size="icon" className="rounded-xl">
             <Bell className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={logout}
+            className="rounded-xl text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 hover:border-red-300"
+            title="Sair do Quantum Tasks"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Sair
           </Button>
         </div>
       </div>
