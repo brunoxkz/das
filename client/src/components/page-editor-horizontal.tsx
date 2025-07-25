@@ -121,6 +121,7 @@ interface Element {
   optionFontWeight?: string;
   optionTextColor?: string;
   checkboxColor?: string;
+  selectionIndicator?: "x_black" | "x_gray" | "circle" | "none";
   min?: number;
   max?: number;
   color?: string;
@@ -6922,6 +6923,24 @@ const gameElementCategories = [
                           onChange={(e) => updateElement(selectedElementData.id, { checkboxColor: e.target.value })}
                           className="w-full h-8 border rounded"
                         />
+                      </div>
+
+                      {/* Indicador de Seleção */}
+                      <div className="col-span-2">
+                        <Label className="text-xs">Indicador de Seleção</Label>
+                        <select 
+                          className="w-full px-2 py-1 border rounded text-xs mt-1"
+                          value={selectedElementData.selectionIndicator || "x_black"}
+                          onChange={(e) => updateElement(selectedElementData.id, { selectionIndicator: e.target.value })}
+                        >
+                          <option value="x_black">❌ X Preto (padrão)</option>
+                          <option value="x_gray">⚫ X Cinza</option>
+                          <option value="circle">⭕ Bolinha</option>
+                          <option value="none">🚫 Nenhum</option>
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Define qual indicador aparece quando uma opção é selecionada
+                        </p>
                       </div>
                     </div>
                   </div>

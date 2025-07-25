@@ -1492,9 +1492,39 @@ export function QuizPublicRenderer({ quiz }: QuizPublicRendererProps) {
                       </span>
                       {isSelected && (
                         <div className="w-4 h-4 flex items-center justify-center">
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-black">
-                            <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                          </svg>
+                          {(() => {
+                            const indicator = element.selectionIndicator || properties?.selectionIndicator || "x_black";
+                            
+                            switch (indicator) {
+                              case "x_black":
+                                return (
+                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-black">
+                                    <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                  </svg>
+                                );
+                              case "x_gray":
+                                return (
+                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-gray-500">
+                                    <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                  </svg>
+                                );
+                              case "circle":
+                                return (
+                                  <div 
+                                    className="w-3 h-3 rounded-full"
+                                    style={{ backgroundColor: element.checkboxColor || properties?.checkboxColor || "#374151" }}
+                                  />
+                                );
+                              case "none":
+                                return null;
+                              default:
+                                return (
+                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-black">
+                                    <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                  </svg>
+                                );
+                            }
+                          })()}
                         </div>
                       )}
                     </div>
