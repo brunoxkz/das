@@ -6682,7 +6682,42 @@ const gameElementCategories = [
               )}
 
               {(selectedElementData.type === "multiple_choice" || selectedElementData.type === "checkbox") && (
-                <div className="space-y-6">
+                <div className="space-y-4">
+                  {/* Controle de Modo - Movido para cima */}
+                  <div className="border border-blue-200 rounded-md p-3 bg-blue-50">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-blue-800">Modo</span>
+                      <div className="flex bg-white rounded overflow-hidden border">
+                        <button
+                          onClick={() => setMultipleChoiceMode('simple')}
+                          className={`px-3 py-1 text-xs font-medium transition-colors ${
+                            multipleChoiceMode === 'simple' 
+                              ? 'bg-blue-600 text-white' 
+                              : 'bg-white text-blue-600 hover:bg-blue-50'
+                          }`}
+                        >
+                          Simples
+                        </button>
+                        <button
+                          onClick={() => setMultipleChoiceMode('advanced')}
+                          className={`px-3 py-1 text-xs font-medium transition-colors ${
+                            multipleChoiceMode === 'advanced' 
+                              ? 'bg-blue-600 text-white' 
+                              : 'bg-white text-blue-600 hover:bg-blue-50'
+                          }`}
+                        >
+                          Avançado
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-blue-600">
+                      {multipleChoiceMode === 'simple' 
+                        ? "Configurações essenciais"
+                        : "Todas as configurações"
+                      }
+                    </p>
+                  </div>
+
                   {/* Pergunta */}
                   <div>
                     <Label htmlFor="question">Pergunta</Label>
@@ -6692,37 +6727,6 @@ const gameElementCategories = [
                       onChange={(e) => updateElement(selectedElementData.id, { question: e.target.value })}
                       className="mt-1"
                     />
-                  </div>
-
-                  {/* Controle de Modo */}
-                  <div className="border-2 border-blue-200 rounded-lg p-4 bg-blue-50">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-semibold text-sm text-blue-800">⚙️ Modo de Configuração</h4>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          size="sm"
-                          variant={multipleChoiceMode === 'simple' ? 'default' : 'outline'}
-                          onClick={() => setMultipleChoiceMode('simple')}
-                          className="text-xs"
-                        >
-                          🔧 Simples
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={multipleChoiceMode === 'advanced' ? 'default' : 'outline'}
-                          onClick={() => setMultipleChoiceMode('advanced')}
-                          className="text-xs"
-                        >
-                          ⚡ Avançado
-                        </Button>
-                      </div>
-                    </div>
-                    <p className="text-xs text-blue-600">
-                      {multipleChoiceMode === 'simple' 
-                        ? "🔧 Modo simples: Apenas configurações essenciais - cores, título e opções de resposta"
-                        : "⚡ Modo avançado: Todas as configurações disponíveis - formatação, comportamento, indicadores e mais"
-                      }
-                    </p>
                   </div>
 
                   {/* MODO SIMPLES */}
