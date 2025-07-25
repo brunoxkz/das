@@ -95,6 +95,10 @@ export interface Element {
   placeholder?: string;
   options?: any[];
   
+  // Propriedades de indicador de seleção
+  selectionIndicator?: "x" | "circle" | "none";
+  selectionIndicatorColor?: string;
+  
   // Outras propriedades específicas
   [key: string]: any;
 }

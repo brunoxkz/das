@@ -1507,34 +1507,29 @@ export default function QuizPreview({ quiz, onClose, onSave, initialPage = 0 }: 
                     {isSelected && (
                       <div className="w-4 h-4 flex items-center justify-center">
                         {(() => {
-                          const indicator = element.selectionIndicator || "x_black";
+                          const indicator = element.selectionIndicator || "x";
+                          const indicatorColor = element.selectionIndicatorColor || "#000000";
                           
                           switch (indicator) {
-                            case "x_black":
+                            case "x":
                               return (
-                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-black">
-                                  <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                                </svg>
-                              );
-                            case "x_gray":
-                              return (
-                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-gray-500">
-                                  <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                  <path d="M9 3L3 9M3 3l6 6" stroke={indicatorColor} strokeWidth="2" strokeLinecap="round"/>
                                 </svg>
                               );
                             case "circle":
                               return (
                                 <div 
                                   className="w-3 h-3 rounded-full"
-                                  style={{ backgroundColor: element.checkboxColor || "#374151" }}
+                                  style={{ backgroundColor: indicatorColor }}
                                 />
                               );
                             case "none":
                               return null;
                             default:
                               return (
-                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-black">
-                                  <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                  <path d="M9 3L3 9M3 3l6 6" stroke={indicatorColor} strokeWidth="2" strokeLinecap="round"/>
                                 </svg>
                               );
                           }

@@ -121,7 +121,8 @@ interface Element {
   optionFontWeight?: string;
   optionTextColor?: string;
   checkboxColor?: string;
-  selectionIndicator?: "x_black" | "x_gray" | "circle" | "none";
+  selectionIndicator?: "x" | "circle" | "none";
+  selectionIndicatorColor?: string;
   min?: number;
   max?: number;
   color?: string;
@@ -6927,21 +6928,33 @@ const gameElementCategories = [
 
                       {/* Indicador de Seleção */}
                       <div className="col-span-2">
-                        <Label className="text-xs">Indicador de Seleção</Label>
+                        <Label className="text-xs">Tipo do Indicador</Label>
                         <select 
                           className="w-full px-2 py-1 border rounded text-xs mt-1"
-                          value={selectedElementData.selectionIndicator || "x_black"}
+                          value={selectedElementData.selectionIndicator || "x"}
                           onChange={(e) => updateElement(selectedElementData.id, { selectionIndicator: e.target.value })}
                         >
-                          <option value="x_black">❌ X Preto (padrão)</option>
-                          <option value="x_gray">⚫ X Cinza</option>
+                          <option value="x">❌ X (padrão)</option>
                           <option value="circle">⭕ Bolinha</option>
                           <option value="none">🚫 Nenhum</option>
                         </select>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Define qual indicador aparece quando uma opção é selecionada
-                        </p>
                       </div>
+
+                      {/* Cor do Indicador */}
+                      {selectedElementData.selectionIndicator !== "none" && (
+                        <div className="col-span-2">
+                          <Label className="text-xs">Cor do Indicador</Label>
+                          <input
+                            type="color"
+                            value={selectedElementData.selectionIndicatorColor || "#000000"}
+                            onChange={(e) => updateElement(selectedElementData.id, { selectionIndicatorColor: e.target.value })}
+                            className="w-full h-8 border rounded mt-1"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Escolha qualquer cor para o indicador de seleção
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
