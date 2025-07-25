@@ -125,6 +125,7 @@ import RemarketingQuantum from "@/pages/remarketing-quantum";
 import AoVivoQuantum from "@/pages/ao-vivo-quantum";
 import QuantumMembers from "@/pages/quantum-members";
 import QuantumCourseManage from "@/pages/quantum-course-manage";
+import QuantumTasksPage from "@/pages/quantum-tasks";
 
 
 function App() {
@@ -225,6 +226,11 @@ function App() {
         <Route path="/sistema-ultra-demo">
           <Layout>
             <SistemaUltraDemo />
+          </Layout>
+        </Route>
+        <Route path="/quantum-tasks">
+          <Layout>
+            <QuantumTasksPage />
           </Layout>
         </Route>
         <Route path="/seus-afiliados">
