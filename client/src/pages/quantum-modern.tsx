@@ -111,80 +111,108 @@ const QuantumTasksModern = () => {
     setTouchEnd(e.targetTouches[0].clientX);
   };
 
-  // Estados para configuração de email
-  const [emailConfig, setEmailConfig] = useState({
+  // Estados para sistema multi-email
+  const [emailAccounts, setEmailAccounts] = useState<Array<{
+    id: string;
+    email: string;
+    provider: string;
+    isConnected: boolean;
+    lastSync: string;
+    unreadCount: number;
+  }>>([]);
+  
+  const [activeEmailAccount, setActiveEmailAccount] = useState<string | null>(null);
+  
+  const [newEmailForm, setNewEmailForm] = useState({
     email: '',
     password: '',
-    isConfiguring: false,
-    isConnected: false,
-    lastSync: null
+    provider: 'zynt',
+    isConfiguring: false
   });
 
-  // Configurar email em tempo real
-  const configureEmailSync = async () => {
-    if (!emailConfig.email || !emailConfig.password) {
+  // Adicionar nova conta de email
+  const addEmailAccount = async () => {
+    if (!newEmailForm.email || !newEmailForm.password) {
       alert('Por favor, preencha email e senha');
       return;
     }
 
-    setEmailConfig(prev => ({ ...prev, isConfiguring: true }));
+    setNewEmailForm(prev => ({ ...prev, isConfiguring: true }));
 
     try {
-      const response = await fetch('/api/email/configure', {
+      const response = await fetch('/api/email/add-account', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: emailConfig.email,
-          password: emailConfig.password
+          email: newEmailForm.email,
+          password: newEmailForm.password,
+          provider: newEmailForm.provider
         })
       });
 
       const result = await response.json();
 
       if (result.success) {
-        setEmailConfig(prev => ({ 
-          ...prev, 
-          isConnected: true, 
-          lastSync: new Date().toLocaleTimeString() 
-        }));
+        const newAccount = {
+          id: result.accountId || Date.now().toString(),
+          email: newEmailForm.email,
+          provider: newEmailForm.provider,
+          isConnected: true,
+          lastSync: new Date().toLocaleTimeString(),
+          unreadCount: 0
+        };
         
-        // Recarregar emails após configuração
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
+        setEmailAccounts(prev => [...prev, newAccount]);
+        setActiveEmailAccount(newAccount.id);
+        setNewEmailForm({ email: '', password: '', provider: 'zynt', isConfiguring: false });
+        setShowEmailConfig(false);
         
-        alert('✅ Email sincronizado com sucesso! Recarregando...');
+        alert('✅ Conta de email adicionada com sucesso!');
       } else {
         alert('❌ Erro: ' + result.error);
       }
     } catch (error) {
-      alert('❌ Erro na configuração: ' + error.message);
+      alert('❌ Erro na configuração: ' + (error as Error).message);
     } finally {
-      setEmailConfig(prev => ({ ...prev, isConfiguring: false }));
+      setNewEmailForm(prev => ({ ...prev, isConfiguring: false }));
     }
   };
 
-  // Verificar status da sincronização
-  const checkEmailStatus = async () => {
+  // Remover conta de email
+  const removeEmailAccount = async (accountId: string) => {
     try {
-      const response = await fetch('/api/email/status');
-      const status = await response.json();
-      
-      setEmailConfig(prev => ({ 
-        ...prev, 
-        isConnected: status.connected,
-        lastSync: status.connected ? new Date().toLocaleTimeString() : null
-      }));
+      await fetch(`/api/email/remove-account/${accountId}`, { method: 'DELETE' });
+      setEmailAccounts(prev => prev.filter(acc => acc.id !== accountId));
+      if (activeEmailAccount === accountId) {
+        setActiveEmailAccount(emailAccounts[0]?.id || null);
+      }
     } catch (error) {
-      console.error('Erro ao verificar status:', error);
+      console.error('Erro ao remover conta:', error);
     }
   };
 
-  // Verificar status ao carregar
+  // Carregar contas de email existentes
+  const loadEmailAccounts = async () => {
+    try {
+      const response = await fetch('/api/email/accounts');
+      const accounts = await response.json();
+      
+      if (accounts.success) {
+        setEmailAccounts(accounts.accounts || []);
+        if (accounts.accounts?.length > 0 && !activeEmailAccount) {
+          setActiveEmailAccount(accounts.accounts[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar contas:', error);
+    }
+  };
+
+  // Carregar contas ao inicializar
   useEffect(() => {
-    checkEmailStatus();
-    // Verificar status a cada 30 segundos
-    const interval = setInterval(checkEmailStatus, 30000);
+    loadEmailAccounts();
+    // Atualizar status a cada 30 segundos
+    const interval = setInterval(loadEmailAccounts, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -457,7 +485,22 @@ const QuantumTasksModern = () => {
                 {Array.isArray(realEmails) ? realEmails.filter((e: any) => !e.read).length : 0} não lidas
               </Badge>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex items-center space-x-2">
+              {/* Selector de contas */}
+              {emailAccounts.length > 0 && (
+                <select
+                  className="px-3 py-1 text-sm border rounded-md bg-white"
+                  value={activeEmailAccount || ''}
+                  onChange={(e) => setActiveEmailAccount(e.target.value)}
+                >
+                  {emailAccounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.email} ({account.unreadCount})
+                    </option>
+                  ))}
+                </select>
+              )}
+              
               <Button 
                 size="sm" 
                 variant="outline"
@@ -465,7 +508,7 @@ const QuantumTasksModern = () => {
                 className="border-blue-200 text-blue-700 hover:bg-blue-50"
               >
                 <Settings className="h-4 w-4 mr-2" />
-                Config Email
+                {emailAccounts.length > 0 ? 'Gerenciar' : 'Adicionar'} Email
               </Button>
               <Button 
                 onClick={() => setComposing(true)}
@@ -542,7 +585,7 @@ const QuantumTasksModern = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-blue-600 text-sm font-medium">Tarefas Hoje</p>
-                    <p className="text-3xl font-bold text-blue-700">{dashboardStats?.tasksToday || 0}</p>
+                    <p className="text-3xl font-bold text-blue-700">{(dashboardStats as any)?.tasksToday || 0}</p>
                   </div>
                   <CheckCircle className="h-12 w-12 text-blue-500" />
                 </div>
@@ -554,7 +597,7 @@ const QuantumTasksModern = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-red-600 text-sm font-medium">Emails Não Lidos</p>
-                    <p className="text-3xl font-bold text-red-700">{dashboardStats?.emailsUnread || 0}</p>
+                    <p className="text-3xl font-bold text-red-700">{(dashboardStats as any)?.emailsUnread || 0}</p>
                   </div>
                   <Mail className="h-12 w-12 text-red-500" />
                 </div>
@@ -566,7 +609,7 @@ const QuantumTasksModern = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-green-600 text-sm font-medium">Projetos Ativos</p>
-                    <p className="text-3xl font-bold text-green-700">{dashboardStats?.activeProjects || 0}</p>
+                    <p className="text-3xl font-bold text-green-700">{(dashboardStats as any)?.activeProjects || 0}</p>
                   </div>
                   <Briefcase className="h-12 w-12 text-green-500" />
                 </div>
@@ -587,12 +630,12 @@ const QuantumTasksModern = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span>Progresso</span>
-                    <span className="font-semibold">{dashboardStats?.productivity || 0}%</span>
+                    <span className="font-semibold">{(dashboardStats as any)?.productivity || 0}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">
                     <div 
                       className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500"
-                      style={{ width: `${dashboardStats?.productivity || 0}%` }}
+                      style={{ width: `${(dashboardStats as any)?.productivity || 0}%` }}
                     ></div>
                   </div>
                 </div>
@@ -610,12 +653,12 @@ const QuantumTasksModern = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span>Eficiência</span>
-                    <span className="font-semibold">{dashboardStats?.completionRate || 0}%</span>
+                    <span className="font-semibold">{(dashboardStats as any)?.completionRate || 0}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">
                     <div 
                       className="bg-gradient-to-r from-green-500 to-teal-600 h-3 rounded-full transition-all duration-500"
-                      style={{ width: `${dashboardStats?.completionRate || 0}%` }}
+                      style={{ width: `${(dashboardStats as any)?.completionRate || 0}%` }}
                     ></div>
                   </div>
                 </div>
@@ -640,66 +683,131 @@ const QuantumTasksModern = () => {
   if (!isAuthenticated) {
     return (
       <QueryClientProvider client={quantumQueryClient}>
-        <QuantumLogin onLogin={() => {}} isLoading={false} />
+        <QuantumLogin onLogin={async () => true} isLoading={false} />
       </QueryClientProvider>
     );
   }
 
-  // Modal de Configuração de Email
-  const EmailConfigModal = () => (
+  // Modal Multi-Email Moderno
+  const MultiEmailConfigModal = () => (
     showEmailConfig && (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-bold">Configurar Email @zynt.com.br</h3>
+        <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              🚀 Gerenciar Contas de Email
+            </h3>
             <Button variant="ghost" size="sm" onClick={() => setShowEmailConfig(false)}>
               <X className="h-4 w-4" />
             </Button>
           </div>
           
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
-              <input
-                type="email"
-                placeholder="seu-email@zynt.com.br"
-                className="w-full px-3 py-2 border rounded-md"
-                value={emailConfig.email}
-                onChange={(e) => setEmailConfig(prev => ({ ...prev, email: e.target.value }))}
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-2">Senha</label>
-              <input
-                type="password"
-                placeholder="Sua senha de email"
-                className="w-full px-3 py-2 border rounded-md"
-                value={emailConfig.password}
-                onChange={(e) => setEmailConfig(prev => ({ ...prev, password: e.target.value }))}
-              />
-            </div>
-            
-            {emailConfig.isConnected && (
-              <div className="p-3 bg-green-50 border border-green-200 rounded-md">
-                <div className="flex items-center text-green-700">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  Conectado - Última sincronização: {emailConfig.lastSync}
-                </div>
+          {/* Lista de contas existentes */}
+          {emailAccounts.length > 0 && (
+            <div className="mb-6">
+              <h4 className="font-semibold mb-3 text-gray-700">📧 Contas Conectadas</h4>
+              <div className="space-y-2">
+                {emailAccounts.map((account) => (
+                  <div key={account.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-3 h-3 rounded-full ${account.isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                      <div>
+                        <p className="font-medium">{account.email}</p>
+                        <p className="text-xs text-gray-500">
+                          {account.provider} • {account.unreadCount} não lidas • {account.lastSync}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        size="sm"
+                        variant={activeEmailAccount === account.id ? "default" : "outline"}
+                        onClick={() => setActiveEmailAccount(account.id)}
+                      >
+                        {activeEmailAccount === account.id ? 'Ativa' : 'Ativar'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => removeEmailAccount(account.id)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
+          )}
+          
+          {/* Adicionar nova conta */}
+          <div className="border-t pt-6">
+            <h4 className="font-semibold mb-4 flex items-center text-gray-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Nova Conta
+            </h4>
             
-            <div className="flex space-x-2">
-              <Button
-                onClick={configureEmailSync}
-                disabled={emailConfig.isConfiguring}
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
-              >
-                {emailConfig.isConfiguring ? 'Conectando...' : 'Conectar & Sincronizar'}
-              </Button>
-              <Button variant="outline" onClick={() => setShowEmailConfig(false)}>
-                Cancelar
-              </Button>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Provedor</label>
+                <select
+                  className="w-full px-3 py-2 border rounded-md"
+                  value={newEmailForm.provider}
+                  onChange={(e) => setNewEmailForm(prev => ({ ...prev, provider: e.target.value }))}
+                >
+                  <option value="zynt">@zynt.com.br</option>
+                  <option value="gmail">Gmail</option>
+                  <option value="outlook">Outlook</option>
+                  <option value="yahoo">Yahoo</option>
+                  <option value="icloud">iCloud</option>
+                  <option value="custom">Personalizado</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2">Email</label>
+                <Input
+                  type="email"
+                  placeholder="seu-email@dominio.com"
+                  value={newEmailForm.email}
+                  onChange={(e) => setNewEmailForm(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2">Senha</label>
+                <Input
+                  type="password"
+                  placeholder="Sua senha de email"
+                  value={newEmailForm.password}
+                  onChange={(e) => setNewEmailForm(prev => ({ ...prev, password: e.target.value }))}
+                  className="w-full"
+                />
+              </div>
+              
+              <div className="flex space-x-2">
+                <Button
+                  onClick={addEmailAccount}
+                  disabled={newEmailForm.isConfiguring}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                >
+                  {newEmailForm.isConfiguring ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Conectando...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Adicionar & Sincronizar
+                    </>
+                  )}
+                </Button>
+                <Button variant="outline" onClick={() => setShowEmailConfig(false)}>
+                  Fechar
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -748,8 +856,8 @@ const QuantumTasksModern = () => {
           )}
         </main>
 
-        {/* Modal de configuração de email */}
-        <EmailConfigModal />
+        {/* Modal multi-email moderno */}
+        <MultiEmailConfigModal />
       </div>
     </QueryClientProvider>
   );

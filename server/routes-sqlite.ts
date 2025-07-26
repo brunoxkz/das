@@ -27655,6 +27655,96 @@ export function registerCheckoutRoutes(app: Express) {
   });
 
   // ============================================================================
+  // ENDPOINTS MULTI-EMAIL SYSTEM (QUANTUM TASKS)
+  // ============================================================================
+  
+  // Buscar contas de email do usuário
+  app.get('/api/email/accounts', verifyToken, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      
+      const accounts = sqlite.prepare(`
+        SELECT id, email, provider, is_connected as isConnected, 
+               last_sync as lastSync, unread_count as unreadCount
+        FROM email_accounts WHERE user_id = ?
+        ORDER BY created_at DESC
+      `).all(userId);
+      
+      res.json({ success: true, accounts });
+    } catch (error) {
+      console.error('Erro ao buscar contas de email:', error);
+      res.status(500).json({ success: false, error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Adicionar nova conta de email
+  app.post('/api/email/add-account', verifyToken, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { email, password, provider } = req.body;
+      
+      if (!email || !password || !provider) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Email, senha e provedor são obrigatórios' 
+        });
+      }
+
+      // Verificar se email já existe
+      const existingAccount = sqlite.prepare(
+        'SELECT id FROM email_accounts WHERE email = ? AND user_id = ?'
+      ).get(email, userId);
+
+      if (existingAccount) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Esta conta de email já foi adicionada' 
+        });
+      }
+
+      // Inserir nova conta
+      const accountId = Date.now().toString();
+      sqlite.prepare(`
+        INSERT INTO email_accounts (id, user_id, email, password, provider, is_connected, last_sync, unread_count, created_at)
+        VALUES (?, ?, ?, ?, ?, 1, datetime('now'), 0, datetime('now'))
+      `).run(accountId, userId, email, password, provider);
+
+      res.json({ 
+        success: true, 
+        accountId,
+        message: 'Conta adicionada com sucesso' 
+      });
+    } catch (error) {
+      console.error('Erro ao adicionar conta de email:', error);
+      res.status(500).json({ success: false, error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Remover conta de email
+  app.delete('/api/email/remove-account/:accountId', verifyToken, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const accountId = req.params.accountId;
+      
+      const result = sqlite.prepare(
+        'DELETE FROM email_accounts WHERE id = ? AND user_id = ?'
+      ).run(accountId, userId);
+
+      if (result.changes === 0) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Conta não encontrada' 
+        });
+      }
+
+      res.json({ success: true, message: 'Conta removida com sucesso' });
+    } catch (error) {
+      console.error('Erro ao remover conta de email:', error);
+      res.status(500).json({ success: false, error: 'Erro interno do servidor' });
+    }
+  });
+
+  // ============================================================================
   // ENDPOINTS DE SINCRONIZAÇÃO DE EMAIL EM TEMPO REAL
   // ============================================================================
 
@@ -27848,6 +27938,19 @@ export function registerCheckoutRoutes(app: Express) {
         next_occurrence DATETIME,
         active INTEGER DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS email_accounts (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        email TEXT NOT NULL,
+        password TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        is_connected INTEGER DEFAULT 1,
+        last_sync DATETIME DEFAULT CURRENT_TIMESTAMP,
+        unread_count INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(email, user_id)
       );
     `);
     
