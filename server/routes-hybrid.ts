@@ -66,20 +66,33 @@ const detectRouteSystem = async () => {
 };
 
 export async function registerHybridRoutes(app: Express): Promise<Server> {
-  const routeSystem = await detectRouteSystem();
+  // FORÇAR PostgreSQL para Railway Deploy (sem detecção automática)
+  console.log('🚀 RAILWAY DEPLOY: Forçando PostgreSQL (sem fallback)');
+  console.log('🛣️ Sistema de rotas: POSTGRESQL (obrigatório)');
   
-  console.log(`🛣️ Configurando sistema de rotas: ${routeSystem.toUpperCase()}`);
+  // Verificar se DATABASE_URL está configurada
+  if (!process.env.DATABASE_URL) {
+    console.error('❌ ERRO CRÍTICO: DATABASE_URL não configurada');
+    console.log('💡 Configure DATABASE_URL no Railway Dashboard');
+    process.exit(1);
+  }
   
-  if (routeSystem === 'postgresql') {
-    // Import PostgreSQL routes dynamically when available
-    try {
-      const { registerPostgreSQLRoutes } = await import('./routes-postgres');
-      return await registerPostgreSQLRoutes(app);
-    } catch (error) {
-      console.log('⚠️ Failed to load PostgreSQL routes, falling back to SQLite');
-      return registerSQLiteRoutes(app);
-    }
-  } else {
-    return registerSQLiteRoutes(app);
+  if (!process.env.DATABASE_URL.includes('postgresql://')) {
+    console.error('❌ ERRO CRÍTICO: DATABASE_URL deve ser PostgreSQL');
+    console.log('💡 Configure uma DATABASE_URL PostgreSQL no Railway');
+    process.exit(1);
+  }
+  
+  try {
+    // Importar rotas PostgreSQL obrigatórias para Railway
+    const { registerPostgreSQLRoutes } = await import('./routes-postgres');
+    const server = await registerPostgreSQLRoutes(app);
+    console.log('✅ RAILWAY: PostgreSQL routes registradas com sucesso');
+    return server;
+  } catch (error) {
+    console.error('❌ ERRO CRÍTICO: Falha ao carregar rotas PostgreSQL');
+    console.error('💥 Detalhes do erro:', error);
+    console.log('🚨 DEPLOY FALHOU - PostgreSQL obrigatório no Railway');
+    process.exit(1); // Falhar deploy se PostgreSQL não funcionar
   }
 }
