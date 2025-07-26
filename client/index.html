@@ -6,10 +6,32 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
-
     
     <!-- Force PWA Cache Clear - HD Icons Version -->
     <meta name="pwa-version" content="2025.01.21.hd" />
+    <script>
+      // Força limpeza completa do cache para ícones HD
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+            registration.unregister();
+          }
+        });
+      }
+      // Clear all caches for HD icons
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (let name of names) {
+            caches.delete(name);
+          }
+        });
+      }
+      // Force reload favicon
+      const link = document.querySelector("link[rel~='icon']");
+      if (link) {
+        link.href = link.href.split('?')[0] + '?v=hd' + Date.now();
+      }
+    </script>
     <title>VENDZZ - Plataforma de Marketing Digital e Quiz Funnels</title>
     
     <!-- Meta Description -->
@@ -96,5 +118,47 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Service Worker Registration com PWA Update -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', async () => {
+          try {
+            // Forçar atualização do Service Worker e PWA
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let registration of registrations) {
+              await registration.unregister();
+              console.log('🔄 Service Worker anterior removido');
+            }
+            
+            const registration = await navigator.serviceWorker.register('/sw.js?' + Date.now(), {
+              scope: '/',
+              updateViaCache: 'none'
+            });
+            console.log('🔧 Service Worker registrado com sucesso:', registration.scope);
+            
+            // Forçar atualização do manifest PWA
+            if (registration.waiting) {
+              registration.waiting.postMessage({ command: 'skipWaiting' });
+            }
+            
+          } catch (error) {
+            console.error('❌ Erro ao registrar Service Worker:', error);
+          }
+        });
+        
+        // Forçar refresh do cache de ícones PWA
+        if (window.caches) {
+          window.caches.keys().then(names => {
+            names.forEach(name => {
+              if (name.includes('icon') || name.includes('manifest')) {
+                caches.delete(name);
+                console.log('🗑️ Cache PWA limpo:', name);
+              }
+            });
+          });
+        }
+      }
+    </script>
   </body>
 </html>

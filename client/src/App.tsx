@@ -126,7 +126,6 @@ import AoVivoQuantum from "@/pages/ao-vivo-quantum";
 import QuantumMembers from "@/pages/quantum-members";
 import QuantumCourseManage from "@/pages/quantum-course-manage";
 import QuantumTasksModern from "@/pages/quantum-modern";
-import DatabaseStatus from "@/pages/database-status";
 
 
 function App() {
@@ -188,7 +187,6 @@ function App() {
         <Route path="/payment-cancel" component={PaymentSuccess} />
         <Route path="/stripe-checkout-link/:linkId" component={StripeCheckoutLink} />
         <Route path="/quantum-tasks" component={QuantumTasksModern} />
-        <Route path="/database-status" component={DatabaseStatus} />
         <Route path="/test" component={TestPage} />
 
 
