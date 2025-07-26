@@ -17,7 +17,7 @@ import {
   X, Menu, Timer, Inbox, FolderOpen, Lightbulb, Sparkles, Flame, 
   ArrowUp, ArrowDown, Pause, Play, SkipForward, MessageCircle,
   FileText, Briefcase, Calendar as CalendarIcon, Clipboard, LogOut,
-  Reply, Forward, Paperclip, Send, ChevronLeft, ChevronRight
+  Reply, Forward, Paperclip, Send, ChevronLeft, ChevronRight, Pin
 } from 'lucide-react';
 
 // Hook para dados reais com auto-atualização usando QueryClient independente
@@ -83,6 +83,13 @@ const QuantumTasksModern = () => {
   const [selectedEmail, setSelectedEmail] = useState(null);
   const [composing, setComposing] = useState(false);
   const [emailFilter, setEmailFilter] = useState('all');
+  const [smartInboxEnabled, setSmartInboxEnabled] = useState(true);
+  const [quickReplyDraft, setQuickReplyDraft] = useState('');
+  const [emailActions, setEmailActions] = useState<Record<string, { 
+    snoozedUntil?: Date; 
+    pinned?: boolean; 
+    category?: 'important' | 'personal' | 'notifications' | 'newsletters' 
+  }>>({});
   const [showEmailConfig, setShowEmailConfig] = useState(false);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
@@ -127,8 +134,64 @@ const QuantumTasksModern = () => {
     email: '',
     password: '',
     provider: 'zynt',
-    isConfiguring: false
+    isConfiguring: false,
+    imapSettings: {
+      host: '',
+      port: 993,
+      secure: true,
+      autoDetected: false
+    }
   });
+
+  // Detecção automática de configurações IMAP baseada no domínio
+  const detectImapSettings = (email: string) => {
+    const domain = email.split('@')[1]?.toLowerCase();
+    
+    const imapConfigs: Record<string, { host: string; port: number; secure: boolean }> = {
+      'gmail.com': { host: 'imap.gmail.com', port: 993, secure: true },
+      'outlook.com': { host: 'imap-mail.outlook.com', port: 993, secure: true },
+      'hotmail.com': { host: 'imap-mail.outlook.com', port: 993, secure: true },
+      'live.com': { host: 'imap-mail.outlook.com', port: 993, secure: true },
+      'yahoo.com': { host: 'imap.mail.yahoo.com', port: 993, secure: true },
+      'icloud.com': { host: 'imap.mail.me.com', port: 993, secure: true },
+      'me.com': { host: 'imap.mail.me.com', port: 993, secure: true },
+      'zynt.com.br': { host: 'mail.zynt.com.br', port: 993, secure: true },
+      'aol.com': { host: 'imap.aol.com', port: 993, secure: true },
+      'zoho.com': { host: 'imap.zoho.com', port: 993, secure: true }
+    };
+
+    const config = imapConfigs[domain];
+    if (config) {
+      setNewEmailForm(prev => ({
+        ...prev,
+        imapSettings: {
+          ...config,
+          autoDetected: true
+        }
+      }));
+    } else {
+      // Configuração genérica para domínios desconhecidos
+      setNewEmailForm(prev => ({
+        ...prev,
+        imapSettings: {
+          host: `mail.${domain}`,
+          port: 993,
+          secure: true,
+          autoDetected: false
+        }
+      }));
+    }
+  };
+
+  // Handler para mudança de email com detecção automática
+  const handleEmailChange = (value: string) => {
+    setNewEmailForm(prev => ({ ...prev, email: value }));
+    
+    // Detectar IMAP automaticamente se tiver @ no email
+    if (value.includes('@') && value.split('@')[1]) {
+      detectImapSettings(value);
+    }
+  };
 
   // Adicionar nova conta de email
   const addEmailAccount = async () => {
@@ -164,7 +227,13 @@ const QuantumTasksModern = () => {
         
         setEmailAccounts(prev => [...prev, newAccount]);
         setActiveEmailAccount(newAccount.id);
-        setNewEmailForm({ email: '', password: '', provider: 'zynt', isConfiguring: false });
+        setNewEmailForm({ 
+          email: '', 
+          password: '', 
+          provider: 'zynt', 
+          isConfiguring: false,
+          imapSettings: { host: '', port: 993, secure: true, autoDetected: false }
+        });
         setShowEmailConfig(false);
         
         alert('✅ Conta de email adicionada com sucesso!');
@@ -189,6 +258,99 @@ const QuantumTasksModern = () => {
     } catch (error) {
       console.error('Erro ao remover conta:', error);
     }
+  };
+
+  // Funcionalidades Spark-like
+  const snoozeEmail = (emailId: string, hours: number) => {
+    const snoozeUntil = new Date(Date.now() + hours * 60 * 60 * 1000);
+    setEmailActions(prev => ({
+      ...prev,
+      [emailId]: { ...prev[emailId], snoozedUntil: snoozeUntil }
+    }));
+    
+    // Auto-remove snooze quando o tempo expirar
+    setTimeout(() => {
+      setEmailActions(prev => {
+        const updated = { ...prev };
+        if (updated[emailId]) {
+          delete updated[emailId].snoozedUntil;
+        }
+        return updated;
+      });
+    }, hours * 60 * 60 * 1000);
+  };
+
+  const pinEmail = (emailId: string) => {
+    setEmailActions(prev => ({
+      ...prev,
+      [emailId]: { ...prev[emailId], pinned: !prev[emailId]?.pinned }
+    }));
+  };
+
+  const categorizeEmail = (emailId: string, category: 'important' | 'personal' | 'notifications' | 'newsletters') => {
+    setEmailActions(prev => ({
+      ...prev,
+      [emailId]: { ...prev[emailId], category }
+    }));
+  };
+
+  const quickReply = async (emailId: string, message: string) => {
+    // Implementação de resposta rápida
+    console.log(`Enviando resposta rápida para ${emailId}: ${message}`);
+    setQuickReplyDraft('');
+  };
+
+  // Smart Inbox categorization (estilo Spark)
+  const categorizeEmails = (emails: any[]) => {
+    if (!smartInboxEnabled) return emails;
+    
+    return emails.map(email => {
+      const content = email.content?.toLowerCase() || '';
+      const subject = email.subject?.toLowerCase() || '';
+      const sender = email.sender_email?.toLowerCase() || '';
+      
+      let autoCategory = 'personal';
+      
+      // Detectar newsletters
+      if (content.includes('unsubscribe') || subject.includes('newsletter') || sender.includes('noreply')) {
+        autoCategory = 'newsletters';
+      }
+      // Detectar notificações
+      else if (subject.includes('notification') || subject.includes('alert') || sender.includes('notification')) {
+        autoCategory = 'notifications';
+      }
+      // Detectar importantes (palavras-chave)
+      else if (subject.includes('urgent') || subject.includes('important') || content.includes('asap')) {
+        autoCategory = 'important';
+      }
+      
+      return {
+        ...email,
+        autoCategory,
+        userCategory: emailActions[email.id]?.category || autoCategory
+      };
+    });
+  };
+
+  // Filtrar emails baseado em snooze e categorias
+  const filterEmails = (emails: any[]) => {
+    const now = new Date();
+    
+    return emails.filter(email => {
+      const actions = emailActions[email.id];
+      
+      // Filtrar emails com snooze ativo
+      if (actions?.snoozedUntil && actions.snoozedUntil > now) {
+        return emailFilter === 'snoozed';
+      }
+      
+      // Filtrar por categoria
+      if (emailFilter !== 'all' && emailFilter !== 'snoozed') {
+        return email.userCategory === emailFilter;
+      }
+      
+      return emailFilter === 'all' || emailFilter === 'snoozed';
+    });
   };
 
   // Carregar contas de email existentes
@@ -424,44 +586,134 @@ const QuantumTasksModern = () => {
     </Card>
   );
 
-  // Lista de emails (Spark-like)
-  const EmailList = () => (
+  // Lista de emails com funcionalidades Spark avançadas
+  const EmailList = ({ emails }: { emails: any[] }) => (
     <div className="space-y-2">
-      {Array.isArray(realEmails) && realEmails.map((email: any, index: number) => (
-        <Card 
-          key={index} 
-          className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
-            email.read ? 'bg-gray-50' : 'bg-white border-l-4 border-l-blue-500'
-          }`}
-          onClick={() => setSelectedEmail(email)}
-        >
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2 mb-1">
-                  <span className={`font-medium ${!email.read ? 'text-gray-900' : 'text-gray-600'}`}>
-                    {email.sender}
-                  </span>
-                  {email.important && <Star className="h-4 w-4 text-yellow-500 fill-current" />}
-                  {email.hasAttachment && <Paperclip className="h-4 w-4 text-gray-400" />}
-                </div>
-                <p className={`text-sm mb-1 ${!email.read ? 'font-medium text-gray-900' : 'text-gray-600'}`}>
-                  {email.subject}
-                </p>
-                <p className="text-sm text-gray-500 truncate">
-                  {email.preview}
-                </p>
-              </div>
-              <div className="flex flex-col items-end space-y-1 ml-4">
-                <span className="text-xs text-gray-500">{email.time}</span>
-                {!email.read && <div className="w-2 h-2 bg-blue-500 rounded-full"></div>}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Emails fixados */}
+      {pinnedEmails.length > 0 && (
+        <div className="mb-4">
+          <h4 className="text-xs font-semibold text-gray-500 mb-2 flex items-center">
+            <Pin className="h-3 w-3 mr-1" />
+            FIXADOS
+          </h4>
+          {pinnedEmails.map((email: any, index: number) => (
+            <EmailCard key={`pinned-${index}`} email={email} isPinned={true} />
+          ))}
+        </div>
+      )}
+      
+      {/* Emails regulares */}
+      {regularEmails.map((email: any, index: number) => (
+        <EmailCard key={index} email={email} isPinned={false} />
       ))}
     </div>
   );
+
+  // Card de email individual com Quick Actions
+  const EmailCard = ({ email, isPinned }: { email: any; isPinned: boolean }) => {
+    const actions = emailActions[email.id] || {};
+    const categoryColors = {
+      important: 'border-l-red-500 bg-red-50',
+      personal: 'border-l-blue-500 bg-blue-50', 
+      notifications: 'border-l-yellow-500 bg-yellow-50',
+      newsletters: 'border-l-green-500 bg-green-50'
+    };
+
+    return (
+      <Card 
+        className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+          email.read ? 'bg-gray-50' : `bg-white border-l-4 ${categoryColors[email.userCategory] || 'border-l-blue-500'}`
+        } ${isPinned ? 'ring-2 ring-purple-200' : ''}`}
+        onClick={() => setSelectedEmail(email)}
+      >
+        <CardContent className="p-3">
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center space-x-2 mb-1">
+                <span className={`font-medium text-sm ${!email.read ? 'text-gray-900' : 'text-gray-600'}`}>
+                  {email.sender || email.sender_email}
+                </span>
+                {isPinned && <Pin className="h-3 w-3 text-purple-500 fill-current" />}
+                {actions.snoozedUntil && <Clock className="h-3 w-3 text-orange-500" />}
+                {email.userCategory === 'important' && <Star className="h-3 w-3 text-red-500 fill-current" />}
+                <span className="text-xs px-2 py-0.5 rounded text-gray-500 bg-gray-100">
+                  {email.userCategory}
+                </span>
+              </div>
+              <p className={`text-sm mb-1 ${!email.read ? 'font-medium text-gray-900' : 'text-gray-600'}`}>
+                {email.subject}
+              </p>
+              <p className="text-xs text-gray-500 truncate">
+                {email.content}
+              </p>
+            </div>
+            <div className="flex flex-col items-end space-y-1 ml-4">
+              <span className="text-xs text-gray-500">{email.received_at}</span>
+              <div className="flex items-center space-x-1">
+                {/* Quick Actions */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 hover:bg-purple-100"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    pinEmail(email.id);
+                  }}
+                >
+                  <Pin className={`h-3 w-3 ${isPinned ? 'text-purple-500 fill-current' : 'text-gray-400'}`} />
+                </Button>
+                <div className="relative group">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 hover:bg-orange-100"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Clock className="h-3 w-3 text-gray-400 group-hover:text-orange-500" />
+                  </Button>
+                  <div className="absolute right-0 top-8 bg-white shadow-lg rounded-lg p-2 hidden group-hover:block z-10">
+                    <div className="space-y-1">
+                      <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => snoozeEmail(email.id, 1)}>
+                        1 hora
+                      </Button>
+                      <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => snoozeEmail(email.id, 4)}>
+                        4 horas  
+                      </Button>
+                      <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => snoozeEmail(email.id, 24)}>
+                        Amanhã
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                {!email.read && <div className="w-2 h-2 bg-blue-500 rounded-full"></div>}
+              </div>
+            </div>
+          </div>
+          
+          {/* Quick Reply se habilitado */}
+          {selectedEmail?.id === email.id && (
+            <div className="mt-3 pt-3 border-t">
+              <div className="flex items-center space-x-2">
+                <Input
+                  placeholder="Resposta rápida..."
+                  value={quickReplyDraft}
+                  onChange={(e) => setQuickReplyDraft(e.target.value)}
+                  className="flex-1 h-8 text-sm"
+                />
+                <Button
+                  size="sm"
+                  className="h-8"
+                  onClick={() => quickReply(email.id, quickReplyDraft)}
+                >
+                  <Send className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
 
   // Renderização do conteúdo principal
   const renderContent = () => {
@@ -520,31 +772,68 @@ const QuantumTasksModern = () => {
             </div>
           </div>
 
-          {/* Filtros do Inbox */}
+          {/* Smart Inbox Filters (Spark-style) */}
           <div className="flex items-center space-x-2 pb-4 border-b">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
               <Button 
                 variant={emailFilter === 'all' ? 'default' : 'ghost'} 
                 size="sm"
                 onClick={() => setEmailFilter('all')}
+                className="text-xs"
               >
-                Todos
-              </Button>
-              <Button 
-                variant={emailFilter === 'unread' ? 'default' : 'ghost'} 
-                size="sm"
-                onClick={() => setEmailFilter('unread')}
-              >
-                Não lidos
+                📧 Todos
               </Button>
               <Button 
                 variant={emailFilter === 'important' ? 'default' : 'ghost'} 
                 size="sm"
                 onClick={() => setEmailFilter('important')}
+                className="text-xs"
               >
-                <Star className="h-4 w-4 mr-1" />
-                Importantes
+                ⭐ Importantes
               </Button>
+              <Button 
+                variant={emailFilter === 'personal' ? 'default' : 'ghost'} 
+                size="sm"
+                onClick={() => setEmailFilter('personal')}
+                className="text-xs"
+              >
+                👤 Pessoais
+              </Button>
+              <Button 
+                variant={emailFilter === 'notifications' ? 'default' : 'ghost'} 
+                size="sm"
+                onClick={() => setEmailFilter('notifications')}
+                className="text-xs"
+              >
+                🔔 Notificações
+              </Button>
+              <Button 
+                variant={emailFilter === 'newsletters' ? 'default' : 'ghost'} 
+                size="sm"
+                onClick={() => setEmailFilter('newsletters')}
+                className="text-xs"
+              >
+                📰 Newsletters
+              </Button>
+              <Button 
+                variant={emailFilter === 'snoozed' ? 'default' : 'ghost'} 
+                size="sm"
+                onClick={() => setEmailFilter('snoozed')}
+                className="text-xs"
+              >
+                😴 Adiados
+              </Button>
+            </div>
+            <div className="flex items-center space-x-2">
+              <label className="flex items-center text-xs text-gray-600">
+                <input
+                  type="checkbox"
+                  checked={smartInboxEnabled}
+                  onChange={(e) => setSmartInboxEnabled(e.target.checked)}
+                  className="mr-1"
+                />
+                Smart Inbox
+              </label>
             </div>
             <div className="flex-1"></div>
             <div className="flex items-center space-x-2">
@@ -561,8 +850,8 @@ const QuantumTasksModern = () => {
             </div>
           </div>
 
-          {/* Lista de emails */}
-          <EmailList />
+          {/* Lista de emails com funcionalidades Spark */}
+          <EmailList emails={filteredEmails} />
         </div>
       );
     }
@@ -770,9 +1059,19 @@ const QuantumTasksModern = () => {
                   type="email"
                   placeholder="seu-email@dominio.com"
                   value={newEmailForm.email}
-                  onChange={(e) => setNewEmailForm(prev => ({ ...prev, email: e.target.value }))}
+                  onChange={(e) => handleEmailChange(e.target.value)}
                   className="w-full"
                 />
+                {newEmailForm.imapSettings.autoDetected && (
+                  <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
+                    ✅ IMAP detectado: {newEmailForm.imapSettings.host}:{newEmailForm.imapSettings.port}
+                  </div>
+                )}
+                {!newEmailForm.imapSettings.autoDetected && newEmailForm.email.includes('@') && (
+                  <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700">
+                    ⚠️ Configuração genérica: {newEmailForm.imapSettings.host}:{newEmailForm.imapSettings.port}
+                  </div>
+                )}
               </div>
               
               <div>
