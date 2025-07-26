@@ -590,32 +590,38 @@ const QuantumTasksModern = () => {
   );
 
   // Lista de emails com funcionalidades Spark avançadas
-  const EmailList = ({ emails }: { emails: any[] }) => (
-    <div className="space-y-2">
-      {/* Emails fixados */}
-      {pinnedEmails.length > 0 && (
-        <div className="mb-4">
-          <h4 className="text-xs font-semibold text-gray-500 mb-2 flex items-center">
-            <Pin className="h-3 w-3 mr-1" />
-            FIXADOS
-          </h4>
-          {pinnedEmails.map((email: any, index: number) => (
-            <EmailCard key={`pinned-${index}`} email={email} isPinned={true} />
-          ))}
-        </div>
-      )}
-      
-      {/* Emails regulares */}
-      {regularEmails.map((email: any, index: number) => (
-        <EmailCard key={index} email={email} isPinned={false} />
-      ))}
-    </div>
-  );
+  const EmailList = ({ emails }: { emails: any[] }) => {
+    // Separar emails fixados dos regulares
+    const pinnedEmails = emails.filter(email => emailActions[email.id]?.pinned);
+    const regularEmails = emails.filter(email => !emailActions[email.id]?.pinned);
+    
+    return (
+      <div className="space-y-2">
+        {/* Emails fixados */}
+        {pinnedEmails.length > 0 && (
+          <div className="mb-4">
+            <h4 className="text-xs font-semibold text-gray-500 mb-2 flex items-center">
+              <Pin className="h-3 w-3 mr-1" />
+              FIXADOS
+            </h4>
+            {pinnedEmails.map((email: any, index: number) => (
+              <EmailCard key={`pinned-${index}`} email={email} isPinned={true} />
+            ))}
+          </div>
+        )}
+        
+        {/* Emails regulares */}
+        {regularEmails.map((email: any, index: number) => (
+          <EmailCard key={index} email={email} isPinned={false} />
+        ))}
+      </div>
+    );
+  };
 
   // Card de email individual com Quick Actions
   const EmailCard = ({ email, isPinned }: { email: any; isPinned: boolean }) => {
     const actions = emailActions[email.id] || {};
-    const categoryColors = {
+    const categoryColors: { [key: string]: string } = {
       important: 'border-l-red-500 bg-red-50',
       personal: 'border-l-blue-500 bg-blue-50', 
       notifications: 'border-l-yellow-500 bg-yellow-50',
@@ -694,7 +700,7 @@ const QuantumTasksModern = () => {
           </div>
           
           {/* Quick Reply se habilitado */}
-          {selectedEmail?.id === email.id && (
+          {selectedEmail && selectedEmail.id === email.id && (
             <div className="mt-3 pt-3 border-t">
               <div className="flex items-center space-x-2">
                 <Input
@@ -729,10 +735,9 @@ const QuantumTasksModern = () => {
       }
       
       // Processar emails com categorização e filtros
-      const categorizedEmails = categorizeEmails(realEmails || []);
+      const emailsArray = Array.isArray(realEmails) ? realEmails : [];
+      const categorizedEmails = categorizeEmails(emailsArray);
       const filteredEmails = filterEmails(categorizedEmails);
-      const pinnedEmails = filteredEmails.filter(email => emailActions[email.id]?.pinned);
-      const regularEmails = filteredEmails.filter(email => !emailActions[email.id]?.pinned);
       
       return (
         <div className="space-y-6">
