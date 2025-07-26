@@ -280,6 +280,7 @@ const QuantumTasksModern = () => {
     }, hours * 60 * 60 * 1000);
   };
 
+  // Quick Actions for Spark-style email management
   const pinEmail = (emailId: string) => {
     setEmailActions(prev => ({
       ...prev,
@@ -352,6 +353,8 @@ const QuantumTasksModern = () => {
       return emailFilter === 'all' || emailFilter === 'snoozed';
     });
   };
+
+
 
   // Carregar contas de email existentes
   const loadEmailAccounts = async () => {
@@ -724,6 +727,12 @@ const QuantumTasksModern = () => {
       if (selectedEmail) {
         return <EmailView email={selectedEmail} />;
       }
+      
+      // Processar emails com categorização e filtros
+      const categorizedEmails = categorizeEmails(realEmails || []);
+      const filteredEmails = filterEmails(categorizedEmails);
+      const pinnedEmails = filteredEmails.filter(email => emailActions[email.id]?.pinned);
+      const regularEmails = filteredEmails.filter(email => !emailActions[email.id]?.pinned);
       
       return (
         <div className="space-y-6">
