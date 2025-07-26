@@ -1,8 +1,8 @@
-const { Pool } = require('pg');
-const Database = require('better-sqlite3');
+import { Pool } from 'pg';
+import Database from 'better-sqlite3';
 
-// Railway requires external URL for connections outside Railway infrastructure
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:DQTpWPNOZbFcLHzomqRDkzwwYFEVjpol@postgres.railway.internal:5432/railway';
+// Railway PostgreSQL public URL
+const DATABASE_URL = process.env.DATABASE_URL;
 
 async function migrateData() {
   const pool = new Pool({

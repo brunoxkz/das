@@ -27493,6 +27493,69 @@ export function registerCheckoutRoutes(app: Express) {
   // ENDPOINT /api/quiz-ia/create REMOVIDO DAQUI - ESTÁ ATIVO NO server/index.ts
 
   // ============================================================================
+  // DATABASE HEALTH CHECK ENDPOINTS
+  // ============================================================================
+  
+  // SQLite Database Status Check
+  app.get('/api/database-status/sqlite', async (req, res) => {
+    try {
+      // Test SQLite connection with multiple queries
+      const startTime = Date.now();
+      const userCount = sqlite.prepare('SELECT COUNT(*) as count FROM users').get().count;
+      const quizCount = sqlite.prepare('SELECT COUNT(*) as count FROM quizzes').get().count;
+      const responseTime = Date.now() - startTime;
+      
+      res.json({ 
+        status: 'healthy', 
+        database: 'SQLite',
+        timestamp: new Date().toISOString(),
+        message: `SQLite operational - ${userCount} users, ${quizCount} quizzes`,
+        performance: {
+          responseTime: `${responseTime}ms`,
+          concurrentUsers: Math.min(userCount, 100), // SQLite limitation
+          maxCapacity: 100,
+          currentLoad: Math.round((userCount / 100) * 100),
+          isOptimal: userCount <= 50
+        },
+        details: {
+          userCount,
+          quizCount,
+          databaseFile: 'vendzz-database.db',
+          connectionMode: 'File-based',
+          advantages: ['Fast local queries', 'Zero network latency', 'Simple deployment'],
+          limitations: ['~100 concurrent users max', 'Single server only', 'Limited for enterprise scale']
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        status: 'unhealthy', 
+        database: 'SQLite',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // PostgreSQL Database Status Check (Railway endpoint disabled)
+  app.get('/api/database-status/postgres', async (req, res) => {
+    res.status(503).json({ 
+      status: 'unavailable', 
+      database: 'PostgreSQL',
+      error: 'The endpoint has been disabled. Enable it using Neon API and retry.',
+      timestamp: new Date().toISOString(),
+      message: 'Railway PostgreSQL endpoint is currently disabled',
+      details: {
+        provider: 'Railway/Neon',
+        expectedCapacity: '1000+ concurrent users',
+        scalability: 'Enterprise-grade',
+        connectionPooling: 'Available when online',
+        advantages: ['High concurrency', 'Advanced queries', 'Production-ready scalability'],
+        currentStatus: 'Endpoint disabled - requires Railway reactivation'
+      }
+    });
+  });
+
+  // ============================================================================
   // PUSH NOTIFICATIONS REMOVIDOS DESTA LOCALIZAÇÃO - REGISTRADOS NO INDEX.TS
   // ============================================================================
   

@@ -2,8 +2,8 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as schema from '../shared/schema-postgres';
 
-// Use external URL for Railway PostgreSQL
-const DATABASE_URL = process.env.DATABASE_URL || "postgresql://postgres:DQTpWPNOZbFcLHzomqRDkzwwYFEVjpol@postgres.railway.internal:5432/railway";
+// Railway PostgreSQL public URL
+const DATABASE_URL = process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
   throw new Error('DATABASE_URL must be set for PostgreSQL connection');

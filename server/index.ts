@@ -760,7 +760,7 @@ app.post('/api/admin-notification-direct', async (req: any, res: any) => {
 console.log('✅ ENDPOINT DIRETO DE NOTIFICAÇÃO ADMIN REGISTRADO');
 
 // Register all routes DEPOIS dos endpoints de push
-const server = registerHybridRoutes(app);
+const server = await registerHybridRoutes(app);
 
 // Registrar rotas administrativas do rate limiting
 import { registerRateLimitingAdminRoutes } from './admin-rate-limiting-routes';
