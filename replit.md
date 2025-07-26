@@ -226,7 +226,7 @@ Realizei uma análise arquitetural profunda do sistema Vendzz. Documento complet
 - **Frontend**: ✅ HTML estático funcional
 - **Config**: ✅ railway.json + nixpacks.toml prontos
 - **Scripts**: ✅ npm build + npm start configurados
-- **Deploy**: ✅ Aguardando apenas `railway up` após login
+- **Deploy**: ✅ Railway CLI autenticado, arquivos prontos, instruções manuais criadas
 
 ### Arquivos Railway Deploy
 - `railway.json` - Configuração Railway com Nixpacks
