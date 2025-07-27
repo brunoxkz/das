@@ -14,18 +14,18 @@ export default function EssenciaDaPaz() {
     visible: boolean;
   }>>([]);
 
-  // Lista de comentários automáticos com timing exato (mesmo do site original)
+  // Lista de comentários automáticos com timing melhorado
   const autoComments = [
-    { id: '1', name: 'Maria Silva', avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face', message: 'Que benção essa oração! 🙏', time: 15 },
-    { id: '2', name: 'João Santos', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face', message: 'Padre Fernando é incrível! Sempre nos ensinando', time: 32 },
-    { id: '3', name: 'Ana Costa', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face', message: 'Santo Antônio interceda por nós! ✨', time: 48 },
-    { id: '4', name: 'Carlos Oliveira', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face', message: 'Essa oração realmente funciona, já recebi 3 milagres!', time: 65 },
-    { id: '5', name: 'Fernanda Lima', avatar: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=40&h=40&fit=crop&crop=face', message: 'Amém! Que o Senhor nos abençoe 🕊️', time: 83 },
-    { id: '6', name: 'Roberto Pereira', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face', message: 'Padre, o senhor é uma bênção para todos nós', time: 102 },
-    { id: '7', name: 'Juliana Ferreira', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=40&h=40&fit=crop&crop=face', message: 'Que emoção! Estou chorando aqui 😭❤️', time: 125 },
-    { id: '8', name: 'Pedro Almeida', avatar: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=40&h=40&fit=crop&crop=face', message: 'Santo Antônio é muito poderoso mesmo!', time: 148 },
-    { id: '9', name: 'Luciana Rodrigues', avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=40&h=40&fit=crop&crop=face', message: 'Já compartilhei com toda minha família 🙏', time: 170 },
-    { id: '10', name: 'Marcos Souza', avatar: 'https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=40&h=40&fit=crop&crop=face', message: 'Que live maravilhosa! Deus abençoe Padre Fernando', time: 195 },
+    { id: '1', name: 'Maria Silva', avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face', message: 'Que benção essa oração! 🙏', time: 5 },
+    { id: '2', name: 'João Santos', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face', message: 'Padre Fernando é incrível! Sempre nos ensinando', time: 12 },
+    { id: '3', name: 'Ana Costa', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face', message: 'Santo Antônio interceda por nós! ✨', time: 18 },
+    { id: '4', name: 'Carlos Oliveira', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face', message: 'Essa oração realmente funciona, já recebi 3 milagres!', time: 25 },
+    { id: '5', name: 'Fernanda Lima', avatar: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=40&h=40&fit=crop&crop=face', message: 'Amém! Que o Senhor nos abençoe 🕊️', time: 32 },
+    { id: '6', name: 'Roberto Pereira', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face', message: 'Padre, o senhor é uma bênção para todos nós', time: 40 },
+    { id: '7', name: 'Juliana Ferreira', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=40&h=40&fit=crop&crop=face', message: 'Que emoção! Estou chorando aqui 😭❤️', time: 47 },
+    { id: '8', name: 'Pedro Almeida', avatar: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=40&h=40&fit=crop&crop=face', message: 'Santo Antônio é muito poderoso mesmo!', time: 55 },
+    { id: '9', name: 'Luciana Rodrigues', avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=40&h=40&fit=crop&crop=face', message: 'Já compartilhei com toda minha família 🙏', time: 63 },
+    { id: '10', name: 'Marcos Souza', avatar: 'https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=40&h=40&fit=crop&crop=face', message: 'Que live maravilhosa! Deus abençoe Padre Fernando', time: 70 },
   ];
 
   // Atualizar contador de visualizações
@@ -40,26 +40,30 @@ export default function EssenciaDaPaz() {
   useEffect(() => {
     if (!isPlaying) return;
 
-    const interval = setInterval(() => {
-      setCurrentTime(prev => {
-        const newTime = prev + 1;
-        
-        // Verificar se algum comentário deve aparecer
-        autoComments.forEach(comment => {
-          if (comment.time === newTime) {
-            setComments(prevComments => {
-              const newComment = { ...comment, visible: true };
-              const updatedComments = [newComment, ...prevComments.slice(0, 9)];
-              return updatedComments;
-            });
-          }
-        });
-
-        return newTime;
-      });
+    // Timer principal do vídeo
+    const timer = setInterval(() => {
+      setCurrentTime(prev => prev + 1);
     }, 1000);
 
-    return () => clearInterval(interval);
+    // Sistema de comentários com timing mais frequente
+    const commentsTimer = setInterval(() => {
+      const randomComment = autoComments[Math.floor(Math.random() * autoComments.length)];
+      const commentWithId = { 
+        ...randomComment, 
+        id: `${randomComment.id}-${Date.now()}`, 
+        visible: true 
+      };
+      
+      setComments(prevComments => {
+        const updatedComments = [commentWithId, ...prevComments.slice(0, 8)];
+        return updatedComments;
+      });
+    }, 3000); // Novo comentário a cada 3 segundos
+
+    return () => {
+      clearInterval(timer);
+      clearInterval(commentsTimer);
+    };
   }, [isPlaying]);
 
   const togglePlay = () => {
