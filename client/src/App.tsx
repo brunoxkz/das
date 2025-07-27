@@ -126,6 +126,7 @@ import AoVivoQuantum from "@/pages/ao-vivo-quantum";
 import QuantumMembers from "@/pages/quantum-members";
 import QuantumCourseManage from "@/pages/quantum-course-manage";
 import QuantumTasksModern from "@/pages/quantum-modern";
+import EssenciaDaPaz from "@/pages/essencia-da-paz";
 
 
 function App() {
@@ -187,6 +188,7 @@ function App() {
         <Route path="/payment-cancel" component={PaymentSuccess} />
         <Route path="/stripe-checkout-link/:linkId" component={StripeCheckoutLink} />
         <Route path="/quantum-tasks" component={QuantumTasksModern} />
+        <Route path="/essencia-da-paz" component={EssenciaDaPaz} />
         <Route path="/test" component={TestPage} />
 
 
