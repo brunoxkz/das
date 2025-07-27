@@ -4,7 +4,7 @@ import { Play, Pause, Volume2, Maximize, ThumbsUp, ThumbsDown, Share2, MoreHoriz
 export default function EssenciaDaPaz() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [viewerCount, setViewerCount] = useState(54994);
+  const [viewerCount, setViewerCount] = useState(2847);
   const [comments, setComments] = useState<Array<{
     id: string;
     name: string;
@@ -147,7 +147,7 @@ export default function EssenciaDaPaz() {
 
             {/* Informações do Vídeo */}
             <div className="mb-4">
-              <h1 className="text-xl font-bold mb-3">
+              <h1 className="text-lg font-bold mb-3">
                 Padre Fernando Lisboa | A oração de Santo Antônio escondida pela Maçonaria por mais de 800 anos que tem trazido milagres a mais de 59 mil pessoas | Live Ao Vivo às 21:50, 26/07/2025.
               </h1>
               
@@ -159,50 +159,34 @@ export default function EssenciaDaPaz() {
                     className="w-10 h-10 rounded-full"
                   />
                   <div>
-                    <div className="font-semibold">Fernando Lisboa</div>
-                    <div className="text-sm text-gray-400">96 mil inscritos</div>
+                    <div className="text-sm font-semibold">Fernando Lisboa</div>
+                    <div className="text-xs text-gray-400">96 mil inscritos</div>
                   </div>
-                  <button className="bg-red-600 px-4 py-2 rounded-full font-semibold hover:bg-red-700">
+                  <button className="bg-red-600 px-3 py-1 rounded-full text-sm font-semibold hover:bg-red-700">
                     Inscrever-se
                   </button>
                 </div>
                 
                 <div className="flex items-center space-x-2">
-                  <button className="flex items-center space-x-2 bg-[#272727] px-4 py-2 rounded-full hover:bg-[#3f3f3f]">
-                    <ThumbsUp className="w-4 h-4" />
+                  <button className="flex items-center space-x-2 bg-[#272727] px-3 py-1 rounded-full hover:bg-[#3f3f3f] text-sm">
+                    <ThumbsUp className="w-3 h-3" />
                     <span>2.1K</span>
                   </button>
-                  <button className="flex items-center space-x-2 bg-[#272727] px-4 py-2 rounded-full hover:bg-[#3f3f3f]">
-                    <ThumbsDown className="w-4 h-4" />
+                  <button className="flex items-center space-x-2 bg-[#272727] px-3 py-1 rounded-full hover:bg-[#3f3f3f]">
+                    <ThumbsDown className="w-3 h-3" />
                   </button>
-                  <button className="flex items-center space-x-2 bg-[#272727] px-4 py-2 rounded-full hover:bg-[#3f3f3f]">
-                    <Share2 className="w-4 h-4" />
+                  <button className="flex items-center space-x-2 bg-[#272727] px-3 py-1 rounded-full hover:bg-[#3f3f3f] text-sm">
+                    <Share2 className="w-3 h-3" />
                     <span>Compartilhar</span>
                   </button>
-                  <button className="bg-[#272727] p-2 rounded-full hover:bg-[#3f3f3f]">
-                    <MoreHorizontal className="w-4 h-4" />
+                  <button className="bg-[#272727] p-1 rounded-full hover:bg-[#3f3f3f]">
+                    <MoreHorizontal className="w-3 h-3" />
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* CTA Principal */}
-            <div className="bg-gradient-to-r from-yellow-600 to-yellow-500 p-6 rounded-lg mb-6">
-              <h2 className="text-2xl font-bold mb-3 text-center">
-                🙏 Receba a Oração Sagrada de Santo Antônio
-              </h2>
-              <p className="text-center mb-4">
-                A oração que mudou a vida de mais de 59 mil pessoas!
-              </p>
-              <div className="text-center">
-                <a 
-                  href="https://blog.infinitaprosperidade.com/click/1?sub16=ML14"
-                  className="inline-block bg-green-600 text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-green-700 transition-colors"
-                >
-                  Quero a Oração Sagrada de Santo Antônio
-                </a>
-              </div>
-            </div>
+
           </div>
 
           {/* Chat Ao Vivo */}
