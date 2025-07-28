@@ -27523,50 +27523,222 @@ export function registerCheckoutRoutes(app: Express) {
   }
 
   // Endpoint: Listar todos os attendants
-  app.get('/api/controle/attendants', async (req, res) => {
+  app.get('/api/controle/attendants', verifyJWT, async (req: any, res: any) => {
     try {
-      const controleDb = require('./controle-db');
-      const attendants = await controleDb.getAllAttendants();
+      const attendants = sqlite.prepare(`
+        SELECT id, nome, email, telefone, meta_vendas_diaria, comissao_percentual, ativo 
+        FROM controle_attendants 
+        WHERE ativo = 1
+        ORDER BY nome
+      `).all();
+
       res.json(attendants);
     } catch (error) {
       console.error('Erro ao buscar attendants:', error);
-      res.status(500).json({ error: 'Erro interno do servidor' });
+      res.status(500).json({ error: 'Erro ao buscar attendants' });
     }
   });
 
-  // Endpoint: Criar novo attendant
-  app.post('/api/controle/attendants', async (req, res) => {
+  // Endpoint: Dashboard admin com métricas
+  app.get('/api/controle/dashboard/admin', verifyJWT, async (req: any, res: any) => {
     try {
-      const controleDb = require('./controle-db');
-      const attendant = await controleDb.createAttendant(req.body);
-      res.json(attendant);
+      const hoje = new Date().toISOString().split('T')[0];
+      const inicioMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+      
+      // Vendas de hoje
+      const vendasHoje = sqlite.prepare(`
+        SELECT COUNT(*) as count, COALESCE(SUM(valor_venda), 0) as valor
+        FROM controle_vendas 
+        WHERE DATE(data_venda) = ? AND status != 'cancelado'
+      `).get(hoje);
+
+      // Vendas do mês
+      const vendasMes = sqlite.prepare(`
+        SELECT COUNT(*) as count, COALESCE(SUM(valor_venda), 0) as valor
+        FROM controle_vendas 
+        WHERE DATE(data_venda) >= ? AND status != 'cancelado'
+      `).get(inicioMes);
+
+      // Comissões do mês (apenas vendas pagas)
+      const comissoesMes = sqlite.prepare(`
+        SELECT COALESCE(SUM(comissao_calculada), 0) as valor
+        FROM controle_vendas 
+        WHERE DATE(data_venda) >= ? AND status = 'pago'
+      `).get(inicioMes);
+
+      // Entregas de hoje
+      const entregasHoje = sqlite.prepare(`
+        SELECT COUNT(*) as count
+        FROM controle_vendas 
+        WHERE DATE(data_agendamento) = ? AND status = 'agendado'
+      `).get(hoje);
+
+      // Performance dos attendants
+      const performanceAttendants = sqlite.prepare(`
+        SELECT 
+          a.nome,
+          COUNT(v.id) as vendas_mes,
+          COALESCE(SUM(CASE WHEN v.status = 'pago' THEN v.comissao_calculada ELSE 0 END), 0) as comissao_mes,
+          COALESCE(SUM(CASE WHEN v.status != 'cancelado' THEN v.valor_venda ELSE 0 END), 0) as valor_total_mes
+        FROM controle_attendants a
+        LEFT JOIN controle_vendas v ON a.id = v.atendente_id 
+          AND DATE(v.data_venda) >= ?
+        WHERE a.ativo = 1
+        GROUP BY a.id, a.nome
+        ORDER BY vendas_mes DESC
+      `).all(inicioMes);
+
+      const dashboardData = {
+        vendasHoje: vendasHoje.count || 0,
+        valorHoje: vendasHoje.valor || 0,
+        vendasMes: vendasMes.count || 0,
+        valorMes: vendasMes.valor || 0,
+        comissoesMes: comissoesMes.valor || 0,
+        entregasHoje: entregasHoje.count || 0,
+        performanceAttendants: performanceAttendants
+      };
+
+      res.json(dashboardData);
     } catch (error) {
-      console.error('Erro ao criar attendant:', error);
-      res.status(500).json({ error: 'Erro interno do servidor' });
+      console.error('Erro ao buscar dados do dashboard:', error);
+      res.status(500).json({ error: 'Erro ao buscar dados do dashboard' });
     }
   });
 
-  // Endpoint: Listar vendas (admin pode ver todas, attendant apenas suas)
-  app.get('/api/controle/sales', async (req, res) => {
+  // Endpoint: Listar vendas
+  app.get('/api/controle/sales', verifyJWT, async (req: any, res: any) => {
     try {
-      const controleDb = require('./controle-db');
-      const { attendantId, status, startDate, endDate } = req.query;
-      
-      const filters = {};
-      if (attendantId) filters.attendantId = attendantId;
-      if (status) filters.status = status;
-      if (startDate) filters.startDate = startDate;
-      if (endDate) filters.endDate = endDate;
-      
-      const sales = await controleDb.getSales(filters);
+      const { attendantId } = req.query;
+      let query = `
+        SELECT 
+          v.*,
+          a.nome as atendente_nome
+        FROM controle_vendas v
+        LEFT JOIN controle_attendants a ON v.atendente_id = a.id
+      `;
+      let params = [];
+
+      if (attendantId && attendantId !== 'admin') {
+        query += ' WHERE v.atendente_id = ?';
+        params.push(attendantId);
+      }
+
+      query += ' ORDER BY v.data_venda DESC, v.created_at DESC LIMIT 100';
+
+      const sales = sqlite.prepare(query).all(...params);
       res.json(sales);
     } catch (error) {
       console.error('Erro ao buscar vendas:', error);
-      res.status(500).json({ error: 'Erro interno do servidor' });
+      res.status(500).json({ error: 'Erro ao buscar vendas' });
     }
   });
 
   // Endpoint: Criar nova venda
+  app.post('/api/controle/sales', verifyJWT, async (req: any, res: any) => {
+    try {
+      const {
+        atendente_id,
+        cliente_nome,
+        cliente_telefone,
+        cliente_endereco,
+        valor_venda,
+        status,
+        data_venda,
+        data_agendamento,
+        periodo_entrega,
+        observacoes
+      } = req.body;
+
+      // Calcular comissão (10% apenas se status for 'pago')
+      const comissao_calculada = status === 'pago' ? valor_venda * 0.10 : 0;
+
+      const saleId = require('crypto').randomUUID();
+      
+      sqlite.prepare(`
+        INSERT INTO controle_vendas (
+          id, atendente_id, cliente_nome, cliente_telefone, cliente_endereco,
+          valor_venda, status, data_venda, data_agendamento, periodo_entrega,
+          comissao_calculada, observacoes, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+      `).run(
+        saleId, atendente_id, cliente_nome, cliente_telefone, cliente_endereco,
+        valor_venda, status, data_venda, data_agendamento, periodo_entrega,
+        comissao_calculada, observacoes
+      );
+
+      res.json({ success: true, id: saleId });
+    } catch (error) {
+      console.error('Erro ao criar venda:', error);
+      res.status(500).json({ error: 'Erro ao criar venda' });
+    }
+  });
+
+  // Endpoint: Atualizar venda
+  app.patch('/api/controle/sales/:id', verifyJWT, async (req: any, res: any) => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+
+      // Recalcular comissão se o status ou valor mudou
+      if (updateData.status || updateData.valor_venda) {
+        const currentSale = sqlite.prepare('SELECT * FROM controle_vendas WHERE id = ?').get(id);
+        if (currentSale) {
+          const newStatus = updateData.status || currentSale.status;
+          const newValue = updateData.valor_venda || currentSale.valor_venda;
+          updateData.comissao_calculada = newStatus === 'pago' ? newValue * 0.10 : 0;
+        }
+      }
+
+      // Construir query de update dinamicamente
+      const fields = Object.keys(updateData).filter(key => key !== 'id');
+      const setClause = fields.map(field => `${field} = ?`).join(', ');
+      const values = fields.map(field => updateData[field]);
+
+      if (fields.length > 0) {
+        sqlite.prepare(`
+          UPDATE controle_vendas 
+          SET ${setClause}, updated_at = datetime('now')
+          WHERE id = ?
+        `).run(...values, id);
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Erro ao atualizar venda:', error);
+      res.status(500).json({ error: 'Erro ao atualizar venda' });
+    }
+  });
+
+  // Endpoint: Entregas de hoje
+  app.get('/api/controle/deliveries/today', verifyJWT, async (req: any, res: any) => {
+    try {
+      const hoje = new Date().toISOString().split('T')[0];
+      
+      const deliveries = sqlite.prepare(`
+        SELECT 
+          v.*,
+          a.nome as atendente_nome
+        FROM controle_vendas v
+        LEFT JOIN controle_attendants a ON v.atendente_id = a.id
+        WHERE DATE(v.data_agendamento) = ? AND v.status = 'agendado'
+        ORDER BY 
+          CASE v.periodo_entrega 
+            WHEN 'manha' THEN 1 
+            WHEN 'tarde' THEN 2 
+            WHEN 'noite' THEN 3 
+            ELSE 4 
+          END,
+          v.cliente_nome
+      `).all(hoje);
+
+      res.json(deliveries);
+    } catch (error) {
+      console.error('Erro ao buscar entregas de hoje:', error);
+      res.status(500).json({ error: 'Erro ao buscar entregas de hoje' });
+    }
+  });
+
+  console.log('✅ Sistema Controle endpoints registrados com sucesso');
   app.post('/api/controle/sales', async (req, res) => {
     try {
       const controleDb = require('./controle-db');

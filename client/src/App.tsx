@@ -126,6 +126,7 @@ import AoVivoQuantum from "@/pages/ao-vivo-quantum";
 import QuantumMembers from "@/pages/quantum-members";
 import QuantumCourseManage from "@/pages/quantum-course-manage";
 import QuantumTasksModern from "@/pages/quantum-modern";
+import ControleDashboard from "@/pages/controle-dashboard";
 import EssenciaDaPaz from "@/pages/essencia-da-paz";
 import PreviewTeste from "@/pages/previewteste";
 import AdminPanel from "@/pages/admin";
@@ -202,6 +203,12 @@ function App() {
         <Route path="/dashboard">
           <Layout>
             <Dashboard />
+          </Layout>
+        </Route>
+
+        <Route path="/controle-dashboard">
+          <Layout>
+            <ControleDashboard />
           </Layout>
         </Route>
 
