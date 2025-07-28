@@ -27540,7 +27540,7 @@ export function registerCheckoutRoutes(app: Express) {
   });
 
   // Endpoint: Dashboard admin com métricas
-  app.get('/api/controle/dashboard/admin', verifyJWT, async (req: any, res: any) => {
+  app.get('/api/controle/dashboard', verifyJWT, async (req: any, res: any) => {
     try {
       const hoje = new Date().toISOString().split('T')[0];
       const inicioMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
@@ -27549,21 +27549,21 @@ export function registerCheckoutRoutes(app: Express) {
       const vendasHoje = sqlite.prepare(`
         SELECT COUNT(*) as count, COALESCE(SUM(valor_venda), 0) as valor
         FROM controle_vendas 
-        WHERE DATE(data_venda) = ? AND status != 'cancelado'
+        WHERE DATE(data_pedido) = ? AND status != 'cancelado'
       `).get(hoje);
 
       // Vendas do mês
       const vendasMes = sqlite.prepare(`
         SELECT COUNT(*) as count, COALESCE(SUM(valor_venda), 0) as valor
         FROM controle_vendas 
-        WHERE DATE(data_venda) >= ? AND status != 'cancelado'
+        WHERE DATE(data_pedido) >= ? AND status != 'cancelado'
       `).get(inicioMes);
 
       // Comissões do mês (apenas vendas pagas)
       const comissoesMes = sqlite.prepare(`
         SELECT COALESCE(SUM(comissao_calculada), 0) as valor
         FROM controle_vendas 
-        WHERE DATE(data_venda) >= ? AND status = 'pago'
+        WHERE DATE(data_pedido) >= ? AND status = 'pago'
       `).get(inicioMes);
 
       // Entregas de hoje
@@ -27582,7 +27582,7 @@ export function registerCheckoutRoutes(app: Express) {
           COALESCE(SUM(CASE WHEN v.status != 'cancelado' THEN v.valor_venda ELSE 0 END), 0) as valor_total_mes
         FROM controle_attendants a
         LEFT JOIN controle_vendas v ON a.id = v.atendente_id 
-          AND DATE(v.data_venda) >= ?
+          AND DATE(v.data_pedido) >= ?
         WHERE a.ativo = 1
         GROUP BY a.id, a.nome
         ORDER BY vendas_mes DESC
@@ -27642,34 +27642,36 @@ export function registerCheckoutRoutes(app: Express) {
         cliente_telefone,
         cliente_endereco,
         valor_venda,
-        status,
-        data_venda,
+        categoria = 'LOGZZ',
+        status = 'agendado',
+        data_pedido,
         data_agendamento,
         periodo_entrega,
         observacoes
       } = req.body;
 
-      // Calcular comissão (10% apenas se status for 'pago')
-      const comissao_calculada = status === 'pago' ? valor_venda * 0.10 : 0;
+      // Calcular comissão (10%)
+      const comissao_calculada = valor_venda * 0.10;
 
       const saleId = require('crypto').randomUUID();
+      const now = new Date().toISOString();
       
       sqlite.prepare(`
         INSERT INTO controle_vendas (
           id, atendente_id, cliente_nome, cliente_telefone, cliente_endereco,
-          valor_venda, status, data_venda, data_agendamento, periodo_entrega,
+          valor_venda, categoria, status, data_pedido, data_agendamento, periodo_entrega,
           comissao_calculada, observacoes, created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
       `).run(
         saleId, atendente_id, cliente_nome, cliente_telefone, cliente_endereco,
-        valor_venda, status, data_venda, data_agendamento, periodo_entrega,
+        valor_venda, categoria, status, data_pedido || now, data_agendamento, periodo_entrega,
         comissao_calculada, observacoes
       );
 
-      res.json({ success: true, id: saleId });
+      res.json({ success: true, id: saleId, message: 'Pedido criado com sucesso!' });
     } catch (error) {
       console.error('Erro ao criar venda:', error);
-      res.status(500).json({ error: 'Erro ao criar venda' });
+      res.status(500).json({ error: 'Erro ao criar venda: ' + error.message });
     }
   });
 

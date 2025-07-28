@@ -33,11 +33,13 @@ export const vendas = sqliteTable("vendas", {
   cliente_telefone: text("cliente_telefone").notNull(),
   cliente_endereco: text("cliente_endereco"),
   valor_venda: real("valor_venda").notNull(),
+  comissao_calculada: real("comissao_calculada").default(0),
+  categoria: text("categoria").notNull(), // 'LOGZZ' ou 'AFTER PAY'
+  forma_pagamento: text("forma_pagamento"), // 'credito', 'debito', 'boleto', 'pix'
   status: text("status").notNull(), // 'agendado', 'pago', 'cancelado'
-  data_venda: text("data_venda").notNull(), // Quando foi feita a venda
+  data_pedido: text("data_pedido").notNull(), // Data/hora automática do pedido
   data_agendamento: text("data_agendamento"), // Para quando foi agendada a entrega
   periodo_entrega: text("periodo_entrega"), // 'manha', 'tarde', 'noite'
-  comissao_calculada: real("comissao_calculada").default(0),
   observacoes: text("observacoes"),
   created_at: text("created_at").default("CURRENT_TIMESTAMP"),
   updated_at: text("updated_at").default("CURRENT_TIMESTAMP"),
@@ -66,6 +68,8 @@ export const insertGastoCampanhaSchema = createInsertSchema(gastos_campanha).omi
 
 export const insertVendaSchema = createInsertSchema(vendas, {
   valor_venda: z.number().min(0.01, "Valor deve ser maior que 0"),
+  categoria: z.enum(["LOGZZ", "AFTER PAY"]),
+  forma_pagamento: z.enum(["credito", "debito", "boleto", "pix"]).optional(),
   status: z.enum(["agendado", "pago", "cancelado"]),
   periodo_entrega: z.enum(["manha", "tarde", "noite"]).optional(),
 }).omit({
@@ -73,6 +77,7 @@ export const insertVendaSchema = createInsertSchema(vendas, {
   created_at: true,
   updated_at: true,
   comissao_calculada: true,
+  data_pedido: true, // Será gerado automaticamente
 });
 
 export const insertConfiguracaoSchema = createInsertSchema(configuracoes).omit({

@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -24,10 +26,13 @@ import {
   XCircle,
   AlertCircle,
   TrendingUp,
-  Package
+  Package,
+  CreditCard,
+  Filter,
+  Eye
 } from 'lucide-react';
 
-// Interface para dados do Sistema Controle
+// Interfaces para dados do Sistema Controle
 interface Attendant {
   id: string;
   nome: string;
@@ -46,11 +51,13 @@ interface Sale {
   cliente_telefone: string;
   cliente_endereco?: string;
   valor_venda: number;
+  comissao_calculada: number;
+  categoria: 'LOGZZ' | 'AFTER PAY';
+  forma_pagamento?: 'credito' | 'debito' | 'boleto' | 'pix';
   status: 'agendado' | 'pago' | 'cancelado';
-  data_venda: string;
+  data_pedido: string;
   data_agendamento?: string;
   periodo_entrega?: 'manha' | 'tarde' | 'noite';
-  comissao_calculada: number;
   observacoes?: string;
 }
 
@@ -72,60 +79,91 @@ interface DashboardData {
 export default function ControleDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedAttendant, setSelectedAttendant] = useState<string>('admin');
-  const [newSaleDialog, setNewSaleDialog] = useState(false);
-  const [editSaleDialog, setEditSaleDialog] = useState(false);
-  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterAttendant, setFilterAttendant] = useState<string>('all');
+  const [selectedSaleId, setSelectedSaleId] = useState<string>('');
+  
+  // Estado do formulário de novo pedido
+  const [formData, setFormData] = useState({
+    atendente_id: '',
+    cliente_nome: '',
+    cliente_telefone: '',
+    valor_venda: '',
+    categoria: 'LOGZZ' as 'LOGZZ' | 'AFTER PAY',
+    data_agendamento: '',
+    periodo_entrega: '' as 'manha' | 'tarde' | 'noite' | '',
+    observacoes: ''
+  });
 
   // Buscar dados do dashboard
   const { data: dashboardData, isLoading: loadingDashboard } = useQuery({
-    queryKey: ['/api/controle/dashboard/admin'],
-    refetchInterval: 30000, // Atualiza a cada 30 segundos
+    queryKey: ['/api/controle/dashboard'],
+    refetchInterval: 30000,
   });
 
-  // Buscar attendants
+  // Buscar atendentes
   const { data: attendants = [] } = useQuery({
     queryKey: ['/api/controle/attendants'],
   });
 
   // Buscar vendas
   const { data: sales = [] } = useQuery({
-    queryKey: ['/api/controle/sales', selectedAttendant],
-    queryFn: () => apiRequest('GET', `/api/controle/sales?${selectedAttendant !== 'admin' ? `attendantId=${selectedAttendant}` : ''}`),
-  });
-
-  // Buscar entregas de hoje
-  const { data: todayDeliveries = [] } = useQuery({
-    queryKey: ['/api/controle/deliveries/today'],
+    queryKey: ['/api/controle/sales'],
+    refetchInterval: 30000,
   });
 
   // Mutation para criar nova venda
   const createSaleMutation = useMutation({
-    mutationFn: (saleData: any) => apiRequest('POST', '/api/controle/sales', saleData),
-    onSuccess: () => {
-      toast({ title: "Venda criada com sucesso!" });
-      queryClient.invalidateQueries({ queryKey: ['/api/controle/sales'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/controle/dashboard/admin'] });
-      setNewSaleDialog(false);
+    mutationFn: (saleData: any) => {
+      // Calcula comissão automaticamente (10%)
+      const valorVenda = parseFloat(saleData.valor_venda);
+      const comissao = valorVenda * 0.10;
+      
+      return apiRequest('POST', '/api/controle/sales', {
+        ...saleData,
+        valor_venda: valorVenda,
+        comissao_calculada: comissao,
+        data_pedido: new Date().toISOString(), // Data atual automática
+        status: 'agendado' // Padrão para novos pedidos
+      });
     },
-    onError: (error) => {
-      toast({ title: "Erro ao criar venda", description: error.message, variant: "destructive" });
+    onSuccess: () => {
+      toast({ title: "Pedido criado com sucesso!" });
+      queryClient.invalidateQueries({ queryKey: ['/api/controle/sales'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/controle/dashboard'] });
+      setIsCreateOrderOpen(false);
+      setFormData({
+        atendente_id: '',
+        cliente_nome: '',
+        cliente_telefone: '',
+        valor_venda: '',
+        categoria: 'LOGZZ',
+        data_agendamento: '',
+        periodo_entrega: '',
+        observacoes: ''
+      });
+    },
+    onError: (error: any) => {
+      toast({ title: "Erro ao criar pedido", description: error.message, variant: "destructive" });
     },
   });
 
-  // Mutation para atualizar venda
-  const updateSaleMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => 
-      apiRequest('PATCH', `/api/controle/sales/${id}`, data),
+  // Mutation para confirmar pagamento
+  const confirmPaymentMutation = useMutation({
+    mutationFn: ({ id, forma_pagamento }: { id: string; forma_pagamento: string }) => 
+      apiRequest('PATCH', `/api/controle/sales/${id}`, { 
+        status: 'pago',
+        forma_pagamento,
+        comissao_calculada: sales.find(s => s.id === id)?.valor_venda * 0.10 || 0
+      }),
     onSuccess: () => {
-      toast({ title: "Venda atualizada com sucesso!" });
+      toast({ title: "Pagamento confirmado!" });
       queryClient.invalidateQueries({ queryKey: ['/api/controle/sales'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/controle/dashboard/admin'] });
-      setEditSaleDialog(false);
-      setSelectedSale(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/controle/dashboard'] });
     },
-    onError: (error) => {
-      toast({ title: "Erro ao atualizar venda", description: error.message, variant: "destructive" });
+    onError: (error: any) => {
+      toast({ title: "Erro ao confirmar pagamento", description: error.message, variant: "destructive" });
     },
   });
 
@@ -139,393 +177,271 @@ export default function ControleDashboard() {
 
   // Função para formatar data
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
-  };
-
-  // Componente de formulário de venda
-  const SaleForm = ({ sale, onSubmit, isEditing = false }: { 
-    sale?: Sale; 
-    onSubmit: (data: any) => void; 
-    isEditing?: boolean;
-  }) => {
-    const [formData, setFormData] = useState({
-      atendente_id: sale?.atendente_id || '',
-      cliente_nome: sale?.cliente_nome || '',
-      cliente_telefone: sale?.cliente_telefone || '',
-      cliente_endereco: sale?.cliente_endereco || '',
-      valor_venda: sale?.valor_venda || 0,
-      status: sale?.status || 'agendado',
-      data_venda: sale?.data_venda || new Date().toISOString().split('T')[0],
-      data_agendamento: sale?.data_agendamento || '',
-      periodo_entrega: sale?.periodo_entrega || '',
-      observacoes: sale?.observacoes || '',
+    return new Date(dateString).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
-
-    const handleSubmit = (e: React.FormEvent) => {
-      e.preventDefault();
-      onSubmit(formData);
-    };
-
-    return (
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="atendente_id">Atendente</Label>
-            <Select value={formData.atendente_id} onValueChange={(value) => 
-              setFormData({ ...formData, atendente_id: value })
-            }>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um atendente" />
-              </SelectTrigger>
-              <SelectContent>
-                {attendants.map((att: Attendant) => (
-                  <SelectItem key={att.id} value={att.id}>{att.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="status">Status</Label>
-            <Select value={formData.status} onValueChange={(value) => 
-              setFormData({ ...formData, status: value })
-            }>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="agendado">Agendado</SelectItem>
-                <SelectItem value="pago">Pago</SelectItem>
-                <SelectItem value="cancelado">Cancelado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="cliente_nome">Nome do Cliente</Label>
-            <Input
-              id="cliente_nome"
-              value={formData.cliente_nome}
-              onChange={(e) => setFormData({ ...formData, cliente_nome: e.target.value })}
-              required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="cliente_telefone">Telefone</Label>
-            <Input
-              id="cliente_telefone"
-              value={formData.cliente_telefone}
-              onChange={(e) => setFormData({ ...formData, cliente_telefone: e.target.value })}
-              required
-            />
-          </div>
-        </div>
-
-        <div>
-          <Label htmlFor="cliente_endereco">Endereço</Label>
-          <Input
-            id="cliente_endereco"
-            value={formData.cliente_endereco}
-            onChange={(e) => setFormData({ ...formData, cliente_endereco: e.target.value })}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="valor_venda">Valor da Venda</Label>
-            <Input
-              id="valor_venda"
-              type="number"
-              step="0.01"
-              value={formData.valor_venda}
-              onChange={(e) => setFormData({ ...formData, valor_venda: parseFloat(e.target.value) || 0 })}
-              required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="data_venda">Data da Venda</Label>
-            <Input
-              id="data_venda"
-              type="date"
-              value={formData.data_venda}
-              onChange={(e) => setFormData({ ...formData, data_venda: e.target.value })}
-              required
-            />
-          </div>
-        </div>
-
-        {formData.status === 'agendado' && (
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="data_agendamento">Data de Agendamento</Label>
-              <Input
-                id="data_agendamento"
-                type="date"
-                value={formData.data_agendamento}
-                onChange={(e) => setFormData({ ...formData, data_agendamento: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="periodo_entrega">Período de Entrega</Label>
-              <Select value={formData.periodo_entrega} onValueChange={(value) => 
-                setFormData({ ...formData, periodo_entrega: value })
-              }>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o período" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="manha">Manhã</SelectItem>
-                  <SelectItem value="tarde">Tarde</SelectItem>
-                  <SelectItem value="noite">Noite</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        )}
-
-        <div>
-          <Label htmlFor="observacoes">Observações</Label>
-          <Input
-            id="observacoes"
-            value={formData.observacoes}
-            onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-          />
-        </div>
-
-        <Button type="submit" className="w-full">
-          {isEditing ? 'Atualizar Venda' : 'Criar Venda'}
-        </Button>
-      </form>
-    );
   };
 
-  if (loadingDashboard) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
+  // Filtrar vendas
+  const filteredSales = sales.filter((sale: Sale) => {
+    const statusMatch = filterStatus === 'all' || sale.status === filterStatus;
+    const attendantMatch = filterAttendant === 'all' || sale.atendente_id === filterAttendant;
+    return statusMatch && attendantMatch;
+  });
 
-  const dashboard: DashboardData = dashboardData || {
-    vendasHoje: 0,
-    valorHoje: 0,
-    vendasMes: 0,
-    valorMes: 0,
-    comissoesMes: 0,
-    entregasHoje: 0,
-    performanceAttendants: []
+  const handleCreateOrder = () => {
+    if (!formData.atendente_id || !formData.cliente_nome || !formData.cliente_telefone || !formData.valor_venda) {
+      toast({ title: "Preencha todos os campos obrigatórios", variant: "destructive" });
+      return;
+    }
+    createSaleMutation.mutate(formData);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
+      <div className="mx-auto max-w-7xl space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-700 bg-clip-text text-transparent">
-            Sistema Controle - Cash on Delivery
-          </h1>
-          
-          <Dialog open={newSaleDialog} onOpenChange={setNewSaleDialog}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700">
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Venda
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Registrar Nova Venda</DialogTitle>
-              </DialogHeader>
-              <SaleForm onSubmit={(data) => createSaleMutation.mutate(data)} />
-            </DialogContent>
-          </Dialog>
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">Sistema Controle</h1>
+            <p className="text-slate-300">Dashboard administrativo para gestão de vendas</p>
+          </div>
+          <Button 
+            onClick={() => setIsCreateOrderOpen(true)}
+            className="bg-green-600 hover:bg-green-700 text-white"
+            size="lg"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Novo Pedido
+          </Button>
         </div>
 
-        {/* Métricas Principais */}
+        {/* Cards de Métricas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="bg-white/70 backdrop-blur-sm border-emerald-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-emerald-700">Vendas Hoje</CardTitle>
-              <ShoppingCart className="h-4 w-4 text-emerald-600" />
+          <Card className="bg-gradient-to-r from-blue-600 to-blue-700 border-0 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center">
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Vendas Hoje
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-emerald-800">{dashboard.vendasHoje}</div>
-              <p className="text-xs text-emerald-600">
-                {formatCurrency(dashboard.valorHoje)} em vendas
-              </p>
+              <div className="text-2xl font-bold">{dashboardData?.vendasHoje || 0}</div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/70 backdrop-blur-sm border-green-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-green-700">Vendas do Mês</CardTitle>
-              <TrendingUp className="h-4 w-4 text-green-600" />
+          <Card className="bg-gradient-to-r from-green-600 to-green-700 border-0 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center">
+                <DollarSign className="w-4 h-4 mr-2" />
+                Valor Hoje
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-800">{dashboard.vendasMes}</div>
-              <p className="text-xs text-green-600">
-                {formatCurrency(dashboard.valorMes)} faturado
-              </p>
+              <div className="text-2xl font-bold">{formatCurrency(dashboardData?.valorHoje || 0)}</div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/70 backdrop-blur-sm border-teal-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-teal-700">Comissões do Mês</CardTitle>
-              <DollarSign className="h-4 w-4 text-teal-600" />
+          <Card className="bg-gradient-to-r from-purple-600 to-purple-700 border-0 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center">
+                <TrendingUp className="w-4 h-4 mr-2" />
+                Comissões Mês
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-teal-800">
-                {formatCurrency(dashboard.comissoesMes)}
-              </div>
-              <p className="text-xs text-teal-600">
-                10% sobre vendas pagas
-              </p>
+              <div className="text-2xl font-bold">{formatCurrency(dashboardData?.comissoesMes || 0)}</div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/70 backdrop-blur-sm border-amber-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-amber-700">Entregas Hoje</CardTitle>
-              <Package className="h-4 w-4 text-amber-600" />
+          <Card className="bg-gradient-to-r from-orange-600 to-orange-700 border-0 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center">
+                <Calendar className="w-4 h-4 mr-2" />
+                Entregas Hoje
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-amber-800">{dashboard.entregasHoje}</div>
-              <p className="text-xs text-amber-600">
-                Agendadas para hoje
-              </p>
+              <div className="text-2xl font-bold">{dashboardData?.entregasHoje || 0}</div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Tabs Principal */}
-        <Tabs defaultValue="vendas" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="vendas">Vendas</TabsTrigger>
-            <TabsTrigger value="entregas">Entregas Hoje</TabsTrigger>
-            <TabsTrigger value="attendants">Atendentes</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+        {/* Tabs de Gestão */}
+        <Tabs defaultValue="vendas" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 bg-slate-800">
+            <TabsTrigger value="vendas" className="text-white data-[state=active]:bg-slate-700">
+              Gestão de Vendas
+            </TabsTrigger>
+            <TabsTrigger value="atendentes" className="text-white data-[state=active]:bg-slate-700">
+              Atendentes
+            </TabsTrigger>
+            <TabsTrigger value="dashboard" className="text-white data-[state=active]:bg-slate-700">
+              Dashboard Geral
+            </TabsTrigger>
           </TabsList>
 
-          {/* Tab Vendas */}
+          {/* Tab Gestão de Vendas */}
           <TabsContent value="vendas" className="space-y-4">
-            <div className="flex items-center gap-4">
-              <Label>Filtrar por Atendente:</Label>
-              <Select value={selectedAttendant} onValueChange={setSelectedAttendant}>
-                <SelectTrigger className="w-64">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Todos os Atendentes</SelectItem>
-                  {attendants.map((att: Attendant) => (
-                    <SelectItem key={att.id} value={att.id}>{att.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Card className="bg-white/70 backdrop-blur-sm">
+            {/* Filtros */}
+            <Card className="bg-slate-800 border-slate-700">
               <CardHeader>
-                <CardTitle>Lista de Vendas</CardTitle>
+                <CardTitle className="text-white flex items-center">
+                  <Filter className="w-5 h-5 mr-2" />
+                  Filtros
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {sales.map((sale: Sale) => (
-                    <div key={sale.id} className="flex items-center justify-between p-4 bg-white rounded-lg border">
-                      <div className="grid grid-cols-5 gap-4 flex-1">
-                        <div>
-                          <p className="font-medium">{sale.cliente_nome}</p>
-                          <p className="text-sm text-gray-600">{sale.cliente_telefone}</p>
-                        </div>
-                        <div>
-                          <p className="font-medium">{formatCurrency(sale.valor_venda)}</p>
-                          <p className="text-sm text-gray-600">{sale.atendente_nome}</p>
-                        </div>
-                        <div>
-                          <Badge variant={
-                            sale.status === 'pago' ? 'default' : 
-                            sale.status === 'agendado' ? 'secondary' : 'destructive'
-                          }>
-                            {sale.status === 'pago' ? 'Pago' : 
-                             sale.status === 'agendado' ? 'Agendado' : 'Cancelado'}
-                          </Badge>
-                        </div>
-                        <div>
-                          <p className="text-sm">{formatDate(sale.data_venda)}</p>
-                          {sale.data_agendamento && (
-                            <p className="text-xs text-gray-600">
-                              Entrega: {formatDate(sale.data_agendamento)}
-                            </p>
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-medium text-green-600">
-                            {formatCurrency(sale.comissao_calculada)}
-                          </p>
-                          <p className="text-xs text-gray-600">Comissão</p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedSale(sale);
-                          setEditSaleDialog(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-slate-300">Status</Label>
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="agendado">Agendado</SelectItem>
+                      <SelectItem value="pago">Pago</SelectItem>
+                      <SelectItem value="cancelado">Cancelado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-slate-300">Atendente</Label>
+                  <Select value={filterAttendant} onValueChange={setFilterAttendant}>
+                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {attendants.map((att: Attendant) => (
+                        <SelectItem key={att.id} value={att.id}>{att.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-end">
+                  <Button 
+                    variant="outline" 
+                    className="w-full bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    Aplicar Filtros
+                  </Button>
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
 
-          {/* Tab Entregas */}
-          <TabsContent value="entregas">
-            <Card className="bg-white/70 backdrop-blur-sm">
+            {/* Lista de Vendas */}
+            <Card className="bg-slate-800 border-slate-700">
               <CardHeader>
-                <CardTitle>Entregas Agendadas para Hoje</CardTitle>
+                <CardTitle className="text-white">Pedidos ({filteredSales.length})</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {todayDeliveries.map((delivery: Sale) => (
-                    <div key={delivery.id} className="p-4 bg-white rounded-lg border">
-                      <div className="grid grid-cols-4 gap-4">
+                <div className="space-y-4">
+                  {filteredSales.map((sale: Sale) => (
+                    <div key={sale.id} className="bg-slate-700 p-4 rounded-lg border border-slate-600">
+                      <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 items-center">
                         <div>
-                          <p className="font-medium">{delivery.cliente_nome}</p>
-                          <p className="text-sm text-gray-600">{delivery.cliente_telefone}</p>
-                        </div>
-                        <div>
-                          <p className="font-medium">{formatCurrency(delivery.valor_venda)}</p>
-                          <p className="text-sm text-gray-600">{delivery.atendente_nome}</p>
-                        </div>
-                        <div>
-                          <Badge variant="secondary">
-                            {delivery.periodo_entrega === 'manha' ? 'Manhã' :
-                             delivery.periodo_entrega === 'tarde' ? 'Tarde' : 'Noite'}
+                          <p className="font-medium text-white">{sale.cliente_nome}</p>
+                          <p className="text-sm text-slate-300">{sale.cliente_telefone}</p>
+                          <Badge variant={sale.categoria === 'LOGZZ' ? 'default' : 'secondary'} className="mt-1">
+                            {sale.categoria}
                           </Badge>
                         </div>
+                        
                         <div>
-                          <Button size="sm" variant="outline">
-                            <Phone className="h-4 w-4 mr-2" />
-                            Notificar Cliente
-                          </Button>
+                          <p className="text-white font-medium">{formatCurrency(sale.valor_venda)}</p>
+                          <p className="text-sm text-green-400">Comissão: {formatCurrency(sale.comissao_calculada)}</p>
+                        </div>
+                        
+                        <div>
+                          <p className="text-sm text-slate-300">Pedido:</p>
+                          <p className="text-white">{formatDate(sale.data_pedido)}</p>
+                        </div>
+                        
+                        <div>
+                          <Badge 
+                            variant={
+                              sale.status === 'pago' ? 'default' : 
+                              sale.status === 'agendado' ? 'secondary' : 'destructive'
+                            }
+                            className={
+                              sale.status === 'pago' ? 'bg-green-600' :
+                              sale.status === 'agendado' ? 'bg-yellow-600' : 'bg-red-600'
+                            }
+                          >
+                            {sale.status.toUpperCase()}
+                          </Badge>
+                          {sale.forma_pagamento && (
+                            <p className="text-xs text-slate-400 mt-1">
+                              {sale.forma_pagamento.toUpperCase()}
+                            </p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          {sale.data_agendamento && (
+                            <>
+                              <p className="text-sm text-slate-300">Agendado:</p>
+                              <p className="text-white text-sm">{formatDate(sale.data_agendamento)}</p>
+                              {sale.periodo_entrega && (
+                                <p className="text-xs text-slate-400">{sale.periodo_entrega}</p>
+                              )}
+                            </>
+                          )}
+                        </div>
+                        
+                        <div className="space-y-2">
+                          {sale.status === 'agendado' && (
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button size="sm" className="bg-green-600 hover:bg-green-700 w-full">
+                                  <CheckCircle className="w-4 h-4 mr-1" />
+                                  Confirmar Pagamento
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="bg-slate-800 border-slate-700">
+                                <DialogHeader>
+                                  <DialogTitle className="text-white">Confirmar Pagamento</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div>
+                                    <Label className="text-slate-300">Forma de Pagamento</Label>
+                                    <Select onValueChange={(value) => {
+                                      confirmPaymentMutation.mutate({ 
+                                        id: sale.id, 
+                                        forma_pagamento: value 
+                                      });
+                                    }}>
+                                      <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                                        <SelectValue placeholder="Selecione a forma de pagamento" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="credito">Cartão de Crédito</SelectItem>
+                                        <SelectItem value="debito">Cartão de Débito</SelectItem>
+                                        <SelectItem value="boleto">Boleto</SelectItem>
+                                        <SelectItem value="pix">PIX</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          )}
+                          
+                          {sale.status === 'pago' && (
+                            <div className="flex items-center text-green-400 text-sm">
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Pago
+                            </div>
+                          )}
                         </div>
                       </div>
-                      {delivery.cliente_endereco && (
-                        <p className="text-sm text-gray-600 mt-2">
-                          <MapPin className="h-3 w-3 inline mr-1" />
-                          {delivery.cliente_endereco}
-                        </p>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -534,64 +450,61 @@ export default function ControleDashboard() {
           </TabsContent>
 
           {/* Tab Atendentes */}
-          <TabsContent value="attendants">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {attendants.map((attendant: Attendant) => (
-                <Card key={attendant.id} className="bg-white/70 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="h-5 w-5" />
-                      {attendant.nome}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div>
-                      <p className="text-sm text-gray-600">Email</p>
-                      <p className="font-medium">{attendant.email}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Telefone</p>
-                      <p className="font-medium">{attendant.telefone}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Meta Diária</p>
-                      <p className="font-medium">{attendant.meta_vendas_diaria} vendas</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Comissão</p>
-                      <p className="font-medium">{attendant.comissao_percentual}%</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+          <TabsContent value="atendentes">
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white">Atendentes Ativos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {attendants.map((attendant: Attendant) => (
+                    <Card key={attendant.id} className="bg-slate-700 border-slate-600">
+                      <CardHeader>
+                        <CardTitle className="text-white text-lg">{attendant.nome}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        <p className="text-slate-300 flex items-center">
+                          <Phone className="w-4 h-4 mr-2" />
+                          {attendant.telefone}
+                        </p>
+                        <p className="text-slate-300">Meta Diária: {attendant.meta_vendas_diaria} vendas</p>
+                        <p className="text-green-400">Comissão: {attendant.comissao_percentual}%</p>
+                        <Badge variant={attendant.ativo ? 'default' : 'secondary'} className="bg-green-600">
+                          {attendant.ativo ? 'Ativo' : 'Inativo'}
+                        </Badge>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          {/* Tab Analytics */}
-          <TabsContent value="analytics">
-            <Card className="bg-white/70 backdrop-blur-sm">
+          {/* Tab Dashboard Geral */}
+          <TabsContent value="dashboard">
+            <Card className="bg-slate-800 border-slate-700">
               <CardHeader>
-                <CardTitle>Performance dos Atendentes</CardTitle>
+                <CardTitle className="text-white">Performance dos Atendentes</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {dashboard.performanceAttendants.map((perf, index) => (
-                    <div key={index} className="p-4 bg-white rounded-lg border">
-                      <div className="grid grid-cols-4 gap-4">
+                  {dashboardData?.performanceAttendants?.map((perf: any, index: number) => (
+                    <div key={index} className="bg-slate-700 p-4 rounded-lg border border-slate-600">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
-                          <p className="font-medium">{perf.nome}</p>
+                          <p className="font-medium text-white">{perf.nome}</p>
                         </div>
                         <div>
-                          <p className="font-medium">{perf.vendas_mes} vendas</p>
-                          <p className="text-sm text-gray-600">Este mês</p>
+                          <p className="text-slate-300">Vendas no Mês</p>
+                          <p className="text-white font-medium">{perf.vendas_mes}</p>
                         </div>
                         <div>
-                          <p className="font-medium">{formatCurrency(perf.valor_total_mes)}</p>
-                          <p className="text-sm text-gray-600">Faturamento</p>
+                          <p className="text-slate-300">Valor Total</p>
+                          <p className="text-white font-medium">{formatCurrency(perf.valor_total_mes)}</p>
                         </div>
                         <div>
-                          <p className="font-medium text-green-600">{formatCurrency(perf.comissao_mes)}</p>
-                          <p className="text-sm text-gray-600">Comissão</p>
+                          <p className="text-slate-300">Comissão</p>
+                          <p className="text-green-400 font-medium">{formatCurrency(perf.comissao_mes)}</p>
                         </div>
                       </div>
                     </div>
@@ -602,19 +515,135 @@ export default function ControleDashboard() {
           </TabsContent>
         </Tabs>
 
-        {/* Dialog para editar venda */}
-        <Dialog open={editSaleDialog} onOpenChange={setEditSaleDialog}>
-          <DialogContent className="max-w-2xl">
+        {/* Dialog para Novo Pedido */}
+        <Dialog open={isCreateOrderOpen} onOpenChange={setIsCreateOrderOpen}>
+          <DialogContent className="bg-slate-800 border-slate-700 max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Editar Venda</DialogTitle>
+              <DialogTitle className="text-white">Novo Pedido</DialogTitle>
             </DialogHeader>
-            {selectedSale && (
-              <SaleForm 
-                sale={selectedSale} 
-                onSubmit={(data) => updateSaleMutation.mutate({ id: selectedSale.id, data })}
-                isEditing={true}
-              />
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-slate-300">Atendente *</Label>
+                <Select value={formData.atendente_id} onValueChange={(value) => 
+                  setFormData(prev => ({ ...prev, atendente_id: value }))
+                }>
+                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                    <SelectValue placeholder="Selecione o atendente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {attendants.map((att: Attendant) => (
+                      <SelectItem key={att.id} value={att.id}>{att.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-slate-300">Categoria *</Label>
+                <Select value={formData.categoria} onValueChange={(value: 'LOGZZ' | 'AFTER PAY') => 
+                  setFormData(prev => ({ ...prev, categoria: value }))
+                }>
+                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="LOGZZ">LOGZZ</SelectItem>
+                    <SelectItem value="AFTER PAY">AFTER PAY</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-slate-300">Nome do Cliente *</Label>
+                <Input
+                  value={formData.cliente_nome}
+                  onChange={(e) => setFormData(prev => ({ ...prev, cliente_nome: e.target.value }))}
+                  className="bg-slate-700 border-slate-600 text-white"
+                  placeholder="Nome completo"
+                />
+              </div>
+
+              <div>
+                <Label className="text-slate-300">WhatsApp do Cliente *</Label>
+                <Input
+                  value={formData.cliente_telefone}
+                  onChange={(e) => setFormData(prev => ({ ...prev, cliente_telefone: e.target.value }))}
+                  className="bg-slate-700 border-slate-600 text-white"
+                  placeholder="(11) 99999-9999"
+                />
+              </div>
+
+              <div>
+                <Label className="text-slate-300">Valor do Produto *</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.valor_venda}
+                  onChange={(e) => setFormData(prev => ({ ...prev, valor_venda: e.target.value }))}
+                  className="bg-slate-700 border-slate-600 text-white"
+                  placeholder="0,00"
+                />
+                {formData.valor_venda && (
+                  <p className="text-green-400 text-sm mt-1">
+                    Comissão (10%): {formatCurrency(parseFloat(formData.valor_venda) * 0.10)}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label className="text-slate-300">Data Agendamento</Label>
+                <Input
+                  type="date"
+                  value={formData.data_agendamento}
+                  onChange={(e) => setFormData(prev => ({ ...prev, data_agendamento: e.target.value }))}
+                  className="bg-slate-700 border-slate-600 text-white"
+                />
+              </div>
+
+              <div>
+                <Label className="text-slate-300">Período de Entrega</Label>
+                <Select value={formData.periodo_entrega} onValueChange={(value: 'manha' | 'tarde' | 'noite') => 
+                  setFormData(prev => ({ ...prev, periodo_entrega: value }))
+                }>
+                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                    <SelectValue placeholder="Selecione o período" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manha">Manhã</SelectItem>
+                    <SelectItem value="tarde">Tarde</SelectItem>
+                    <SelectItem value="noite">Noite</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="md:col-span-2">
+                <Label className="text-slate-300">Observações</Label>
+                <Textarea
+                  value={formData.observacoes}
+                  onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
+                  className="bg-slate-700 border-slate-600 text-white"
+                  placeholder="Observações adicionais..."
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsCreateOrderOpen(false)}
+                className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleCreateOrder}
+                disabled={createSaleMutation.isPending}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {createSaleMutation.isPending ? 'Criando...' : 'Criar Pedido'}
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

@@ -522,6 +522,12 @@ function App() {
             <AdminDashboard />
           </Layout>
         </Route>
+
+        <Route path="/controle-dashboard">
+          <Layout>
+            <ControleDashboard />
+          </Layout>
+        </Route>
         
         <Route path="/whatsapp-dual">
           <Layout>
