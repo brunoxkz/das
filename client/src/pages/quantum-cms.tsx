@@ -479,12 +479,12 @@ export default function QuantumCMS() {
                   <h3 className="text-lg font-semibold text-white">Generated Code Preview</h3>
                   <div className="bg-black/40 p-4 rounded-lg border border-white/10 font-mono text-sm text-green-400 overflow-x-auto">
                     <div className="text-purple-300">// WordPress Theme Functions</div>
-                    <div>function quantum_cms_theme_setup() {'{'}}</div>
-                    <div className="ml-4">add_theme_support('post-thumbnails');</div>
+                    <div>function quantum_cms_theme_setup() {'{'}</div>
+                    <div className="ml-4">add_theme_support(&apos;post-thumbnails&apos;);</div>
                     <div className="ml-4">register_nav_menus(array(...));</div>
                     <div>{'}'}</div>
                     <div className="mt-2 text-purple-300">// Elementor Widget Registration</div>
-                    <div>class Quantum_News_Widget extends \Elementor\Widget_Base {'{'}...{'}'}</div>
+                    <div>class Quantum_News_Widget extends \Elementor\Widget_Base {'{'} ... {'}'}</div>
                   </div>
                 </div>
               </CardContent>
