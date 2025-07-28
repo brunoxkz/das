@@ -127,6 +127,7 @@ import QuantumMembers from "@/pages/quantum-members";
 import QuantumCourseManage from "@/pages/quantum-course-manage";
 import QuantumTasksModern from "@/pages/quantum-modern";
 import EssenciaDaPaz from "@/pages/essencia-da-paz";
+import PreviewTeste from "@/pages/previewteste";
 
 
 function App() {
@@ -189,6 +190,7 @@ function App() {
         <Route path="/stripe-checkout-link/:linkId" component={StripeCheckoutLink} />
         <Route path="/quantum-tasks" component={QuantumTasksModern} />
         <Route path="/essencia-da-paz" component={EssenciaDaPaz} />
+        <Route path="/previewteste" component={PreviewTeste} />
         <Route path="/test" component={TestPage} />
 
 
