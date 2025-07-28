@@ -388,7 +388,7 @@ const QuantumTasksModern = () => {
     const isLeftSwipe = distance > 50;
     const isRightSwipe = distance < -50;
 
-    const tabs = ['inicio', 'tarefas', 'inbox', 'projetos', 'lembretes', 'analytics'];
+    const tabs = ['inicio', 'tarefas', 'inbox', 'projetos', 'lembretes', 'controle', 'analytics'];
     const currentIndex = tabs.indexOf(activeTab);
     
     if (isLeftSwipe && currentIndex < tabs.length - 1) {
@@ -414,6 +414,7 @@ const QuantumTasksModern = () => {
     { id: 'inbox', label: 'INBOX', icon: Mail, gradient: 'from-red-500 to-pink-600' },
     { id: 'projetos', label: 'PROJETOS', icon: Briefcase, gradient: 'from-yellow-500 to-orange-600' },
     { id: 'lembretes', label: 'LEMBRETES', icon: Bell, gradient: 'from-purple-500 to-indigo-600' },
+    { id: 'controle', label: 'CONTROLE', icon: Users, gradient: 'from-emerald-500 to-green-600' },
     { id: 'analytics', label: 'ANALYTICS', icon: BarChart3, gradient: 'from-cyan-500 to-blue-600' }
   ];
 
@@ -967,6 +968,26 @@ const QuantumTasksModern = () => {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        </div>
+      );
+    }
+
+    // Aba Controle - Sistema de Vendas para Attendants
+    if (activeTab === 'controle') {
+      return (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-emerald-500 to-green-600 bg-clip-text text-transparent">
+              Sistema Controle
+            </h2>
+            <Button className="bg-gradient-to-r from-emerald-500 to-green-600">
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Venda
+            </Button>
+          </div>
+          <div className="text-center py-12">
+            <p className="text-gray-600">Interface Controle em desenvolvimento...</p>
           </div>
         </div>
       );

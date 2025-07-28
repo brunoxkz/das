@@ -27508,6 +27508,164 @@ export function registerCheckoutRoutes(app: Express) {
   const EmailSyncService = require('./email-sync').default;
   const emailSync = new EmailSyncService(sqlite);
 
+  // ============================================================================
+  // SISTEMA CONTROLE - ENDPOINTS PARA GESTÃO DE VENDAS
+  // ============================================================================
+  
+  console.log('🏢 REGISTRANDO ENDPOINTS SISTEMA CONTROLE...');
+
+  // Inicializar database Controle se necessário
+  try {
+    const controleDb = require('./controle-db');
+    console.log('✅ Database Controle inicializado com sucesso');
+  } catch (error) {
+    console.error('⚠️ Erro ao inicializar database Controle:', error);
+  }
+
+  // Endpoint: Listar todos os attendants
+  app.get('/api/controle/attendants', async (req, res) => {
+    try {
+      const controleDb = require('./controle-db');
+      const attendants = await controleDb.getAllAttendants();
+      res.json(attendants);
+    } catch (error) {
+      console.error('Erro ao buscar attendants:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint: Criar novo attendant
+  app.post('/api/controle/attendants', async (req, res) => {
+    try {
+      const controleDb = require('./controle-db');
+      const attendant = await controleDb.createAttendant(req.body);
+      res.json(attendant);
+    } catch (error) {
+      console.error('Erro ao criar attendant:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint: Listar vendas (admin pode ver todas, attendant apenas suas)
+  app.get('/api/controle/sales', async (req, res) => {
+    try {
+      const controleDb = require('./controle-db');
+      const { attendantId, status, startDate, endDate } = req.query;
+      
+      const filters = {};
+      if (attendantId) filters.attendantId = attendantId;
+      if (status) filters.status = status;
+      if (startDate) filters.startDate = startDate;
+      if (endDate) filters.endDate = endDate;
+      
+      const sales = await controleDb.getSales(filters);
+      res.json(sales);
+    } catch (error) {
+      console.error('Erro ao buscar vendas:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint: Criar nova venda
+  app.post('/api/controle/sales', async (req, res) => {
+    try {
+      const controleDb = require('./controle-db');
+      const sale = await controleDb.createSale(req.body);
+      res.json(sale);
+    } catch (error) {
+      console.error('Erro ao criar venda:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint: Atualizar status da venda
+  app.patch('/api/controle/sales/:id', async (req, res) => {
+    try {
+      const controleDb = require('./controle-db');
+      const sale = await controleDb.updateSaleStatus(req.params.id, req.body);
+      res.json(sale);
+    } catch (error) {
+      console.error('Erro ao atualizar venda:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint: Dashboard admin - visão geral
+  app.get('/api/controle/dashboard/admin', async (req, res) => {
+    try {
+      const controleDb = require('./controle-db');
+      const dashboard = await controleDb.getAdminDashboard();
+      res.json(dashboard);
+    } catch (error) {
+      console.error('Erro ao buscar dashboard admin:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint: Dashboard attendant - visão específica
+  app.get('/api/controle/dashboard/attendant/:id', async (req, res) => {
+    try {
+      const controleDb = require('./controle-db');
+      const dashboard = await controleDb.getAttendantDashboard(req.params.id);
+      res.json(dashboard);
+    } catch (error) {
+      console.error('Erro ao buscar dashboard attendant:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint: Comissões por attendant
+  app.get('/api/controle/commissions/:attendantId', async (req, res) => {
+    try {
+      const controleDb = require('./controle-db');
+      const { startDate, endDate } = req.query;
+      const commissions = await controleDb.getCommissions(req.params.attendantId, startDate, endDate);
+      res.json(commissions);
+    } catch (error) {
+      console.error('Erro ao buscar comissões:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint: Leads por attendant
+  app.get('/api/controle/leads/:attendantId', async (req, res) => {
+    try {
+      const controleDb = require('./controle-db');
+      const { date, source } = req.query;
+      const leads = await controleDb.getLeadsByAttendant(req.params.attendantId, date, source);
+      res.json(leads);
+    } catch (error) {
+      console.error('Erro ao buscar leads:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint: Entregas agendadas para hoje
+  app.get('/api/controle/deliveries/today', async (req, res) => {
+    try {
+      const controleDb = require('./controle-db');
+      const deliveries = await controleDb.getTodayDeliveries();
+      res.json(deliveries);
+    } catch (error) {
+      console.error('Erro ao buscar entregas:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint: Notificar cliente sobre entrega
+  app.post('/api/controle/notify-delivery/:saleId', async (req, res) => {
+    try {
+      const controleDb = require('./controle-db');
+      const notification = await controleDb.notifyDelivery(req.params.saleId, req.body.message);
+      res.json(notification);
+    } catch (error) {
+      console.error('Erro ao notificar entrega:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
+  console.log('✅ ENDPOINTS SISTEMA CONTROLE REGISTRADOS COM SUCESSO');
+
   // Dashboard stats - dados reais com auto-atualização
   app.get('/api/dashboard-stats', async (req, res) => {
     try {
