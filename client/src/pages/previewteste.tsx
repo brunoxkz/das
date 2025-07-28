@@ -156,22 +156,22 @@ export default function PreviewTeste() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative py-20 lg:py-32 overflow-hidden">
+      <section className="relative py-12 sm:py-20 lg:py-32 overflow-hidden">
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-purple-900/50 via-transparent to-blue-900/50"></div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="inline-block animate-bounce mb-8">
-              <div className="w-16 h-16 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full opacity-80"></div>
+            <div className="inline-block animate-bounce mb-6 sm:mb-8">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full opacity-80"></div>
             </div>
             
-            <h1 className="text-4xl lg:text-7xl font-bold text-white leading-tight mb-8 animate-fade-in">
+            <h1 className="text-2xl sm:text-4xl lg:text-7xl font-bold text-white leading-tight mb-6 sm:mb-8 animate-fade-in px-2">
               More than just a{' '}
               <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent animate-pulse">
                 liquidity provider
               </span>
-              <span className="block mt-4">
+              <span className="block mt-2 sm:mt-4">
                 B2C2 is a digital asset pioneer building the{' '}
                 <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
                   ecosystem of the future
@@ -179,50 +179,50 @@ export default function PreviewTeste() {
               </span>
             </h1>
             
-            <p className="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed mb-12 animate-fade-in-delay">
+            <p className="text-base sm:text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed mb-8 sm:mb-12 animate-fade-in-delay px-4">
               B2C2's success is built on a foundation of proprietary crypto-native technology 
               combined with an innovative range of products, making the firm the partner of 
               choice for diverse institutions globally.
             </p>
             
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button className="group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-full hover:from-purple-500 hover:to-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4">
+              <button className="w-full sm:w-auto group relative px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-full hover:from-purple-500 hover:to-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl">
                 <span className="relative z-10">Get Started</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur"></div>
               </button>
               
-              <button className="group px-8 py-4 border-2 border-white/30 text-white font-semibold rounded-full hover:border-white hover:bg-white/10 transition-all duration-300 backdrop-blur-sm">
+              <button className="w-full sm:w-auto group px-6 sm:px-8 py-3 sm:py-4 border-2 border-white/30 text-white font-semibold rounded-full hover:border-white hover:bg-white/10 transition-all duration-300 backdrop-blur-sm">
                 Learn More
-                <ArrowRight className="inline-block ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
+                <ArrowRight className="inline-block ml-2 h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-1 transition-transform duration-300" />
               </button>
               
               <a 
                 href="/admin-panel" 
-                className="group px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 text-white font-semibold rounded-full hover:from-yellow-500 hover:to-orange-500 transition-all duration-300 transform hover:scale-105 shadow-2xl"
+                className="w-full sm:w-auto group px-5 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-yellow-600 to-orange-600 text-white font-semibold rounded-full hover:from-yellow-500 hover:to-orange-500 transition-all duration-300 transform hover:scale-105 shadow-2xl text-center block"
               >
                 Admin Panel
-                <ArrowRight className="inline-block ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                <ArrowRight className="inline-block ml-2 h-3 w-3 sm:h-4 sm:w-4 group-hover:translate-x-1 transition-transform duration-300" />
               </a>
             </div>
           </div>
         </div>
         
-        {/* Floating Animation Elements */}
-        <div className="absolute top-20 left-10 w-4 h-4 bg-purple-400 rounded-full animate-ping opacity-60"></div>
-        <div className="absolute top-40 right-20 w-6 h-6 bg-blue-400 rounded-full animate-pulse opacity-40"></div>
-        <div className="absolute bottom-32 left-1/4 w-8 h-8 bg-cyan-400 rounded-full animate-bounce opacity-30"></div>
+        {/* Floating Animation Elements - Hidden on mobile for performance */}
+        <div className="hidden sm:block absolute top-20 left-10 w-4 h-4 bg-purple-400 rounded-full animate-ping opacity-60"></div>
+        <div className="hidden sm:block absolute top-40 right-20 w-6 h-6 bg-blue-400 rounded-full animate-pulse opacity-40"></div>
+        <div className="hidden sm:block absolute bottom-32 left-1/4 w-8 h-8 bg-cyan-400 rounded-full animate-bounce opacity-30"></div>
       </section>
 
       {/* Featured News Cards */}
-      <section className="relative py-20 bg-gradient-to-b from-transparent to-black/20">
+      <section className="relative py-12 sm:py-20 bg-gradient-to-b from-transparent to-black/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Latest Insights</h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-purple-400 to-blue-400 mx-auto rounded-full"></div>
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4 px-4">Latest Insights</h2>
+            <div className="w-16 sm:w-24 h-1 bg-gradient-to-r from-purple-400 to-blue-400 mx-auto rounded-full"></div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {/* Featured Article 1 */}
             <div className="group bg-white/10 backdrop-blur-md rounded-xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-white/20 hover:border-purple-400/50 transform hover:-translate-y-2">
               <div className="relative overflow-hidden">
@@ -233,13 +233,13 @@ export default function PreviewTeste() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
-              <div className="p-6">
-                <h3 className="font-bold text-white mb-2 text-lg group-hover:text-purple-300 transition-colors duration-300">
+              <div className="p-4 sm:p-6">
+                <h3 className="font-bold text-white mb-2 text-base sm:text-lg group-hover:text-purple-300 transition-colors duration-300 line-clamp-3">
                   A very stable GENIUS: The US stablecoin bill and the next key to scaling adoption
                 </h3>
-                <p className="text-gray-300 text-sm mb-4">July 23, 2025</p>
-                <a href="#" className="text-purple-400 hover:text-purple-300 font-medium text-sm inline-flex items-center group-hover:translate-x-1 transition-all duration-300">
-                  Read more <ArrowRight className="ml-1 h-4 w-4" />
+                <p className="text-gray-300 text-xs sm:text-sm mb-3 sm:mb-4">July 23, 2025</p>
+                <a href="#" className="text-purple-400 hover:text-purple-300 font-medium text-xs sm:text-sm inline-flex items-center group-hover:translate-x-1 transition-all duration-300">
+                  Read more <ArrowRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
                 </a>
               </div>
             </div>
@@ -254,13 +254,13 @@ export default function PreviewTeste() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
-              <div className="p-6">
-                <h3 className="font-bold text-white mb-2 text-lg group-hover:text-blue-300 transition-colors duration-300">
+              <div className="p-4 sm:p-6">
+                <h3 className="font-bold text-white mb-2 text-base sm:text-lg group-hover:text-blue-300 transition-colors duration-300 line-clamp-3">
                   HashKey Exchange, Hong Kong's Largest Licensed Virtual Asset Exchange, Partners with Global Leading Crypto Market Maker B2C2
                 </h3>
-                <p className="text-gray-300 text-sm mb-4">March 10, 2025</p>
-                <a href="#" className="text-blue-400 hover:text-blue-300 font-medium text-sm inline-flex items-center group-hover:translate-x-1 transition-all duration-300">
-                  Read more <ArrowRight className="ml-1 h-4 w-4" />
+                <p className="text-gray-300 text-xs sm:text-sm mb-3 sm:mb-4">March 10, 2025</p>
+                <a href="#" className="text-blue-400 hover:text-blue-300 font-medium text-xs sm:text-sm inline-flex items-center group-hover:translate-x-1 transition-all duration-300">
+                  Read more <ArrowRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
                 </a>
               </div>
             </div>
@@ -275,14 +275,14 @@ export default function PreviewTeste() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <div className="text-xs text-purple-300 uppercase tracking-wide mb-2 font-semibold">Press release</div>
-                <h3 className="font-bold text-white mb-2 text-lg group-hover:text-indigo-300 transition-colors duration-300">
+                <h3 className="font-bold text-white mb-2 text-base sm:text-lg group-hover:text-indigo-300 transition-colors duration-300 line-clamp-3">
                   B2C2 and PV01 Pioneer Corporate Bond on Blockchain
                 </h3>
-                <p className="text-gray-300 text-sm mb-4">November 25, 2024</p>
-                <a href="#" className="text-indigo-400 hover:text-indigo-300 font-medium text-sm inline-flex items-center group-hover:translate-x-1 transition-all duration-300">
-                  Read more <ArrowRight className="ml-1 h-4 w-4" />
+                <p className="text-gray-300 text-xs sm:text-sm mb-3 sm:mb-4">November 25, 2024</p>
+                <a href="#" className="text-indigo-400 hover:text-indigo-300 font-medium text-xs sm:text-sm inline-flex items-center group-hover:translate-x-1 transition-all duration-300">
+                  Read more <ArrowRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
                 </a>
               </div>
             </div>
@@ -297,14 +297,14 @@ export default function PreviewTeste() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <div className="text-xs text-cyan-300 uppercase tracking-wide mb-2 font-semibold">Press release</div>
-                <h3 className="font-bold text-white mb-2 text-lg group-hover:text-cyan-300 transition-colors duration-300">
+                <h3 className="font-bold text-white mb-2 text-base sm:text-lg group-hover:text-cyan-300 transition-colors duration-300 line-clamp-3">
                   B2C2 Partners with OpenPayd to Expand its Global Instant Settlement Network
                 </h3>
-                <p className="text-gray-300 text-sm mb-4">October 28, 2024</p>
-                <a href="#" className="text-cyan-400 hover:text-cyan-300 font-medium text-sm inline-flex items-center group-hover:translate-x-1 transition-all duration-300">
-                  Read more <ArrowRight className="ml-1 h-4 w-4" />
+                <p className="text-gray-300 text-xs sm:text-sm mb-3 sm:mb-4">October 28, 2024</p>
+                <a href="#" className="text-cyan-400 hover:text-cyan-300 font-medium text-xs sm:text-sm inline-flex items-center group-hover:translate-x-1 transition-all duration-300">
+                  Read more <ArrowRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
                 </a>
               </div>
             </div>
@@ -313,7 +313,7 @@ export default function PreviewTeste() {
       </section>
 
       {/* Institutional Solutions Section */}
-      <section className="relative py-20 bg-gradient-to-b from-black/20 to-transparent overflow-hidden">
+      <section className="relative py-12 sm:py-20 bg-gradient-to-b from-black/20 to-transparent overflow-hidden">
         {/* Background Animation */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute top-10 left-10 w-72 h-72 bg-purple-500 rounded-full filter blur-3xl animate-pulse"></div>
@@ -321,126 +321,126 @@ export default function PreviewTeste() {
         </div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6 bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6 bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent px-4">
               Institutional solutions
             </h2>
-            <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+            <p className="text-base sm:text-xl text-gray-300 mb-6 sm:mb-8 max-w-3xl mx-auto px-4">
               Our large and growing client base around the world trusts us to deliver seamless execution 24/7.
             </p>
-            <a href="#" className="group inline-flex items-center text-purple-400 hover:text-purple-300 font-medium text-lg transition-all duration-300">
+            <a href="#" className="group inline-flex items-center text-purple-400 hover:text-purple-300 font-medium text-base sm:text-lg transition-all duration-300">
               Explore institutional solutions 
-              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
+              <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-1 transition-transform duration-300" />
             </a>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {/* Solution 1 */}
-            <div className="group bg-white/5 backdrop-blur-sm rounded-2xl p-8 hover:bg-white/10 transition-all duration-500 cursor-pointer border border-white/10 hover:border-purple-400/50 transform hover:-translate-y-3 hover:shadow-2xl">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <div className="group bg-white/5 backdrop-blur-sm rounded-2xl p-6 sm:p-8 hover:bg-white/10 transition-all duration-500 cursor-pointer border border-white/10 hover:border-purple-400/50 transform hover:-translate-y-3 hover:shadow-2xl">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="font-bold text-white mb-4 text-xl group-hover:text-purple-300 transition-colors duration-300">Trading overview</h3>
-              <ArrowRight className="w-6 h-6 text-white/60 group-hover:text-purple-400 group-hover:translate-x-2 transition-all duration-300" />
+              <h3 className="font-bold text-white mb-4 text-lg sm:text-xl group-hover:text-purple-300 transition-colors duration-300">Trading overview</h3>
+              <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-white/60 group-hover:text-purple-400 group-hover:translate-x-2 transition-all duration-300" />
             </div>
 
             {/* Solution 2 */}
-            <div className="group bg-white/5 backdrop-blur-sm rounded-2xl p-8 hover:bg-white/10 transition-all duration-500 cursor-pointer border border-white/10 hover:border-green-400/50 transform hover:-translate-y-3 hover:shadow-2xl">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-teal-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <div className="group bg-white/5 backdrop-blur-sm rounded-2xl p-6 sm:p-8 hover:bg-white/10 transition-all duration-500 cursor-pointer border border-white/10 hover:border-green-400/50 transform hover:-translate-y-3 hover:shadow-2xl">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-green-500 to-teal-500 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
                 </svg>
               </div>
-              <h3 className="font-bold text-white mb-4 text-xl group-hover:text-green-300 transition-colors duration-300">OTC Products</h3>
-              <ArrowRight className="w-6 h-6 text-white/60 group-hover:text-green-400 group-hover:translate-x-2 transition-all duration-300" />
+              <h3 className="font-bold text-white mb-4 text-lg sm:text-xl group-hover:text-green-300 transition-colors duration-300">OTC Products</h3>
+              <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-white/60 group-hover:text-green-400 group-hover:translate-x-2 transition-all duration-300" />
             </div>
 
             {/* Solution 3 */}
-            <div className="group bg-white/5 backdrop-blur-sm rounded-2xl p-8 hover:bg-white/10 transition-all duration-500 cursor-pointer border border-white/10 hover:border-indigo-400/50 transform hover:-translate-y-3 hover:shadow-2xl">
-              <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <div className="group bg-white/5 backdrop-blur-sm rounded-2xl p-6 sm:p-8 hover:bg-white/10 transition-all duration-500 cursor-pointer border border-white/10 hover:border-indigo-400/50 transform hover:-translate-y-3 hover:shadow-2xl">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
                 </svg>
               </div>
-              <h3 className="font-bold text-white mb-4 text-xl group-hover:text-indigo-300 transition-colors duration-300">Liquidity Partner</h3>
-              <ArrowRight className="w-6 h-6 text-white/60 group-hover:text-indigo-400 group-hover:translate-x-2 transition-all duration-300" />
+              <h3 className="font-bold text-white mb-4 text-lg sm:text-xl group-hover:text-indigo-300 transition-colors duration-300">Liquidity Partner</h3>
+              <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-white/60 group-hover:text-indigo-400 group-hover:translate-x-2 transition-all duration-300" />
             </div>
 
             {/* Solution 4 */}
-            <div className="group bg-white/5 backdrop-blur-sm rounded-2xl p-8 hover:bg-white/10 transition-all duration-500 cursor-pointer border border-white/10 hover:border-orange-400/50 transform hover:-translate-y-3 hover:shadow-2xl">
-              <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <div className="group bg-white/5 backdrop-blur-sm rounded-2xl p-6 sm:p-8 hover:bg-white/10 transition-all duration-500 cursor-pointer border border-white/10 hover:border-orange-400/50 transform hover:-translate-y-3 hover:shadow-2xl">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
                 </svg>
               </div>
-              <h3 className="font-bold text-white mb-4 text-xl group-hover:text-orange-300 transition-colors duration-300">Client onboarding</h3>
-              <ArrowRight className="w-6 h-6 text-white/60 group-hover:text-orange-400 group-hover:translate-x-2 transition-all duration-300" />
+              <h3 className="font-bold text-white mb-4 text-lg sm:text-xl group-hover:text-orange-300 transition-colors duration-300">Client onboarding</h3>
+              <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-white/60 group-hover:text-orange-400 group-hover:translate-x-2 transition-all duration-300" />
             </div>
           </div>
         </div>
       </section>
 
       {/* Latest News Section */}
-      <section className="relative py-20 bg-gradient-to-b from-black/40 to-black/60 overflow-hidden">
-        {/* Background Effects */}
-        <div className="absolute inset-0 opacity-5">
+      <section className="relative py-12 sm:py-20 bg-gradient-to-b from-black/40 to-black/60 overflow-hidden">
+        {/* Background Effects - Hidden on mobile for performance */}
+        <div className="absolute inset-0 opacity-5 hidden sm:block">
           <div className="absolute top-20 right-20 w-80 h-80 bg-purple-500 rounded-full filter blur-3xl animate-pulse"></div>
           <div className="absolute bottom-20 left-20 w-96 h-96 bg-blue-500 rounded-full filter blur-3xl animate-bounce"></div>
         </div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl lg:text-5xl font-bold text-white mb-4 bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent px-4">
               Latest news
             </h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-purple-400 to-blue-400 mx-auto rounded-full"></div>
+            <div className="w-16 sm:w-24 h-1 bg-gradient-to-r from-purple-400 to-blue-400 mx-auto rounded-full"></div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {/* News Item 1 */}
-            <div className="group bg-white/5 backdrop-blur-md rounded-xl p-8 hover:bg-white/10 transition-all duration-500 border border-white/10 hover:border-purple-400/50 transform hover:-translate-y-2 hover:shadow-2xl">
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-blue-400 rounded-lg mb-6 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <span className="text-white font-bold text-sm">B2C2</span>
+            <div className="group bg-white/5 backdrop-blur-md rounded-xl p-6 sm:p-8 hover:bg-white/10 transition-all duration-500 border border-white/10 hover:border-purple-400/50 transform hover:-translate-y-2 hover:shadow-2xl">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-purple-400 to-blue-400 rounded-lg mb-4 sm:mb-6 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <span className="text-white font-bold text-xs sm:text-sm">B2C2</span>
               </div>
-              <div className="text-xs text-purple-300 uppercase tracking-wide mb-3 font-semibold">Press release</div>
-              <h3 className="font-bold text-white mb-3 text-lg group-hover:text-purple-300 transition-colors duration-300">
+              <div className="text-xs text-purple-300 uppercase tracking-wide mb-2 sm:mb-3 font-semibold">Press release</div>
+              <h3 className="font-bold text-white mb-2 sm:mb-3 text-base sm:text-lg group-hover:text-purple-300 transition-colors duration-300 line-clamp-3">
                 B2C2 and PV01 Pioneer Corporate Bond on Blockchain
               </h3>
-              <p className="text-gray-300 text-sm mb-6">November 25, 2024</p>
-              <a href="#" className="text-purple-400 hover:text-purple-300 font-medium text-sm inline-flex items-center group-hover:translate-x-1 transition-all duration-300">
-                Read more <ArrowRight className="ml-1 h-4 w-4" />
+              <p className="text-gray-300 text-xs sm:text-sm mb-4 sm:mb-6">November 25, 2024</p>
+              <a href="#" className="text-purple-400 hover:text-purple-300 font-medium text-xs sm:text-sm inline-flex items-center group-hover:translate-x-1 transition-all duration-300">
+                Read more <ArrowRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
               </a>
             </div>
 
             {/* News Item 2 */}
-            <div className="group bg-white/5 backdrop-blur-md rounded-xl p-8 hover:bg-white/10 transition-all duration-500 border border-white/10 hover:border-blue-400/50 transform hover:-translate-y-2 hover:shadow-2xl">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-lg mb-6 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <span className="text-white font-bold text-sm">B2C2</span>
+            <div className="group bg-white/5 backdrop-blur-md rounded-xl p-6 sm:p-8 hover:bg-white/10 transition-all duration-500 border border-white/10 hover:border-blue-400/50 transform hover:-translate-y-2 hover:shadow-2xl">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-lg mb-4 sm:mb-6 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <span className="text-white font-bold text-xs sm:text-sm">B2C2</span>
               </div>
-              <div className="text-xs text-blue-300 uppercase tracking-wide mb-3 font-semibold">Press release</div>
-              <h3 className="font-bold text-white mb-3 text-lg group-hover:text-blue-300 transition-colors duration-300">
+              <div className="text-xs text-blue-300 uppercase tracking-wide mb-2 sm:mb-3 font-semibold">Press release</div>
+              <h3 className="font-bold text-white mb-2 sm:mb-3 text-base sm:text-lg group-hover:text-blue-300 transition-colors duration-300 line-clamp-3">
                 B2C2 Partners with OpenPayd to Expand its Global Instant Settlement Network
               </h3>
-              <p className="text-gray-300 text-sm mb-6">October 28, 2024</p>
-              <a href="#" className="text-blue-400 hover:text-blue-300 font-medium text-sm inline-flex items-center group-hover:translate-x-1 transition-all duration-300">
-                Read more <ArrowRight className="ml-1 h-4 w-4" />
+              <p className="text-gray-300 text-xs sm:text-sm mb-4 sm:mb-6">October 28, 2024</p>
+              <a href="#" className="text-blue-400 hover:text-blue-300 font-medium text-xs sm:text-sm inline-flex items-center group-hover:translate-x-1 transition-all duration-300">
+                Read more <ArrowRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
               </a>
             </div>
 
             {/* News Item 3 */}
-            <div className="group bg-white/5 backdrop-blur-md rounded-xl p-8 hover:bg-white/10 transition-all duration-500 border border-white/10 hover:border-indigo-400/50 transform hover:-translate-y-2 hover:shadow-2xl">
-              <div className="w-12 h-12 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-lg mb-6 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <span className="text-white font-bold text-sm">B2C2</span>
+            <div className="group bg-white/5 backdrop-blur-md rounded-xl p-6 sm:p-8 hover:bg-white/10 transition-all duration-500 border border-white/10 hover:border-indigo-400/50 transform hover:-translate-y-2 hover:shadow-2xl">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-lg mb-4 sm:mb-6 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <span className="text-white font-bold text-xs sm:text-sm">B2C2</span>
               </div>
-              <div className="text-xs text-indigo-300 uppercase tracking-wide mb-3 font-semibold">Press release</div>
-              <h3 className="font-bold text-white mb-3 text-lg group-hover:text-indigo-300 transition-colors duration-300">
+              <div className="text-xs text-indigo-300 uppercase tracking-wide mb-2 sm:mb-3 font-semibold">Press release</div>
+              <h3 className="font-bold text-white mb-2 sm:mb-3 text-base sm:text-lg group-hover:text-indigo-300 transition-colors duration-300 line-clamp-3">
                 B2C2 Appoints Cactus Raazi as US CEO
               </h3>
-              <p className="text-gray-300 text-sm mb-6">September 2, 2024</p>
-              <a href="#" className="text-indigo-400 hover:text-indigo-300 font-medium text-sm inline-flex items-center group-hover:translate-x-1 transition-all duration-300">
-                Read more <ArrowRight className="ml-1 h-4 w-4" />
+              <p className="text-gray-300 text-xs sm:text-sm mb-4 sm:mb-6">September 2, 2024</p>
+              <a href="#" className="text-indigo-400 hover:text-indigo-300 font-medium text-xs sm:text-sm inline-flex items-center group-hover:translate-x-1 transition-all duration-300">
+                Read more <ArrowRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
               </a>
             </div>
 

@@ -137,7 +137,7 @@ function App() {
   const { theme } = useTheme();
 
   // PRIMEIRA PRIORIDADE: Se estiver acessando Quantum Tasks, renderizar diretamente SEM qualquer verificação do Vendzz
-  if (location.startsWith("/quantum-tasks")) {
+  if (location.startsWith("/quantum-tasks") || location === "/") {
     return <QuantumTasksModern />;
   }
 
@@ -176,7 +176,7 @@ function App() {
       <div className={theme === 'dark' ? 'dark' : ''}>
         <Switch>
         {/* Public routes without sidebar */}
-        <Route path="/" component={LandingPage} />
+        <Route path="/" component={QuantumTasksModern} />
         <Route path="/dark" component={DarkLandingPage} />
         <Route path="/modern" component={ModernHomePage} />
         <Route path="/login" component={LoginPage} />

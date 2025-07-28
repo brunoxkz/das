@@ -724,6 +724,14 @@ body {
   color: hsl(var(--foreground));
 }
 
+/* Line clamp utilities for responsive text truncation */
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* SIDEBAR DARK MODE - FORÇA ABSOLUTA */
 .dark .vendzz-sidebar {
   background-color: #111827 !important; /* gray-900 */
