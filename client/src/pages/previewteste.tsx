@@ -1,9 +1,26 @@
 import { useState, useEffect } from 'react';
 import { Menu, X, ArrowRight, ChevronDown } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
 export default function PreviewTeste() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [email, setEmail] = useState('');
+
+  // Fetch dynamic data from API
+  const { data: news } = useQuery({
+    queryKey: ['/api/news'],
+    queryFn: () => fetch('/api/news?limit=4').then(res => res.json()),
+  });
+
+  const { data: insights } = useQuery({
+    queryKey: ['/api/insights'],
+    queryFn: () => fetch('/api/insights?limit=4').then(res => res.json()),
+  });
+
+  const { data: solutions } = useQuery({
+    queryKey: ['/api/solutions'],
+    queryFn: () => fetch('/api/solutions').then(res => res.json()),
+  });
   const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
@@ -12,14 +29,32 @@ export default function PreviewTeste() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Newsletter subscription:', email);
-    setEmail('');
+    
+    try {
+      const response = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, source: 'website' })
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok) {
+        setEmail('');
+        alert('Thank you for subscribing to our newsletter!');
+      } else {
+        alert(result.error || 'Failed to subscribe. Please try again.');
+      }
+    } catch (error) {
+      console.error('Newsletter subscription error:', error);
+      alert('Failed to subscribe. Please try again.');
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-950 text-white font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-purple-800 via-purple-900 to-blue-800 text-white font-sans overflow-x-hidden">
       <style>{`
         @keyframes animate-fade-in {
           from { opacity: 0; transform: translateY(30px); }
@@ -39,9 +74,9 @@ export default function PreviewTeste() {
       `}</style>
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-20 -right-20 w-96 h-96 bg-purple-500 rounded-full opacity-10 animate-pulse"></div>
-        <div className="absolute top-1/2 -left-20 w-64 h-64 bg-blue-500 rounded-full opacity-10 animate-bounce"></div>
-        <div className="absolute bottom-20 right-1/3 w-48 h-48 bg-indigo-500 rounded-full opacity-10 animate-ping"></div>
+        <div className="absolute -top-20 -right-20 w-96 h-96 bg-purple-400 rounded-full opacity-15 animate-pulse"></div>
+        <div className="absolute top-1/2 -left-20 w-64 h-64 bg-purple-600 rounded-full opacity-15 animate-bounce"></div>
+        <div className="absolute bottom-20 right-1/3 w-48 h-48 bg-purple-500 rounded-full opacity-15 animate-ping"></div>
         <div 
           className="absolute top-1/4 left-1/4 w-32 h-32 bg-cyan-500 rounded-full opacity-20"
           style={{ transform: `translateY(${scrollY * 0.5}px)` }}
@@ -161,6 +196,14 @@ export default function PreviewTeste() {
                 Learn More
                 <ArrowRight className="inline-block ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
               </button>
+              
+              <a 
+                href="/admin-panel" 
+                className="group px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 text-white font-semibold rounded-full hover:from-yellow-500 hover:to-orange-500 transition-all duration-300 transform hover:scale-105 shadow-2xl"
+              >
+                Admin Panel
+                <ArrowRight className="inline-block ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+              </a>
             </div>
           </div>
         </div>

@@ -1,235 +1,150 @@
-import {
-  pgTable,
-  text,
-  varchar,
-  timestamp,
-  jsonb,
-  index,
-  integer,
+import { sql } from 'drizzle-orm';
+import { 
+  integer, 
+  text, 
   boolean,
-  serial,
-  uuid,
-  numeric,
-} from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod";
+  timestamp,
+  pgTable,
+  varchar,
+  json
+} from 'drizzle-orm/pg-core';
+import { createInsertSchema } from 'drizzle-zod';
+import { z } from 'zod';
 
-// Session storage table for Replit Auth
-export const sessions = pgTable(
-  "sessions",
-  {
-    sid: varchar("sid").primaryKey(),
-    sess: jsonb("sess").notNull(),
-    expire: timestamp("expire").notNull(),
-  },
-  (table) => [index("IDX_session_expire").on(table.expire)],
-);
-
-// User storage table for JWT Auth
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().notNull(),
-  email: varchar("email").unique(),
-  password: varchar("password"), // For JWT auth
-  refreshToken: text("refresh_token"), // For JWT refresh
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
-  profileImageUrl: varchar("profile_image_url"),
-  role: varchar("role").default("user").notNull(), // admin, user
-  stripeCustomerId: varchar("stripe_customer_id"),
-  stripeSubscriptionId: varchar("stripe_subscription_id"),
-  subscriptionStatus: varchar("subscription_status").default("inactive"),
-  plan: varchar("plan").default("free").notNull(), // free, invited, plus
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+// Site Content Management
+export const siteContent = pgTable('site_content', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  section: varchar('section', { length: 100 }).notNull(), // hero, about, services, etc
+  title: text('title'),
+  subtitle: text('subtitle'),
+  content: text('content'),
+  buttonText: text('button_text'),
+  buttonUrl: text('button_url'),
+  imageUrl: text('image_url'),
+  isActive: boolean('is_active').default(true),
+  order: integer('order').default(0),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
 });
 
-// Quiz templates
-export const quizTemplates = pgTable("quiz_templates", {
-  id: serial("id").primaryKey(),
-  name: varchar("name").notNull(),
-  description: text("description"),
-  category: varchar("category").notNull(),
-  thumbnail: varchar("thumbnail"),
-  structure: jsonb("structure").notNull(),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
+// Latest News Management
+export const news = pgTable('news', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  title: text('title').notNull(),
+  excerpt: text('excerpt'),
+  content: text('content'),
+  imageUrl: text('image_url'),
+  category: varchar('category', { length: 50 }).default('Press release'),
+  publishedAt: timestamp('published_at').defaultNow(),
+  isPublished: boolean('is_published').default(true),
+  author: varchar('author', { length: 100 }).default('B2C2'),
+  slug: varchar('slug', { length: 200 }).unique(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
 });
 
-// User quizzes
-export const quizzes = pgTable("quizzes", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  templateId: integer("template_id").references(() => quizTemplates.id),
-  title: varchar("title").notNull(),
-  description: text("description"),
-  structure: jsonb("structure").notNull(),
-  settings: jsonb("settings").default("{}"),
-  isPublished: boolean("is_published").default(false),
-  embedCode: text("embed_code"),
-  // Tracking pixels and scripts
-  facebookPixel: varchar("facebook_pixel"),
-  googlePixel: varchar("google_pixel"),
-  ga4Id: varchar("ga4_id"),
-  customHeadScript: text("custom_head_script"),
-  // Branding and customization
-  brandingLogo: varchar("branding_logo"), // URL da logo que fica flutuando
-  progressBarColor: varchar("progress_bar_color").default("#10b981"), // Cor da barra de progresso
-  buttonColor: varchar("button_color").default("#10b981"), // Cor dos botões
-  favicon: varchar("favicon"), // URL do favicon
-  seoTitle: varchar("seo_title"),
-  seoDescription: text("seo_description"),
-  seoKeywords: varchar("seo_keywords"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+// Events Management
+export const events = pgTable('events', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  title: text('title').notNull(),
+  description: text('description'),
+  eventDate: timestamp('event_date').notNull(),
+  location: text('location'),
+  imageUrl: text('image_url'),
+  registrationUrl: text('registration_url'),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
 });
 
-// Quiz responses/leads
-export const quizResponses = pgTable("quiz_responses", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  quizId: uuid("quiz_id").references(() => quizzes.id).notNull(),
-  email: varchar("email"),
-  name: varchar("name"),
-  phone: varchar("phone"),
-  responses: jsonb("responses").notNull(),
-  result: jsonb("result"),
-  score: numeric("score"),
-  completedAt: timestamp("completed_at").defaultNow(),
-  ipAddress: varchar("ip_address"),
-  userAgent: text("user_agent"),
+// Institutional Solutions Management
+export const solutions = pgTable('solutions', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  title: text('title').notNull(),
+  description: text('description'),
+  icon: varchar('icon', { length: 50 }).default('check'),
+  color: varchar('color', { length: 50 }).default('purple'),
+  url: text('url'),
+  isActive: boolean('is_active').default(true),
+  order: integer('order').default(0),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
 });
 
-// Quiz analytics
-export const quizAnalytics = pgTable("quiz_analytics", {
-  id: serial("id").primaryKey(),
-  quizId: uuid("quiz_id").references(() => quizzes.id).notNull(),
-  date: timestamp("date").defaultNow(),
-  views: integer("views").default(0),
-  starts: integer("starts").default(0),
-  completions: integer("completions").default(0),
-  leads: integer("leads").default(0),
-  conversionRate: numeric("conversion_rate").default("0"),
+// Institutional Insights Management
+export const insights = pgTable('insights', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  title: text('title').notNull(),
+  excerpt: text('excerpt'),
+  content: text('content'),
+  imageUrl: text('image_url'),
+  category: varchar('category', { length: 50 }).default('Thought leadership'),
+  publishedAt: timestamp('published_at').defaultNow(),
+  isPublished: boolean('is_published').default(true),
+  readTime: integer('read_time').default(5),
+  slug: varchar('slug', { length: 200 }).unique(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
 });
 
-// Produtos físicos para afiliação
-export const products = pgTable("products", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: varchar("name").notNull(),
-  description: text("description"),
-  image: varchar("image"), // URL da imagem do produto
-  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
-  commissionRate: numeric("commission_rate", { precision: 5, scale: 2 }).notNull(), // Porcentagem de comissão
-  commissionValue: numeric("commission_value", { precision: 10, scale: 2 }), // Valor fixo da comissão
-  category: varchar("category"),
-  brand: varchar("brand"),
-  affiliateLink: text("affiliate_link"), // Link para onde o usuário será redirecionado
-  isActive: boolean("is_active").default(true),
-  createdBy: varchar("created_by").references(() => users.id).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+// Newsletter Subscriptions
+export const newsletter = pgTable('newsletter', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  isActive: boolean('is_active').default(true),
+  source: varchar('source', { length: 50 }).default('website'),
+  subscribedAt: timestamp('subscribed_at').defaultNow(),
+  unsubscribedAt: timestamp('unsubscribed_at')
 });
 
-// Afiliações dos usuários aos produtos
-export const affiliations = pgTable("affiliations", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  productId: uuid("product_id").references(() => products.id).notNull(),
-  status: varchar("status").default("active").notNull(), // active, paused, cancelled
-  affiliateCode: varchar("affiliate_code").unique(), // Código único do afiliado para tracking
-  customLink: text("custom_link"), // Link personalizado gerado
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+// Admin Users
+export const adminUsers = pgTable('admin_users', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  username: varchar('username', { length: 100 }).notNull().unique(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  password: text('password').notNull(),
+  role: varchar('role', { length: 50 }).default('admin'),
+  isActive: boolean('is_active').default(true),
+  lastLogin: timestamp('last_login'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
 });
 
-// SMS Credits Packages
-export const smsCreditPackages = pgTable("sms_credit_packages", {
-  id: serial("id").primaryKey(),
-  name: varchar("name").notNull(),
-  description: text("description"),
-  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
-  credits: integer("credits").notNull(),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
+// Site Settings
+export const siteSettings = pgTable('site_settings', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  key: varchar('key', { length: 100 }).notNull().unique(),
+  value: text('value'),
+  type: varchar('type', { length: 50 }).default('text'), // text, boolean, json, number
+  description: text('description'),
+  group: varchar('group', { length: 50 }).default('general'),
+  updatedAt: timestamp('updated_at').defaultNow()
 });
 
-// SMS Credits Transactions
-export const smsCreditsTransactions = pgTable("sms_credits_transactions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  packageId: integer("package_id").references(() => smsCreditPackages.id),
-  transactionType: varchar("transaction_type").notNull(), // purchase, usage
-  credits: integer("credits").notNull(),
-  amount: numeric("amount", { precision: 10, scale: 2 }),
-  transactionDate: timestamp("transaction_date").defaultNow(),
-});
+// Insert Schemas
+export const insertSiteContent = createInsertSchema(siteContent);
+export const insertNews = createInsertSchema(news);
+export const insertEvents = createInsertSchema(events);
+export const insertSolutions = createInsertSchema(solutions);
+export const insertInsights = createInsertSchema(insights);
+export const insertNewsletter = createInsertSchema(newsletter);
+export const insertAdminUser = createInsertSchema(adminUsers);
+export const insertSiteSettings = createInsertSchema(siteSettings);
 
-// Schema exports
-export const insertUserSchema = createInsertSchema(users).omit({
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertQuizTemplateSchema = createInsertSchema(quizTemplates).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertQuizSchema = createInsertSchema(quizzes).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-}).extend({
-  structure: z.any().optional(),
-  settings: z.any().optional(),
-});
-
-export const insertQuizResponseSchema = createInsertSchema(quizResponses).omit({
-  id: true,
-  completedAt: true,
-});
-
-export const insertQuizAnalyticsSchema = createInsertSchema(quizAnalytics).omit({
-  id: true,
-  date: true,
-});
-
-export const insertProductSchema = createInsertSchema(products).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertAffiliationSchema = createInsertSchema(affiliations).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertSmsCreditsTransactionSchema = createInsertSchema(smsCreditsTransactions).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertSmsCreditPackageSchema = createInsertSchema(smsCreditPackages).omit({
-  id: true,
-  createdAt: true,
-});
-
-// Type exports
-export type UpsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
-export type InsertQuizTemplate = z.infer<typeof insertQuizTemplateSchema>;
-export type QuizTemplate = typeof quizTemplates.$inferSelect;
-export type InsertQuiz = z.infer<typeof insertQuizSchema>;
-export type Quiz = typeof quizzes.$inferSelect;
-export type InsertQuizResponse = z.infer<typeof insertQuizResponseSchema>;
-export type QuizResponse = typeof quizResponses.$inferSelect;
-export type InsertQuizAnalytics = z.infer<typeof insertQuizAnalyticsSchema>;
-export type QuizAnalytics = typeof quizAnalytics.$inferSelect;
-export type InsertProduct = z.infer<typeof insertProductSchema>;
-export type Product = typeof products.$inferSelect;
-export type InsertAffiliation = z.infer<typeof insertAffiliationSchema>;
-export type Affiliation = typeof affiliations.$inferSelect;
-export type InsertSmsCreditsTransaction = z.infer<typeof insertSmsCreditsTransactionSchema>;
-export type SmsCreditsTransaction = typeof smsCreditsTransactions.$inferSelect;
-export type InsertSmsCreditPackage = z.infer<typeof insertSmsCreditPackageSchema>;
-export type SmsCreditPackage = typeof smsCreditPackages.$inferSelect;
+// Types
+export type SiteContent = typeof siteContent.$inferSelect;
+export type InsertSiteContent = z.infer<typeof insertSiteContent>;
+export type News = typeof news.$inferSelect;
+export type InsertNews = z.infer<typeof insertNews>;
+export type Events = typeof events.$inferSelect;
+export type InsertEvents = z.infer<typeof insertEvents>;
+export type Solutions = typeof solutions.$inferSelect;
+export type InsertSolutions = z.infer<typeof insertSolutions>;
+export type Insights = typeof insights.$inferSelect;
+export type InsertInsights = z.infer<typeof insertInsights>;
+export type Newsletter = typeof newsletter.$inferSelect;
+export type InsertNewsletter = z.infer<typeof insertNewsletter>;
+export type AdminUser = typeof adminUsers.$inferSelect;
+export type InsertAdminUser = z.infer<typeof insertAdminUser>;
+export type SiteSettings = typeof siteSettings.$inferSelect;
+export type InsertSiteSettings = z.infer<typeof insertSiteSettings>;

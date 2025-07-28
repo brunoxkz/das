@@ -1,471 +1,406 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/hooks/useAuth-jwt";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { Shield, Users, Settings, Crown, Bell, Send, Smartphone, Zap } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus, Edit, Trash2, Eye, EyeOff, Save, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { apiRequest } from '@/lib/queryClient';
 
-interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  plan: string;
-  createdAt: string;
-}
-
-const getRoleBadgeColor = (role: string) => {
-  switch (role) {
-    case 'admin': return 'bg-red-500 text-white';
-    case 'editor': return 'bg-blue-500 text-white';
-    case 'user': return 'bg-gray-500 text-white';
-    default: return 'bg-gray-500 text-white';
-  }
-};
-
-const getPlanBadgeColor = (plan: string) => {
-  switch (plan) {
-    case 'enterprise': return 'bg-purple-500 text-white';
-    case 'premium': return 'bg-green-500 text-white';
-    case 'free': return 'bg-gray-400 text-white';
-    default: return 'bg-gray-400 text-white';
-  }
-};
-
-export default function AdminPage() {
-  const { user } = useAuth();
+export default function AdminPanel() {
+  const [activeTab, setActiveTab] = useState('content');
+  const [editingItem, setEditingItem] = useState<any>(null);
   const queryClient = useQueryClient();
-  const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const [newRole, setNewRole] = useState<string>('');
-  
-  // Notification form state
-  const [notificationForm, setNotificationForm] = useState({
-    title: '',
-    message: '',
-    type: 'info' as 'info' | 'success' | 'warning' | 'error',
-    isGlobal: true,
-    targetUsers: [] as string[]
+
+  // Fetch data
+  const { data: news } = useQuery({
+    queryKey: ['/api/admin/news'],
   });
 
-  // Fetch all users
-  const { data: users, isLoading, error } = useQuery<User[]>({
-    queryKey: ['/api/admin/users'],
-    queryFn: async () => {
-      console.log("ADMIN - Buscando usuários...");
-      const data = await apiRequest('GET', '/api/admin/users');
-      console.log("ADMIN - Users data:", data);
-      return Array.isArray(data) ? data : [];
-    },
-    enabled: user?.role === 'admin'
+  const { data: insights } = useQuery({
+    queryKey: ['/api/admin/insights'],
   });
 
-  console.log("ADMIN - Estado atual:", { user: user?.role, users, isLoading, error });
+  const { data: solutions } = useQuery({
+    queryKey: ['/api/admin/solutions'],
+  });
 
-  // Update user role mutation
-  const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      const response = await apiRequest('PUT', `/api/admin/users/${userId}/role`, { 
-        body: JSON.stringify({ role }),
-        headers: { 'Content-Type': 'application/json' }
-      });
-      return response.json();
-    },
+  const { data: events } = useQuery({
+    queryKey: ['/api/admin/events'],
+  });
+
+  const { data: subscribers } = useQuery({
+    queryKey: ['/api/admin/newsletter/subscribers/active'],
+  });
+
+  // Mutations
+  const createNewsMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('POST', '/api/admin/news', data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
-      toast({
-        title: "Sucesso",
-        description: "Papel do usuário atualizado com sucesso",
-      });
-      setSelectedUser(null);
-      setNewRole('');
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/news'] });
+      setEditingItem(null);
     },
-    onError: (error: any) => {
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao atualizar papel do usuário",
-        variant: "destructive"
-      });
-    }
   });
 
-  // Send notification mutation
-  const sendNotificationMutation = useMutation({
-    mutationFn: async (notificationData: any) => {
-      return await apiRequest('POST', '/api/notifications/send-push', notificationData);
-    },
+  const updateNewsMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) =>
+      apiRequest('PUT', `/api/admin/news/${id}`, data),
     onSuccess: () => {
-      toast({
-        title: "Notificação enviada!",
-        description: "A notificação foi enviada com sucesso.",
-      });
-      setNotificationForm({
-        title: '',
-        message: '',
-        type: 'info',
-        isGlobal: true,
-        targetUsers: []
-      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/news'] });
+      setEditingItem(null);
     },
-    onError: (error: any) => {
-      toast({
-        title: "Erro ao enviar notificação",
-        description: error.message || "Erro interno do servidor",
-        variant: "destructive"
-      });
-    }
   });
 
-  // Check if user is admin
-  if (user?.role !== 'admin') {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-        <div className="max-w-2xl mx-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Acesso Negado
-              </CardTitle>
-              <CardDescription>
-                Você não tem permissão para acessar esta página.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  const deleteNewsMutation = useMutation({
+    mutationFn: (id: number) => apiRequest('DELETE', `/api/admin/news/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/news'] });
+    },
+  });
 
-  const handleUpdateRole = (userId: string, role: string) => {
-    updateRoleMutation.mutate({ userId, role });
-  };
+  const createInsightMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('POST', '/api/admin/insights', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/insights'] });
+      setEditingItem(null);
+    },
+  });
 
-  const handleSendNotification = () => {
-    if (!notificationForm.title || !notificationForm.message) {
-      toast({
-        title: "Erro",
-        description: "Título e mensagem são obrigatórios",
-        variant: "destructive"
-      });
-      return;
-    }
+  const updateInsightMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) =>
+      apiRequest('PUT', `/api/admin/insights/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/insights'] });
+      setEditingItem(null);
+    },
+  });
 
-    sendNotificationMutation.mutate(notificationForm);
-  };
+  const deleteInsightMutation = useMutation({
+    mutationFn: (id: number) => apiRequest('DELETE', `/api/admin/insights/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/insights'] });
+    },
+  });
 
-  const handleUserSelection = (userId: string, isChecked: boolean) => {
-    if (isChecked) {
-      setNotificationForm(prev => ({
-        ...prev,
-        targetUsers: [...prev.targetUsers, userId]
-      }));
+  const handleSaveNews = (data: any) => {
+    if (editingItem?.id) {
+      updateNewsMutation.mutate({ id: editingItem.id, data });
     } else {
-      setNotificationForm(prev => ({
-        ...prev,
-        targetUsers: prev.targetUsers.filter(id => id !== userId)
-      }));
+      createNewsMutation.mutate(data);
+    }
+  };
+
+  const handleSaveInsight = (data: any) => {
+    if (editingItem?.id) {
+      updateInsightMutation.mutate({ id: editingItem.id, data });
+    } else {
+      createInsightMutation.mutate(data);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Crown className="h-8 w-8 text-yellow-500" />
-            Painel de Administração
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">
-            Gerencie usuários, roles, permissões e notificações do sistema
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-purple-800 via-purple-900 to-blue-800 text-white">
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-4xl font-bold mb-8 text-center bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
+          Admin Panel
+        </h1>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Usuários</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{users?.length || 0}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Administradores</CardTitle>
-              <Shield className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {users?.filter(u => u.role === 'admin').length || 0}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Usuários Premium</CardTitle>
-              <Crown className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {users?.filter(u => u.plan !== 'free').length || 0}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content with Tabs */}
-        <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="users" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Gerenciar Usuários
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-5 bg-black/20 backdrop-blur-md">
+            <TabsTrigger value="content" className="data-[state=active]:bg-purple-600">
+              Site Content
             </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex items-center gap-2">
-              <Bell className="h-4 w-4" />
-              Enviar Notificações
+            <TabsTrigger value="news" className="data-[state=active]:bg-purple-600">
+              Latest News
+            </TabsTrigger>
+            <TabsTrigger value="insights" className="data-[state=active]:bg-purple-600">
+              Insights
+            </TabsTrigger>
+            <TabsTrigger value="solutions" className="data-[state=active]:bg-purple-600">
+              Solutions
+            </TabsTrigger>
+            <TabsTrigger value="newsletter" className="data-[state=active]:bg-purple-600">
+              Newsletter
             </TabsTrigger>
           </TabsList>
 
-          {/* Users Management Tab */}
-          <TabsContent value="users">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gerenciamento de Usuários</CardTitle>
-                <CardDescription>
-                  Visualize e edite os papéis dos usuários no sistema
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Papel</TableHead>
-                        <TableHead>Plano</TableHead>
-                        <TableHead>Cadastrado em</TableHead>
-                        <TableHead>Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users?.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell className="font-medium">
-                            {user.firstName} {user.lastName}
-                          </TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell>
-                            <Badge className={getRoleBadgeColor(user.role)}>
-                              {user.role}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={getPlanBadgeColor(user.plan)}>
-                              {user.plan}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {new Date(user.createdAt).toLocaleDateString('pt-BR')}
-                          </TableCell>
-                          <TableCell>
-                            {selectedUser === user.id ? (
-                              <div className="flex gap-2">
-                                <Select value={newRole} onValueChange={setNewRole}>
-                                  <SelectTrigger className="w-32">
-                                    <SelectValue placeholder="Papel" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="user">user</SelectItem>
-                                    <SelectItem value="editor">editor</SelectItem>
-                                    <SelectItem value="admin">admin</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <Button 
-                                  size="sm" 
-                                  onClick={() => handleUpdateRole(user.id, newRole)}
-                                  disabled={!newRole || updateRoleMutation.isPending}
-                                >
-                                  Salvar
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => {
-                                    setSelectedUser(null);
-                                    setNewRole('');
-                                  }}
-                                >
-                                  Cancelar
-                                </Button>
-                              </div>
-                            ) : (
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedUser(user.id);
-                                  setNewRole(user.role);
-                                }}
-                              >
-                                <Settings className="h-4 w-4 mr-2" />
-                                Editar
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+          {/* Latest News Management */}
+          <TabsContent value="news" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Latest News Management</h2>
+              <Button
+                onClick={() => setEditingItem({ type: 'news' })}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add News
+              </Button>
+            </div>
 
-          {/* Notifications Tab */}
-          <TabsContent value="notifications">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5" />
-                  Enviar Notificações
-                </CardTitle>
-                <CardDescription>
-                  Envie notificações para todos os usuários ou usuários específicos
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Notification Form */}
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Título da Notificação</Label>
-                    <Input
-                      id="title"
-                      placeholder="Digite o título da notificação"
-                      value={notificationForm.title}
-                      onChange={(e) => setNotificationForm(prev => ({ ...prev, title: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="message">Mensagem</Label>
-                    <Textarea
-                      id="message"
-                      placeholder="Digite a mensagem da notificação"
-                      value={notificationForm.message}
-                      onChange={(e) => setNotificationForm(prev => ({ ...prev, message: e.target.value }))}
-                      rows={4}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="type">Tipo de Notificação</Label>
-                    <Select 
-                      value={notificationForm.type} 
-                      onValueChange={(value: any) => setNotificationForm(prev => ({ ...prev, type: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="info">Informação</SelectItem>
-                        <SelectItem value="success">Sucesso</SelectItem>
-                        <SelectItem value="warning">Aviso</SelectItem>
-                        <SelectItem value="error">Erro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Global vs Specific Users */}
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="global"
-                        checked={notificationForm.isGlobal}
-                        onCheckedChange={(checked) => 
-                          setNotificationForm(prev => ({ 
-                            ...prev, 
-                            isGlobal: checked as boolean,
-                            targetUsers: checked ? [] : prev.targetUsers
-                          }))
-                        }
-                      />
-                      <Label htmlFor="global">Enviar para todos os usuários</Label>
-                    </div>
-
-                    {!notificationForm.isGlobal && (
-                      <div className="space-y-2">
-                        <Label>Selecionar Usuários Específicos</Label>
-                        <div className="max-h-40 overflow-y-auto border rounded-md p-3">
-                          {users?.map((user) => (
-                            <div key={user.id} className="flex items-center space-x-2 py-1">
-                              <Checkbox
-                                id={`user-${user.id}`}
-                                checked={notificationForm.targetUsers.includes(user.id)}
-                                onCheckedChange={(checked) => handleUserSelection(user.id, checked as boolean)}
-                              />
-                              <Label htmlFor={`user-${user.id}`} className="text-sm">
-                                {user.firstName} {user.lastName} ({user.email})
-                              </Label>
-                            </div>
-                          ))}
+            <div className="grid gap-6">
+              {news?.map((item: any) => (
+                <Card key={item.id} className="bg-white/10 backdrop-blur-md border-white/20">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-white">{item.title}</CardTitle>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant={item.isPublished ? 'default' : 'secondary'}>
+                            {item.isPublished ? 'Published' : 'Draft'}
+                          </Badge>
+                          <span className="text-sm text-gray-300">
+                            {new Date(item.publishedAt).toLocaleDateString()}
+                          </span>
                         </div>
                       </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingItem({ ...item, type: 'news' })}
+                          className="border-white/20 text-white hover:bg-white/10"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteNewsMutation.mutate(item.id)}
+                          className="border-red-500/20 text-red-400 hover:bg-red-500/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-300">{item.excerpt}</p>
+                    {item.imageUrl && (
+                      <img
+                        src={item.imageUrl}
+                        alt={item.title}
+                        className="mt-4 w-full h-32 object-cover rounded-lg"
+                      />
                     )}
-                  </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
 
-                  <Button 
-                    onClick={handleSendNotification}
-                    disabled={sendNotificationMutation.isPending || !notificationForm.title || !notificationForm.message}
-                    className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
-                  >
-                    <Send className="w-4 h-4 mr-2" />
-                    {sendNotificationMutation.isPending ? 'Enviando...' : 'Enviar Notificação'}
-                  </Button>
+          {/* Insights Management */}
+          <TabsContent value="insights" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Institutional Insights Management</h2>
+              <Button
+                onClick={() => setEditingItem({ type: 'insight' })}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Insight
+              </Button>
+            </div>
+
+            <div className="grid gap-6">
+              {insights?.map((item: any) => (
+                <Card key={item.id} className="bg-white/10 backdrop-blur-md border-white/20">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-white">{item.title}</CardTitle>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant={item.isPublished ? 'default' : 'secondary'}>
+                            {item.isPublished ? 'Published' : 'Draft'}
+                          </Badge>
+                          <span className="text-sm text-gray-300">
+                            {new Date(item.publishedAt).toLocaleDateString()}
+                          </span>
+                          <span className="text-sm text-gray-300">
+                            {item.readTime} min read
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingItem({ ...item, type: 'insight' })}
+                          className="border-white/20 text-white hover:bg-white/10"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteInsightMutation.mutate(item.id)}
+                          className="border-red-500/20 text-red-400 hover:bg-red-500/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-300">{item.excerpt}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* Newsletter Management */}
+          <TabsContent value="newsletter" className="space-y-6">
+            <h2 className="text-2xl font-bold">Newsletter Subscribers</h2>
+            <Card className="bg-white/10 backdrop-blur-md border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white">Active Subscribers: {subscribers?.length || 0}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {subscribers?.map((subscriber: any) => (
+                    <div key={subscriber.id} className="flex justify-between items-center p-2 bg-white/5 rounded">
+                      <span className="text-white">{subscriber.email}</span>
+                      <span className="text-sm text-gray-300">
+                        {new Date(subscriber.subscribedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Edit Modal */}
+        {editingItem && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-white">
+                  {editingItem.id ? 'Edit' : 'Add'} {editingItem.type === 'news' ? 'News' : 'Insight'}
+                </h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditingItem(null)}
+                  className="border-white/20 text-white hover:bg-white/10"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  const data = {
+                    title: formData.get('title'),
+                    excerpt: formData.get('excerpt'),
+                    content: formData.get('content'),
+                    imageUrl: formData.get('imageUrl'),
+                    isPublished: formData.get('isPublished') === 'on',
+                    readTime: editingItem.type === 'insight' ? parseInt(formData.get('readTime') as string) : undefined,
+                  };
+
+                  if (editingItem.type === 'news') {
+                    handleSaveNews(data);
+                  } else {
+                    handleSaveInsight(data);
+                  }
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">Title</label>
+                  <Input
+                    name="title"
+                    defaultValue={editingItem.title}
+                    className="bg-white/10 border-white/20 text-white"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">Excerpt</label>
+                  <Textarea
+                    name="excerpt"
+                    defaultValue={editingItem.excerpt}
+                    className="bg-white/10 border-white/20 text-white"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">Content</label>
+                  <Textarea
+                    name="content"
+                    defaultValue={editingItem.content}
+                    className="bg-white/10 border-white/20 text-white"
+                    rows={6}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">Image URL</label>
+                  <Input
+                    name="imageUrl"
+                    defaultValue={editingItem.imageUrl}
+                    className="bg-white/10 border-white/20 text-white"
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
+
+                {editingItem.type === 'insight' && (
+                  <div>
+                    <label className="block text-sm font-medium text-white mb-2">Read Time (minutes)</label>
+                    <Input
+                      name="readTime"
+                      type="number"
+                      defaultValue={editingItem.readTime || 5}
+                      className="bg-white/10 border-white/20 text-white"
+                      min="1"
+                    />
+                  </div>
+                )}
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    name="isPublished"
+                    id="isPublished"
+                    defaultChecked={editingItem.isPublished}
+                    className="rounded"
+                  />
+                  <label htmlFor="isPublished" className="text-sm text-white">
+                    Published
+                  </label>
+                </div>
+
+                <div className="flex gap-4 pt-4">
+                  <Button
+                    type="submit"
+                    className="bg-purple-600 hover:bg-purple-700 flex-1"
+                    disabled={createNewsMutation.isPending || updateNewsMutation.isPending || createInsightMutation.isPending || updateInsightMutation.isPending}
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Save
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditingItem(null)}
+                    className="border-white/20 text-white hover:bg-white/10"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

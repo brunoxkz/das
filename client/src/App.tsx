@@ -128,6 +128,8 @@ import QuantumCourseManage from "@/pages/quantum-course-manage";
 import QuantumTasksModern from "@/pages/quantum-modern";
 import EssenciaDaPaz from "@/pages/essencia-da-paz";
 import PreviewTeste from "@/pages/previewteste";
+import AdminPanel from "@/pages/admin";
+import QuantumCMS from "@/pages/quantum-cms";
 
 
 function App() {
@@ -151,7 +153,7 @@ function App() {
   }
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/", "/dark", "/modern", "/login", "/pwa-login", "/payment-success", "/payment-cancel", "/quantum-tasks"];
+  const publicRoutes = ["/", "/dark", "/modern", "/login", "/pwa-login", "/payment-success", "/payment-cancel", "/quantum-tasks", "/quantum-cms", "/previewteste", "/admin-panel"];
   const isQuizRoute = location.startsWith("/quiz/");
   const isCheckoutRoute = location.startsWith("/checkout/");
   const isStripeCheckoutLink = location.startsWith("/stripe-checkout-link/");
@@ -189,8 +191,10 @@ function App() {
         <Route path="/payment-cancel" component={PaymentSuccess} />
         <Route path="/stripe-checkout-link/:linkId" component={StripeCheckoutLink} />
         <Route path="/quantum-tasks" component={QuantumTasksModern} />
+        <Route path="/quantum-cms" component={QuantumCMS} />
         <Route path="/essencia-da-paz" component={EssenciaDaPaz} />
         <Route path="/previewteste" component={PreviewTeste} />
+        <Route path="/admin-panel" component={AdminPanel} />
         <Route path="/test" component={TestPage} />
 
 

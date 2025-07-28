@@ -1,431 +1,533 @@
-import {
-  users as usersTable,
-  quizzes,
-  quizTemplates,
-  quizResponses,
-  quizAnalytics,
-  type User,
-  type UpsertUser,
-  type Quiz,
-  type InsertQuiz,
-  type QuizTemplate,
-  type InsertQuizTemplate,
-  type QuizResponse,
-  type InsertQuizResponse,
-  type QuizAnalytics,
-  type InsertQuizAnalytics,
-} from "@shared/schema";
-import { db } from "./db";
-import { eq, desc, and, sql, gte, lte } from "drizzle-orm";
-import crypto from "crypto";
+import { 
+  siteContent, 
+  news, 
+  events, 
+  solutions, 
+  insights, 
+  newsletter, 
+  adminUsers, 
+  siteSettings,
+  type SiteContent,
+  type News,
+  type Events,
+  type Solutions,
+  type Insights,
+  type Newsletter,
+  type AdminUser,
+  type SiteSettings,
+  type InsertSiteContent,
+  type InsertNews,
+  type InsertEvents,
+  type InsertSolutions,
+  type InsertInsights,
+  type InsertNewsletter,
+  type InsertAdminUser,
+  type InsertSiteSettings
+} from '@shared/schema';
+import { eq, desc, and } from 'drizzle-orm';
 
 export interface IStorage {
-  // User operations (required for Replit Auth)
-  getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
-  updateUserStripeInfo(userId: string, stripeCustomerId: string, stripeSubscriptionId: string): Promise<User>;
-  updateUserPlan(userId: string, plan: string, subscriptionStatus?: string): Promise<User>;
+  // Site Content Management
+  getSiteContent(section: string): Promise<SiteContent[]>;
+  updateSiteContent(id: number, data: Partial<InsertSiteContent>): Promise<SiteContent>;
+  createSiteContent(data: InsertSiteContent): Promise<SiteContent>;
+  deleteSiteContent(id: number): Promise<void>;
 
-  // Admin operations
-  getAllUsers(): Promise<User[]>;
-  updateUserRole(userId: string, role: string): Promise<User>;
-  deleteUser(userId: string): Promise<void>;
+  // News Management
+  getAllNews(): Promise<News[]>;
+  getPublishedNews(limit?: number): Promise<News[]>;
+  getNewsById(id: number): Promise<News | undefined>;
+  getNewsBySlug(slug: string): Promise<News | undefined>;
+  createNews(data: InsertNews): Promise<News>;
+  updateNews(id: number, data: Partial<InsertNews>): Promise<News>;
+  deleteNews(id: number): Promise<void>;
 
-  // Quiz operations
-  getUserQuizzes(userId: string): Promise<Quiz[]>;
-  getQuiz(id: string): Promise<Quiz | undefined>;
-  createQuiz(quiz: InsertQuiz): Promise<Quiz>;
-  updateQuiz(id: string, updates: Partial<InsertQuiz>): Promise<Quiz>;
-  deleteQuiz(id: string): Promise<void>;
+  // Events Management
+  getAllEvents(): Promise<Events[]>;
+  getActiveEvents(): Promise<Events[]>;
+  getUpcomingEvents(limit?: number): Promise<Events[]>;
+  createEvent(data: InsertEvents): Promise<Events>;
+  updateEvent(id: number, data: Partial<InsertEvents>): Promise<Events>;
+  deleteEvent(id: number): Promise<void>;
 
-  // Quiz template operations
-  getQuizTemplates(): Promise<QuizTemplate[]>;
-  getQuizTemplate(id: number): Promise<QuizTemplate | undefined>;
-  createQuizTemplate(template: InsertQuizTemplate): Promise<QuizTemplate>;
+  // Solutions Management
+  getAllSolutions(): Promise<Solutions[]>;
+  getActiveSolutions(): Promise<Solutions[]>;
+  createSolution(data: InsertSolutions): Promise<Solutions>;
+  updateSolution(id: number, data: Partial<InsertSolutions>): Promise<Solutions>;
+  deleteSolution(id: number): Promise<void>;
 
-  // Quiz response operations
-  getQuizResponses(quizId: string): Promise<QuizResponse[]>;
-  createQuizResponse(response: InsertQuizResponse): Promise<QuizResponse>;
+  // Insights Management
+  getAllInsights(): Promise<Insights[]>;
+  getPublishedInsights(limit?: number): Promise<Insights[]>;
+  getInsightById(id: number): Promise<Insights | undefined>;
+  getInsightBySlug(slug: string): Promise<Insights | undefined>;
+  createInsight(data: InsertInsights): Promise<Insights>;
+  updateInsight(id: number, data: Partial<InsertInsights>): Promise<Insights>;
+  deleteInsight(id: number): Promise<void>;
 
-  // Analytics operations
-  getQuizAnalytics(quizId: string, startDate?: Date, endDate?: Date): Promise<QuizAnalytics[]>;
-  updateQuizAnalytics(quizId: string, analytics: InsertQuizAnalytics): Promise<void>;
-  getDashboardStats(userId: string): Promise<{
-    totalQuizzes: number;
-    totalLeads: number;
-    totalViews: number;
-    avgConversionRate: number;
-  }>;
+  // Newsletter Management
+  subscribeToNewsletter(email: string, source?: string): Promise<Newsletter>;
+  unsubscribeFromNewsletter(email: string): Promise<void>;
+  getAllSubscribers(): Promise<Newsletter[]>;
+  getActiveSubscribers(): Promise<Newsletter[]>;
 
-    // JWT Auth methods
-  getUserByEmail(email: string): Promise<User | null>;
-  createUserWithPassword(userData: {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-  }): Promise<User>;
-  storeRefreshToken(userId: string, refreshToken: string): Promise<void>;
-  isValidRefreshToken(userId: string, refreshToken: string): Promise<boolean>;
-  invalidateRefreshTokens(userId: string): Promise<void>;
-  
-  // SMS Credits methods
-  updateUserSmsCredits(userId: string, newBalance: number): Promise<void>;
-  createSmsTransaction(transaction: {
-    userId: string;
-    type: string;
-    amount: number;
-    balance: number;
-    description: string;
-    quizId?: string;
-    smsCount: number;
-    costPerSms: number;
-  }): Promise<void>;
-  getSmsTransactions(userId: string): Promise<any[]>;
+  // Admin Users
+  getAdminByUsername(username: string): Promise<AdminUser | undefined>;
+  getAdminByEmail(email: string): Promise<AdminUser | undefined>;
+  createAdmin(data: InsertAdminUser): Promise<AdminUser>;
+  updateAdmin(id: number, data: Partial<InsertAdminUser>): Promise<AdminUser>;
+
+  // Site Settings
+  getSetting(key: string): Promise<SiteSettings | undefined>;
+  updateSetting(key: string, value: string): Promise<SiteSettings>;
+  getAllSettings(): Promise<SiteSettings[]>;
+  getSettingsByGroup(group: string): Promise<SiteSettings[]>;
 }
 
-export interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  profileImageUrl?: string;
-  password?: string; // For JWT auth
-  stripeCustomerId?: string;
-  stripeSubscriptionId?: string;
-  plan: string;
-  role: string;
-  smsCredits?: string; // SMS credits balance
-  createdAt: Date;
-  updatedAt: Date;
-}
+// In-memory storage implementation for development
+export class MemStorage implements IStorage {
+  private siteContent: SiteContent[] = [];
+  private news: News[] = [];
+  private events: Events[] = [];
+  private solutions: Solutions[] = [];
+  private insights: Insights[] = [];
+  private newsletter: Newsletter[] = [];
+  private adminUsers: AdminUser[] = [];
+  private siteSettings: SiteSettings[] = [];
+  private nextId = 1;
 
-export interface UpsertUser {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  profileImageUrl?: string;
-}
-
-export class DatabaseStorage implements IStorage {
-  // User operations
-  async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
-    return user;
+  constructor() {
+    this.seedData();
   }
 
-  async getUserByEmail(email: string): Promise<User | null> {
-    const rows = await db.select().from(usersTable).where(eq(usersTable.email, email));
-    return rows[0] || null;
-  }
-
-  async createUserWithPassword(userData: {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-  }): Promise<User> {
-    const newUser = {
-      id: crypto.randomUUID(),
-      email: userData.email,
-      password: userData.password,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      plan: "free",
-      role: "user",
+  private seedData() {
+    // Seed hero content
+    this.siteContent.push({
+      id: this.nextId++,
+      section: 'hero',
+      title: 'Welcome to the future of digital asset trading',
+      subtitle: 'We are B2C2',
+      content: 'Founded in 2015, B2C2 is the world\'s largest digital asset liquidity provider. We serve over 600 counterparties including retail platforms, market makers, hedge funds, family offices, high-net-worth individuals and traditional banks.',
+      buttonText: 'Explore our solutions',
+      buttonUrl: '#solutions',
+      imageUrl: null,
+      isActive: true,
+      order: 0,
       createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+      updatedAt: new Date()
+    });
 
-    await db.insert(usersTable).values(newUser).returning();
-    return newUser;
-  }
-
-  async storeRefreshToken(userId: string, refreshToken: string): Promise<void> {
-    // Store in a refresh_tokens table or add to users table
-    // For simplicity, we'll store in a simple in-memory cache
-    // In production, use Redis or database table
-    refreshTokenStore.set(userId, refreshToken);
-  }
-
-  async isValidRefreshToken(userId: string, refreshToken: string): Promise<boolean> {
-    const storedToken = refreshTokenStore.get(userId);
-    return storedToken === refreshToken;
-  }
-
-  async invalidateRefreshTokens(userId: string): Promise<void> {
-    refreshTokenStore.delete(userId);
-  }
-
-  async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
-      .insert(usersTable)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: usersTable.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    return user;
-  }
-
-  async updateUserStripeInfo(userId: string, stripeCustomerId: string, stripeSubscriptionId: string): Promise<User> {
-    const [user] = await db
-      .update(usersTable)
-      .set({ 
-        stripeCustomerId, 
-        stripeSubscriptionId,
+    // Seed news
+    this.news.push(
+      {
+        id: this.nextId++,
+        title: 'B2C2 and PV01 Pioneer Corporate Bond on Blockchain',
+        excerpt: 'Revolutionary partnership bringing traditional finance to blockchain.',
+        content: 'B2C2 and PV01 have successfully completed the first corporate bond transaction on blockchain, marking a significant milestone in the digitization of traditional financial instruments.',
+        imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=200&fit=crop',
+        category: 'Press release',
+        publishedAt: new Date('2024-11-25'),
+        isPublished: true,
+        author: 'B2C2',
+        slug: 'b2c2-pv01-corporate-bond-blockchain',
+        createdAt: new Date(),
         updatedAt: new Date()
-      })
-      .where(eq(usersTable.id, userId))
-      .returning();
-    return user;
+      },
+      {
+        id: this.nextId++,
+        title: 'B2C2 Partners with OpenPayd to Expand Global Instant Settlement Network',
+        excerpt: 'Strategic partnership enhances global payment infrastructure.',
+        content: 'B2C2 announces strategic partnership with OpenPayd to expand its global instant settlement network, enabling faster and more efficient cross-border transactions.',
+        imageUrl: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&h=200&fit=crop',
+        category: 'Press release',
+        publishedAt: new Date('2024-10-28'),
+        isPublished: true,
+        author: 'B2C2',
+        slug: 'b2c2-openpaid-partnership',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    );
+
+    // Seed solutions
+    this.solutions.push(
+      {
+        id: this.nextId++,
+        title: 'Trading overview',
+        description: 'Comprehensive trading solutions for institutional clients',
+        icon: 'chart-line',
+        color: 'purple',
+        url: '/trading',
+        isActive: true,
+        order: 1,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: this.nextId++,
+        title: 'OTC Products',
+        description: 'Over-the-counter trading products and services',
+        icon: 'handshake',
+        color: 'blue',
+        url: '/otc',
+        isActive: true,
+        order: 2,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    );
+
+    // Seed insights
+    this.insights.push({
+      id: this.nextId++,
+      title: 'A Treasurer\'s guide to Becoming Crypto-ready',
+      excerpt: 'Essential guide for corporate treasurers entering digital assets.',
+      content: 'This comprehensive guide provides corporate treasurers with the knowledge and tools needed to navigate the digital asset landscape safely and effectively.',
+      imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=200&fit=crop',
+      category: 'Thought leadership',
+      publishedAt: new Date('2022-09-20'),
+      isPublished: true,
+      readTime: 8,
+      slug: 'treasurer-guide-crypto-ready',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    // Seed admin user
+    this.adminUsers.push({
+      id: this.nextId++,
+      username: 'admin',
+      email: 'admin@b2c2.com',
+      password: '$2a$10$rQ8K8K8K8K8K8K8K8K8K8K', // Hashed 'admin123'
+      role: 'admin',
+      isActive: true,
+      lastLogin: null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    // Seed settings
+    this.siteSettings.push(
+      {
+        id: this.nextId++,
+        key: 'site_title',
+        value: 'B2C2 - Digital Asset Liquidity Provider',
+        type: 'text',
+        description: 'Main site title',
+        group: 'general',
+        updatedAt: new Date()
+      },
+      {
+        id: this.nextId++,
+        key: 'primary_color',
+        value: '#8B5CF6',
+        type: 'color',
+        description: 'Primary brand color',
+        group: 'design',
+        updatedAt: new Date()
+      }
+    );
   }
 
-  async updateUserPlan(userId: string, plan: string, subscriptionStatus?: string): Promise<User> {
-    const updateData: any = {
-      plan,
-      updatedAt: new Date(),
-    };
+  // Site Content Methods
+  async getSiteContent(section: string): Promise<SiteContent[]> {
+    return this.siteContent.filter(c => c.section === section && c.isActive);
+  }
 
-    if (subscriptionStatus) {
-      updateData.subscriptionStatus = subscriptionStatus;
+  async updateSiteContent(id: number, data: Partial<InsertSiteContent>): Promise<SiteContent> {
+    const index = this.siteContent.findIndex(c => c.id === id);
+    if (index === -1) throw new Error('Content not found');
+    
+    const updated = { ...this.siteContent[index], ...data, updatedAt: new Date() };
+    this.siteContent[index] = updated;
+    return updated;
+  }
+
+  async createSiteContent(data: InsertSiteContent): Promise<SiteContent> {
+    const newContent: SiteContent = {
+      id: this.nextId++,
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.siteContent.push(newContent);
+    return newContent;
+  }
+
+  async deleteSiteContent(id: number): Promise<void> {
+    this.siteContent = this.siteContent.filter(c => c.id !== id);
+  }
+
+  // News Methods
+  async getAllNews(): Promise<News[]> {
+    return [...this.news].sort((a, b) => b.publishedAt!.getTime() - a.publishedAt!.getTime());
+  }
+
+  async getPublishedNews(limit = 10): Promise<News[]> {
+    return this.news
+      .filter(n => n.isPublished)
+      .sort((a, b) => b.publishedAt!.getTime() - a.publishedAt!.getTime())
+      .slice(0, limit);
+  }
+
+  async getNewsById(id: number): Promise<News | undefined> {
+    return this.news.find(n => n.id === id);
+  }
+
+  async getNewsBySlug(slug: string): Promise<News | undefined> {
+    return this.news.find(n => n.slug === slug);
+  }
+
+  async createNews(data: InsertNews): Promise<News> {
+    const newNews: News = {
+      id: this.nextId++,
+      ...data,
+      slug: data.slug || data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.news.push(newNews);
+    return newNews;
+  }
+
+  async updateNews(id: number, data: Partial<InsertNews>): Promise<News> {
+    const index = this.news.findIndex(n => n.id === id);
+    if (index === -1) throw new Error('News not found');
+    
+    const updated = { ...this.news[index], ...data, updatedAt: new Date() };
+    this.news[index] = updated;
+    return updated;
+  }
+
+  async deleteNews(id: number): Promise<void> {
+    this.news = this.news.filter(n => n.id !== id);
+  }
+
+  // Events Methods
+  async getAllEvents(): Promise<Events[]> {
+    return [...this.events].sort((a, b) => b.eventDate.getTime() - a.eventDate.getTime());
+  }
+
+  async getActiveEvents(): Promise<Events[]> {
+    return this.events.filter(e => e.isActive);
+  }
+
+  async getUpcomingEvents(limit = 10): Promise<Events[]> {
+    const now = new Date();
+    return this.events
+      .filter(e => e.isActive && e.eventDate > now)
+      .sort((a, b) => a.eventDate.getTime() - b.eventDate.getTime())
+      .slice(0, limit);
+  }
+
+  async createEvent(data: InsertEvents): Promise<Events> {
+    const newEvent: Events = {
+      id: this.nextId++,
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.events.push(newEvent);
+    return newEvent;
+  }
+
+  async updateEvent(id: number, data: Partial<InsertEvents>): Promise<Events> {
+    const index = this.events.findIndex(e => e.id === id);
+    if (index === -1) throw new Error('Event not found');
+    
+    const updated = { ...this.events[index], ...data, updatedAt: new Date() };
+    this.events[index] = updated;
+    return updated;
+  }
+
+  async deleteEvent(id: number): Promise<void> {
+    this.events = this.events.filter(e => e.id !== id);
+  }
+
+  // Solutions Methods
+  async getAllSolutions(): Promise<Solutions[]> {
+    return [...this.solutions].sort((a, b) => a.order - b.order);
+  }
+
+  async getActiveSolutions(): Promise<Solutions[]> {
+    return this.solutions
+      .filter(s => s.isActive)
+      .sort((a, b) => a.order - b.order);
+  }
+
+  async createSolution(data: InsertSolutions): Promise<Solutions> {
+    const newSolution: Solutions = {
+      id: this.nextId++,
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.solutions.push(newSolution);
+    return newSolution;
+  }
+
+  async updateSolution(id: number, data: Partial<InsertSolutions>): Promise<Solutions> {
+    const index = this.solutions.findIndex(s => s.id === id);
+    if (index === -1) throw new Error('Solution not found');
+    
+    const updated = { ...this.solutions[index], ...data, updatedAt: new Date() };
+    this.solutions[index] = updated;
+    return updated;
+  }
+
+  async deleteSolution(id: number): Promise<void> {
+    this.solutions = this.solutions.filter(s => s.id !== id);
+  }
+
+  // Insights Methods
+  async getAllInsights(): Promise<Insights[]> {
+    return [...this.insights].sort((a, b) => b.publishedAt!.getTime() - a.publishedAt!.getTime());
+  }
+
+  async getPublishedInsights(limit = 10): Promise<Insights[]> {
+    return this.insights
+      .filter(i => i.isPublished)
+      .sort((a, b) => b.publishedAt!.getTime() - a.publishedAt!.getTime())
+      .slice(0, limit);
+  }
+
+  async getInsightById(id: number): Promise<Insights | undefined> {
+    return this.insights.find(i => i.id === id);
+  }
+
+  async getInsightBySlug(slug: string): Promise<Insights | undefined> {
+    return this.insights.find(i => i.slug === slug);
+  }
+
+  async createInsight(data: InsertInsights): Promise<Insights> {
+    const newInsight: Insights = {
+      id: this.nextId++,
+      ...data,
+      slug: data.slug || data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.insights.push(newInsight);
+    return newInsight;
+  }
+
+  async updateInsight(id: number, data: Partial<InsertInsights>): Promise<Insights> {
+    const index = this.insights.findIndex(i => i.id === id);
+    if (index === -1) throw new Error('Insight not found');
+    
+    const updated = { ...this.insights[index], ...data, updatedAt: new Date() };
+    this.insights[index] = updated;
+    return updated;
+  }
+
+  async deleteInsight(id: number): Promise<void> {
+    this.insights = this.insights.filter(i => i.id !== id);
+  }
+
+  // Newsletter Methods
+  async subscribeToNewsletter(email: string, source = 'website'): Promise<Newsletter> {
+    const existing = this.newsletter.find(n => n.email === email);
+    if (existing) {
+      if (existing.isActive) {
+        throw new Error('Email already subscribed');
+      }
+      // Reactivate subscription
+      existing.isActive = true;
+      existing.unsubscribedAt = null;
+      return existing;
     }
 
-    const [user] = await db
-      .update(usersTable)
-      .set(updateData)
-      .where(eq(usersTable.id, userId))
-      .returning();
-    return user;
-  }
-
-  // Admin operations
-  async getAllUsers(): Promise<User[]> {
-    return await db.select().from(usersTable).orderBy(usersTable.createdAt);
-  }
-
-  async updateUserRole(userId: string, role: string): Promise<User> {
-    const [user] = await db
-      .update(usersTable)
-      .set({
-        role,
-        updatedAt: new Date(),
-      })
-      .where(eq(usersTable.id, userId))
-      .returning();
-    return user;
-  }
-
-  async deleteUser(userId: string): Promise<void> {
-    await db.delete(usersTable).where(eq(usersTable.id, userId));
-  }
-
-  // JWT Auth implementations
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    const users = await db.select().from(usersTable).where(eq(usersTable.email, email));
-    return users[0];
-  }
-
-  async createUserWithPassword(userData: { email: string; password: string; firstName: string; lastName: string }): Promise<User> {
-    const userId = crypto.randomUUID();
-    const user = {
-      id: userId,
-      email: userData.email,
-      password: userData.password,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      role: "user" as const,
-      plan: "free" as const,
+    const newSubscription: Newsletter = {
+      id: this.nextId++,
+      email,
+      isActive: true,
+      source,
+      subscribedAt: new Date(),
+      unsubscribedAt: null
     };
-
-    await db.insert(usersTable).values(user);
-    return user as User;
+    this.newsletter.push(newSubscription);
+    return newSubscription;
   }
 
-  async storeRefreshToken(userId: string, refreshToken: string): Promise<void> {
-    await db.update(usersTable)
-      .set({ refreshToken })
-      .where(eq(usersTable.id, userId));
-  }
-
-  async isValidRefreshToken(userId: string, refreshToken: string): Promise<boolean> {
-    const users = await db.select().from(usersTable)
-      .where(and(eq(usersTable.id, userId), eq(usersTable.refreshToken, refreshToken)));
-    return users.length > 0;
-  }
-
-  async invalidateRefreshTokens(userId: string): Promise<void> {
-    await db.update(usersTable)
-      .set({ refreshToken: null })
-      .where(eq(usersTable.id, userId));
-  }
-
-  async getUserByRefreshToken(refreshToken: string): Promise<User | undefined> {
-    const users = await db.select().from(usersTable)
-      .where(eq(usersTable.refreshToken, refreshToken));
-    return users[0];
-  }
-
-  async clearRefreshTokens(userId: string): Promise<void> {
-    await db.update(usersTable)
-      .set({ refreshToken: null })
-      .where(eq(usersTable.id, userId));
-  }
-
-  // Quiz operations
-  async getUserQuizzes(userId: string): Promise<Quiz[]> {
-    return await db
-      .select()
-      .from(quizzes)
-      .where(eq(quizzes.userId, userId))
-      .orderBy(desc(quizzes.createdAt));
-  }
-
-  async getQuiz(id: string): Promise<Quiz | undefined> {
-    const [quiz] = await db.select().from(quizzes).where(eq(quizzes.id, id));
-    return quiz;
-  }
-
-  async createQuiz(quiz: InsertQuiz): Promise<Quiz> {
-    const [newQuiz] = await db.insert(quizzes).values(quiz).returning();
-    return newQuiz;
-  }
-
-  async updateQuiz(id: string, updates: Partial<InsertQuiz>): Promise<Quiz> {
-    const [quiz] = await db
-      .update(quizzes)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(quizzes.id, id))
-      .returning();
-    return quiz;
-  }
-
-  async deleteQuiz(id: string): Promise<void> {
-    await db.delete(quizzes).where(eq(quizzes.id, id));
-  }
-
-  // Quiz template operations
-  async getQuizTemplates(): Promise<QuizTemplate[]> {
-    return await db
-      .select()
-      .from(quizTemplates)
-      .where(eq(quizTemplates.isActive, true))
-      .orderBy(quizTemplates.name);
-  }
-
-  async getQuizTemplate(id: number): Promise<QuizTemplate | undefined> {
-    const [template] = await db
-      .select()
-      .from(quizTemplates)
-      .where(eq(quizTemplates.id, id));
-    return template;
-  }
-
-  async createQuizTemplate(template: InsertQuizTemplate): Promise<QuizTemplate> {
-    const [newTemplate] = await db
-      .insert(quizTemplates)
-      .values(template)
-      .returning();
-    return newTemplate;
-  }
-
-  // Quiz response operations
-  async getQuizResponses(quizId: string): Promise<QuizResponse[]> {
-    return await db
-      .select()
-      .from(quizResponses)
-      .where(eq(quizResponses.quizId, quizId))
-      .orderBy(desc(quizResponses.completedAt));
-  }
-
-  async createQuizResponse(response: InsertQuizResponse): Promise<QuizResponse> {
-    const [newResponse] = await db
-      .insert(quizResponses)
-      .values(response)
-      .returning();
-    return newResponse;
-  }
-
-  // Analytics operations
-  async getQuizAnalytics(quizId: string, startDate?: Date, endDate?: Date): Promise<QuizAnalytics[]> {
-    let whereConditions = [eq(quizAnalytics.quizId, quizId)];
-
-    if (startDate && endDate) {
-      whereConditions.push(
-        gte(quizAnalytics.date, startDate),
-        lte(quizAnalytics.date, endDate)
-      );
+  async unsubscribeFromNewsletter(email: string): Promise<void> {
+    const subscription = this.newsletter.find(n => n.email === email);
+    if (subscription) {
+      subscription.isActive = false;
+      subscription.unsubscribedAt = new Date();
     }
-
-    return await db
-      .select()
-      .from(quizAnalytics)
-      .where(and(...whereConditions))
-      .orderBy(desc(quizAnalytics.date));
   }
 
-  async updateQuizAnalytics(quizId: string, analytics: InsertQuizAnalytics): Promise<void> {
-    // Simply insert a new analytics record for each view
-    await db
-      .insert(quizAnalytics)
-      .values({ 
-        quizId,
-        date: new Date(),
-        views: analytics.views || 0,
-        starts: analytics.starts || 0,
-        completions: analytics.completions || 0,
-        leads: analytics.leads || 0,
-        conversionRate: analytics.conversionRate || "0"
-      });
+  async getAllSubscribers(): Promise<Newsletter[]> {
+    return [...this.newsletter];
   }
 
-  async getDashboardStats(userId: string): Promise<{
-    totalQuizzes: number;
-    totalLeads: number;
-    totalViews: number;
-    avgConversionRate: number;
-  }> {
-    // Get user's quizzes count
-    const [quizCount] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(quizzes)
-      .where(eq(quizzes.userId, userId));
+  async getActiveSubscribers(): Promise<Newsletter[]> {
+    return this.newsletter.filter(n => n.isActive);
+  }
 
-    // Get total leads from user's quizzes
-    const [leadCount] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(quizResponses)
-      .innerJoin(quizzes, eq(quizResponses.quizId, quizzes.id))
-      .where(eq(quizzes.userId, userId));
+  // Admin Methods
+  async getAdminByUsername(username: string): Promise<AdminUser | undefined> {
+    return this.adminUsers.find(a => a.username === username);
+  }
 
-    // Get total views and conversion rate
-    const [analytics] = await db
-      .select({
-        totalViews: sql<number>`sum(${quizAnalytics.views})`,
-        totalCompletions: sql<number>`sum(${quizAnalytics.completions})`,
-      })
-      .from(quizAnalytics)
-      .innerJoin(quizzes, eq(quizAnalytics.quizId, quizzes.id))
-      .where(eq(quizzes.userId, userId));
+  async getAdminByEmail(email: string): Promise<AdminUser | undefined> {
+    return this.adminUsers.find(a => a.email === email);
+  }
 
-    const totalViews = analytics?.totalViews || 0;
-    const totalCompletions = analytics?.totalCompletions || 0;
-    const avgConversionRate = totalViews > 0 ? (totalCompletions / totalViews) * 100 : 0;
-
-    return {
-      totalQuizzes: quizCount.count,
-      totalLeads: leadCount.count,
-      totalViews,
-      avgConversionRate: Number(avgConversionRate.toFixed(2)),
+  async createAdmin(data: InsertAdminUser): Promise<AdminUser> {
+    const newAdmin: AdminUser = {
+      id: this.nextId++,
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
+    this.adminUsers.push(newAdmin);
+    return newAdmin;
+  }
+
+  async updateAdmin(id: number, data: Partial<InsertAdminUser>): Promise<AdminUser> {
+    const index = this.adminUsers.findIndex(a => a.id === id);
+    if (index === -1) throw new Error('Admin not found');
+    
+    const updated = { ...this.adminUsers[index], ...data, updatedAt: new Date() };
+    this.adminUsers[index] = updated;
+    return updated;
+  }
+
+  // Settings Methods
+  async getSetting(key: string): Promise<SiteSettings | undefined> {
+    return this.siteSettings.find(s => s.key === key);
+  }
+
+  async updateSetting(key: string, value: string): Promise<SiteSettings> {
+    const index = this.siteSettings.findIndex(s => s.key === key);
+    if (index === -1) {
+      const newSetting: SiteSettings = {
+        id: this.nextId++,
+        key,
+        value,
+        type: 'text',
+        description: null,
+        group: 'general',
+        updatedAt: new Date()
+      };
+      this.siteSettings.push(newSetting);
+      return newSetting;
+    }
+    
+    const updated = { ...this.siteSettings[index], value, updatedAt: new Date() };
+    this.siteSettings[index] = updated;
+    return updated;
+  }
+
+  async getAllSettings(): Promise<SiteSettings[]> {
+    return [...this.siteSettings];
+  }
+
+  async getSettingsByGroup(group: string): Promise<SiteSettings[]> {
+    return this.siteSettings.filter(s => s.group === group);
   }
 }
 
-// Simple in-memory refresh token store (use Redis in production)
-const refreshTokenStore = new Map<string, string>();
-export const storage = new DatabaseStorage();
+export const storage = new MemStorage();
