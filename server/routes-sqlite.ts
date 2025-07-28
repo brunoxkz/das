@@ -27539,62 +27539,81 @@ export function registerCheckoutRoutes(app: Express) {
     }
   });
 
-  // Endpoint: Dashboard admin com métricas
-  app.get('/api/controle/dashboard', verifyJWT, async (req: any, res: any) => {
+  // Endpoint: Dashboard por atendente
+  app.get('/api/controle/dashboard/:attendantId?', verifyJWT, async (req: any, res: any) => {
     try {
+      const { attendantId } = req.params;
+      const userRole = req.user?.role || 'user';
+      const currentUserId = req.user?.id;
+      
       const hoje = new Date().toISOString().split('T')[0];
       const inicioMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+
+      // Determinar qual atendente buscar
+      let targetAttendantId = attendantId;
+      if (userRole !== 'admin' && req.user?.email !== 'admin@admin.com') {
+        targetAttendantId = currentUserId;
+      }
+
+      let whereCondition = '';
+      let params = [];
+      
+      if (targetAttendantId) {
+        whereCondition = ' AND atendente_id = ?';
+        params = [targetAttendantId];
+      }
       
       // Vendas de hoje
       const vendasHoje = sqlite.prepare(`
         SELECT COUNT(*) as count, COALESCE(SUM(valor_venda), 0) as valor
         FROM controle_vendas 
-        WHERE DATE(data_pedido) = ? AND status != 'cancelado'
-      `).get(hoje);
+        WHERE DATE(data_pedido) = ? AND status != 'cancelado'${whereCondition}
+      `).get(hoje, ...params);
 
       // Vendas do mês
       const vendasMes = sqlite.prepare(`
         SELECT COUNT(*) as count, COALESCE(SUM(valor_venda), 0) as valor
         FROM controle_vendas 
-        WHERE DATE(data_pedido) >= ? AND status != 'cancelado'
-      `).get(inicioMes);
+        WHERE DATE(data_pedido) >= ? AND status != 'cancelado'${whereCondition}
+      `).get(inicioMes, ...params);
 
       // Comissões do mês (apenas vendas pagas)
       const comissoesMes = sqlite.prepare(`
-        SELECT COALESCE(SUM(comissao_calculada), 0) as valor
+        SELECT COALESCE(SUM(valor_venda * 0.10), 0) as valor
         FROM controle_vendas 
-        WHERE DATE(data_pedido) >= ? AND status = 'pago'
-      `).get(inicioMes);
+        WHERE DATE(data_pedido) >= ? AND status = 'pago'${whereCondition}
+      `).get(inicioMes, ...params);
 
       // Entregas de hoje
       const entregasHoje = sqlite.prepare(`
         SELECT COUNT(*) as count
         FROM controle_vendas 
-        WHERE DATE(data_agendamento) = ? AND status = 'agendado'
-      `).get(hoje);
+        WHERE DATE(data_agendamento) = ? AND status IN ('agendado', 'em_rota')${whereCondition}
+      `).get(hoje, ...params);
 
-      // Performance dos attendants
-      const performanceAttendants = sqlite.prepare(`
-        SELECT 
-          a.nome,
-          COUNT(v.id) as vendas_mes,
-          COALESCE(SUM(CASE WHEN v.status = 'pago' THEN v.comissao_calculada ELSE 0 END), 0) as comissao_mes,
-          COALESCE(SUM(CASE WHEN v.status != 'cancelado' THEN v.valor_venda ELSE 0 END), 0) as valor_total_mes
-        FROM controle_attendants a
-        LEFT JOIN controle_vendas v ON a.id = v.atendente_id 
-          AND DATE(v.data_pedido) >= ?
-        WHERE a.ativo = 1
-        GROUP BY a.id, a.nome
-        ORDER BY vendas_mes DESC
-      `).all(inicioMes);
+      // Performance dos attendants (só para admin)
+      let performanceAttendants = [];
+      if (userRole === 'admin' || req.user?.email === 'admin@admin.com') {
+        performanceAttendants = sqlite.prepare(`
+          SELECT 
+            a.nome,
+            COUNT(v.id) as vendas_mes,
+            COALESCE(SUM(CASE WHEN v.status = 'pago' THEN v.valor_venda * 0.10 ELSE 0 END), 0) as comissao_mes,
+            COALESCE(SUM(CASE WHEN v.status != 'cancelado' THEN v.valor_venda ELSE 0 END), 0) as valor_total_mes
+          FROM controle_attendants a
+          LEFT JOIN controle_vendas v ON a.id = v.atendente_id 
+            AND DATE(v.data_pedido) >= ?
+          WHERE a.ativo = 1
+          GROUP BY a.id, a.nome
+          ORDER BY vendas_mes DESC
+        `).all(inicioMes);
+      }
 
       const dashboardData = {
-        vendasHoje: vendasHoje.count || 0,
-        valorHoje: vendasHoje.valor || 0,
-        vendasMes: vendasMes.count || 0,
-        valorMes: vendasMes.valor || 0,
-        comissoesMes: comissoesMes.valor || 0,
-        entregasHoje: entregasHoje.count || 0,
+        vendasHoje: { count: vendasHoje.count || 0, valor: vendasHoje.valor || 0 },
+        vendasMes: { count: vendasMes.count || 0, valor: vendasMes.valor || 0 },
+        comissoesMes: { valor: comissoesMes.valor || 0 },
+        entregasHoje: { count: entregasHoje.count || 0 },
         performanceAttendants: performanceAttendants
       };
 
@@ -27605,10 +27624,13 @@ export function registerCheckoutRoutes(app: Express) {
     }
   });
 
-  // Endpoint: Listar vendas
-  app.get('/api/controle/sales', verifyJWT, async (req: any, res: any) => {
+  // Endpoint: Listar vendas por atendente
+  app.get('/api/controle/sales/:attendantId?', verifyJWT, async (req: any, res: any) => {
     try {
-      const { attendantId } = req.query;
+      const { attendantId } = req.params;
+      const userRole = req.user?.role || 'user';
+      const currentUserId = req.user?.id;
+
       let query = `
         SELECT 
           v.*,
@@ -27618,12 +27640,17 @@ export function registerCheckoutRoutes(app: Express) {
       `;
       let params = [];
 
-      if (attendantId && attendantId !== 'admin') {
+      // Se não for admin, só pode ver suas próprias vendas
+      if (userRole !== 'admin' && req.user?.email !== 'admin@admin.com') {
+        query += ' WHERE v.atendente_id = ?';
+        params.push(currentUserId);
+      } else if (attendantId) {
+        // Admin pode filtrar por atendente específico
         query += ' WHERE v.atendente_id = ?';
         params.push(attendantId);
       }
 
-      query += ' ORDER BY v.data_venda DESC, v.created_at DESC LIMIT 100';
+      query += ' ORDER BY v.data_pedido DESC, v.created_at DESC LIMIT 100';
 
       const sales = sqlite.prepare(query).all(...params);
       res.json(sales);
