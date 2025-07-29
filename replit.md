@@ -373,6 +373,54 @@ O sistema utiliza Stripe Payment Intent para processar pagamentos únicos de R$ 
 
 
 
+## Sistema Controle Independente - Atendentes (January 29, 2025)
+
+### 🏢 SISTEMA COMPLETAMENTE SEPARADO E FUNCIONAL
+
+Criado sistema independente para controle de atendentes e operações cash-on-delivery:
+
+#### Arquitetura Separada:
+- **Nova pasta**: `sistema-controle/` completamente isolada do SaaS
+- **Banco próprio**: SQLite independente (`controle.sqlite`)
+- **Backend dedicado**: Express.js na porta 3001
+- **Frontend próprio**: React com Tailwind CSS
+- **Autenticação simples**: JWT básico para uso interno
+
+#### Funcionalidades Implementadas:
+- ✅ **Login/Cadastro**: Sistema de autenticação duplo (admin/atendente)
+- ✅ **Dashboard Individual**: Cada atendente vê apenas seus dados
+- ✅ **Dashboard Admin**: Visão completa de todos atendentes e negócio
+- ✅ **Sistema de Pedidos**: Pago, LOGZZ, After Pay com filtros
+- ✅ **Menu Educacional**: Tutoriais, Objeções, Aulas estruturadas
+- ✅ **Gestão Completa**: Criação de atendentes, métricas, performance
+
+#### Especificações do Negócio:
+- 3 tipos de pedidos: Pago, LOGZZ (entrega agendada), After Pay
+- Comissão 10% sobre vendas pagas
+- Filtros por data, categoria, status
+- Workflow: Criação → Agendamento → Lembretes → Confirmação
+
+#### Acesso Padrão:
+- **Admin**: admin@controle.com / admin123
+- **Sistema**: localhost:3001
+
+#### Estrutura de Arquivos:
+```
+sistema-controle/
+├── backend/
+│   ├── server.js          # Servidor Express principal
+│   └── database.js        # Conexão SQLite e statements
+├── frontend/
+│   ├── src/
+│   │   ├── pages/         # Login, Dashboard, Admin, Tutoriais, Objeções, Aulas
+│   │   ├── components/    # Layout e componentes reutilizáveis
+│   │   └── context/       # AuthContext para autenticação
+├── database/
+│   └── controle.sqlite    # Banco SQLite independente
+├── schema.sql             # Schema completo do banco
+└── README.md              # Documentação completa
+```
+
 ## Sistema de Autodetecção Completo - VENDZZ
 
 ### 📊 SISTEMA DE AUTODETECÇÃO E REMARKETING IDS 100% DOCUMENTADO (July 22, 2025)
