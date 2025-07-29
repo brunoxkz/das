@@ -131,6 +131,7 @@ import EssenciaDaPaz from "@/pages/essencia-da-paz";
 import PreviewTeste from "@/pages/previewteste";
 import AdminPanel from "@/pages/admin";
 import QuantumCMS from "@/pages/quantum-cms";
+import ControleSystem from "@/pages/controle-sistema";
 
 
 function App() {
@@ -154,7 +155,7 @@ function App() {
   }
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/", "/dark", "/modern", "/login", "/pwa-login", "/payment-success", "/payment-cancel", "/quantum-tasks", "/quantum-cms", "/previewteste", "/admin-panel"];
+  const publicRoutes = ["/", "/dark", "/modern", "/login", "/pwa-login", "/payment-success", "/payment-cancel", "/quantum-tasks", "/quantum-cms", "/previewteste", "/admin-panel", "/controle-sistema"];
   const isQuizRoute = location.startsWith("/quiz/");
   const isCheckoutRoute = location.startsWith("/checkout/");
   const isStripeCheckoutLink = location.startsWith("/stripe-checkout-link/");
@@ -196,6 +197,7 @@ function App() {
         <Route path="/essencia-da-paz" component={EssenciaDaPaz} />
         <Route path="/previewteste" component={PreviewTeste} />
         <Route path="/admin-panel" component={AdminPanel} />
+        <Route path="/controle-sistema" component={ControleSystem} />
         <Route path="/test" component={TestPage} />
 
 
