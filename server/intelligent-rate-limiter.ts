@@ -104,6 +104,11 @@ class IntelligentRateLimiter {
   // Middleware principal
   public middleware() {
     return (req: any, res: any, next: any) => {
+      // Exceção para Sistema Controle - permitir acesso irrestrito
+      if (this.isSistemaControleRequest(req)) {
+        return next();
+      }
+      
       const userId = req.user?.id || req.ip;
       const endpoint = this.getEndpointPattern(req.path);
       const rule = this.rules.find(r => endpoint.includes(r.endpoint));
@@ -186,6 +191,26 @@ class IntelligentRateLimiter {
 
       next();
     };
+  }
+
+  private isSistemaControleRequest(req: any): boolean {
+    // Exceção para Sistema Controle - porta 3001 independente
+    const sistemaControlePaths = [
+      '/sistema-controle',
+      '/api/controle',
+      '/controle',
+      '/atendentes'
+    ];
+    
+    // Verificar se é requisição do sistema controle
+    const isSistemaControle = sistemaControlePaths.some(path => 
+      req.path.includes(path) || req.url.includes(path)
+    );
+    
+    // Verificar se a porta é 3001 (sistema controle)
+    const isPort3001 = req.get('host')?.includes(':3001');
+    
+    return isSistemaControle || isPort3001;
   }
 
   private getEndpointPattern(path: string): string {

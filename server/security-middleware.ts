@@ -60,6 +60,11 @@ export const createIntelligentRateLimit = (config: {
       });
     },
     skip: (req) => {
+      // Pular completamente requisições do Sistema Controle
+      if (isSistemaControleRequest(req)) {
+        return true;
+      }
+      
       // Log successful requests for monitoring
       const requestType = getRequestType(req);
       const limit = calculateLimitForRequest(req, config.baseMax, config);
@@ -70,6 +75,26 @@ export const createIntelligentRateLimit = (config: {
 };
 
 // Helper functions for intelligent rate limiting
+function isSistemaControleRequest(req: any): boolean {
+  // Exceção para Sistema Controle - porta 3001 independente
+  const sistemaControlePaths = [
+    '/sistema-controle',
+    '/api/controle',
+    '/controle',
+    '/atendentes'
+  ];
+  
+  // Verificar se é requisição do sistema controle
+  const isSistemaControle = sistemaControlePaths.some(path => 
+    req.path.includes(path) || req.url.includes(path)
+  );
+  
+  // Verificar se a porta é 3001 (sistema controle)
+  const isPort3001 = req.get('host')?.includes(':3001');
+  
+  return isSistemaControle || isPort3001;
+}
+
 function isAssetRequest(req: any): boolean {
   const assetExtensions = ['.js', '.css', '.tsx', '.ts', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2'];
   const assetPaths = ['/src/', '/@fs/', '/node_modules/', '/public/', '/assets/'];
@@ -135,6 +160,7 @@ function hasValidUserSession(req: any): boolean {
 }
 
 function getRequestType(req: any): string {
+  if (isSistemaControleRequest(req)) return 'sistema-controle';
   if (isAssetRequest(req)) return 'assets';
   if (isAutomaticRequest(req)) return 'automatic';
   if (isComplexQuizWork(req)) return 'quiz-complex';

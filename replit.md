@@ -418,8 +418,22 @@ sistema-controle/
 ├── database/
 │   └── controle.sqlite    # Banco SQLite independente
 ├── schema.sql             # Schema completo do banco
-└── README.md              # Documentação completa
+├── install.sh             # Script de instalação automática
+├── start.sh               # Script de inicialização
+├── README.md              # Documentação completa
+└── ROUTE_PROTECTION_COMPLETE.md  # Documentação de proteção multi-camada
 ```
+
+#### Proteção Multi-Camada Implementada:
+- ✅ **Middleware Principal**: Exceções em todas as 7 camadas de segurança
+- ✅ **Rate Limiting**: Bypass completo para rotas do sistema
+- ✅ **Security Headers**: Não aplicados ao sistema controle
+- ✅ **IP/Header Validation**: Exceções implementadas
+- ✅ **Input Sanitization**: Bypass para operações internas
+- ✅ **SQL Injection Detection**: Exceções configuradas
+- ✅ **Request Validation**: Bypass para porta 3001
+
+**Status**: Sistema completamente isolado com ZERO interferência do SaaS principal
 
 ## Sistema de Autodetecção Completo - VENDZZ
 

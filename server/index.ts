@@ -72,14 +72,53 @@ console.log('🔒 Inicializando Sistema de Segurança de Produção...');
 // 1. Headers de segurança otimizados para Replit
 app.use(securityHeaders);
 
-// 2. Verificação de IPs bloqueados
-app.use(checkBlockedIP);
+// 2. Verificação de IPs bloqueados (com exceção para Sistema Controle)
+app.use((req, res, next) => {
+  const sistemaControlePaths = ['/sistema-controle', '/api/controle', '/controle', '/atendentes'];
+  const isSistemaControle = sistemaControlePaths.some(path => req.path.includes(path) || req.url.includes(path));
+  const isPort3001 = req.get('host')?.includes(':3001');
+  
+  if (isSistemaControle || isPort3001) {
+    return next();
+  }
+  
+  return checkBlockedIP(req, res, next);
+});
 
-// 3. Validação de headers maliciosos
-app.use(validateHeaders);
+// 3. Validação de headers maliciosos (com exceção para Sistema Controle)
+app.use((req, res, next) => {
+  const sistemaControlePaths = ['/sistema-controle', '/api/controle', '/controle', '/atendentes'];
+  const isSistemaControle = sistemaControlePaths.some(path => req.path.includes(path) || req.url.includes(path));
+  const isPort3001 = req.get('host')?.includes(':3001');
+  
+  if (isSistemaControle || isPort3001) {
+    return next();
+  }
+  
+  return validateHeaders(req, res, next);
+});
 
 // 4. Rate limiting inteligente por tipo de requisição
 app.use((req, res, next) => {
+  // Exceção para Sistema Controle - porta 3001 independente
+  const sistemaControlePaths = [
+    '/sistema-controle',
+    '/api/controle',
+    '/controle',
+    '/atendentes'
+  ];
+  
+  const isSistemaControle = sistemaControlePaths.some(path => 
+    req.path.includes(path) || req.url.includes(path)
+  );
+  
+  const isPort3001 = req.get('host')?.includes(':3001');
+  
+  if (isSistemaControle || isPort3001) {
+    console.log(`🏢 Sistema Controle Request: ${req.method} ${req.path} - BYPASS`);
+    return next();
+  }
+  
   // Assets get special treatment with higher limits
   if (req.path.includes('/src/') || 
       req.path.includes('/@fs/') || 
@@ -97,14 +136,44 @@ app.use((req, res, next) => {
   return generalRateLimit(req, res, next);
 });
 
-// 5. Sanitização de inputs (SQL injection protection)
-app.use(sanitizeInput);
+// 5. Sanitização de inputs (SQL injection protection) - com exceção para Sistema Controle
+app.use((req, res, next) => {
+  const sistemaControlePaths = ['/sistema-controle', '/api/controle', '/controle', '/atendentes'];
+  const isSistemaControle = sistemaControlePaths.some(path => req.path.includes(path) || req.url.includes(path));
+  const isPort3001 = req.get('host')?.includes(':3001');
+  
+  if (isSistemaControle || isPort3001) {
+    return next();
+  }
+  
+  return sanitizeInput(req, res, next);
+});
 
-// 6. Detecção avançada de SQL injection
-app.use(detectSQLInjection);
+// 6. Detecção avançada de SQL injection - com exceção para Sistema Controle
+app.use((req, res, next) => {
+  const sistemaControlePaths = ['/sistema-controle', '/api/controle', '/controle', '/atendentes'];
+  const isSistemaControle = sistemaControlePaths.some(path => req.path.includes(path) || req.url.includes(path));
+  const isPort3001 = req.get('host')?.includes(':3001');
+  
+  if (isSistemaControle || isPort3001) {
+    return next();
+  }
+  
+  return detectSQLInjection(req, res, next);
+});
 
-// 7. Validação de estrutura e tamanho da requisição
-app.use(validateRequest);
+// 7. Validação de estrutura e tamanho da requisição - com exceção para Sistema Controle
+app.use((req, res, next) => {
+  const sistemaControlePaths = ['/sistema-controle', '/api/controle', '/controle', '/atendentes'];
+  const isSistemaControle = sistemaControlePaths.some(path => req.path.includes(path) || req.url.includes(path));
+  const isPort3001 = req.get('host')?.includes(':3001');
+  
+  if (isSistemaControle || isPort3001) {
+    return next();
+  }
+  
+  return validateRequest(req, res, next);
+});
 
 console.log('✅ Sistema de Segurança de Produção ativado!');
 
