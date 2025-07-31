@@ -426,7 +426,7 @@ class B2C2_Nav_Walker extends Walker_Nav_Menu {
         $attributes .= ! empty($item->xfn) ? ' rel="' . esc_attr($item->xfn ) .'"' : '';
         $attributes .= ! empty($item->url) ? ' href="' . esc_attr($item->url ) .'"' : '';
         $item_output = isset($args->before) ? $args->before : '';
-        $item_output .= '<a' . $attributes . ' style="color: #374151; text-decoration: none; font-weight: 500; padding: 0.5rem 0; transition: color 0.3s ease;">';
+        $item_output .= '<a' . $attributes . ' style="color: #333; text-decoration: none; font-weight: 500; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; transition: color 0.2s ease;">';
         $item_output .= (isset($args->link_before) ? $args->link_before : '') . apply_filters('the_title', $item->title, $item->ID) . (isset($args->link_after) ? $args->link_after : '');
         $item_output .= '</a>';
         $item_output .= isset($args->after) ? $args->after : '';
@@ -503,6 +503,109 @@ function b2c2_customize_register($wp_customize) {
         'type' => 'textarea',
     ));
     
+    // Hero Section
+    $wp_customize->add_section('b2c2_hero', array(
+        'title' => __('Hero Section', 'b2c2-template'),
+        'priority' => 30,
+    ));
+    
+    // Hero title
+    $wp_customize->add_setting('hero_title', array(
+        'default' => 'More than just a liquidity provider, B2C2 is a digital asset pioneer',
+        'sanitize_callback' => 'sanitize_text_field',
+    ));
+    
+    $wp_customize->add_control('hero_title', array(
+        'label' => __('Hero Title', 'b2c2-template'),
+        'section' => 'b2c2_hero',
+        'type' => 'textarea',
+    ));
+    
+    // Hero subtitle
+    $wp_customize->add_setting('hero_subtitle', array(
+        'default' => 'We offer institutional clients advanced trading technology, deep liquidity pools, and innovative digital asset solutions across global markets.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+    ));
+    
+    $wp_customize->add_control('hero_subtitle', array(
+        'label' => __('Hero Subtitle', 'b2c2-template'),
+        'section' => 'b2c2_hero',
+        'type' => 'textarea',
+    ));
+    
+    // Hero buttons
+    $wp_customize->add_setting('hero_primary_text', array(
+        'default' => 'Trading Overview',
+        'sanitize_callback' => 'sanitize_text_field',
+    ));
+    
+    $wp_customize->add_control('hero_primary_text', array(
+        'label' => __('Primary Button Text', 'b2c2-template'),
+        'section' => 'b2c2_hero',
+        'type' => 'text',
+    ));
+    
+    $wp_customize->add_setting('hero_primary_link', array(
+        'default' => '/solutions/trading-overview',
+        'sanitize_callback' => 'esc_url_raw',
+    ));
+    
+    $wp_customize->add_control('hero_primary_link', array(
+        'label' => __('Primary Button Link', 'b2c2-template'),
+        'section' => 'b2c2_hero',
+        'type' => 'url',
+    ));
+    
+    $wp_customize->add_setting('hero_secondary_text', array(
+        'default' => 'About B2C2',
+        'sanitize_callback' => 'sanitize_text_field',
+    ));
+    
+    $wp_customize->add_control('hero_secondary_text', array(
+        'label' => __('Secondary Button Text', 'b2c2-template'),
+        'section' => 'b2c2_hero',
+        'type' => 'text',
+    ));
+    
+    $wp_customize->add_setting('hero_secondary_link', array(
+        'default' => '/about',
+        'sanitize_callback' => 'esc_url_raw',
+    ));
+    
+    $wp_customize->add_control('hero_secondary_link', array(
+        'label' => __('Secondary Button Link', 'b2c2-template'),
+        'section' => 'b2c2_hero',
+        'type' => 'url',
+    ));
+    
+    // Values Section
+    $wp_customize->add_section('b2c2_values', array(
+        'title' => __('Values Section', 'b2c2-template'),
+        'priority' => 32,
+    ));
+    
+    $wp_customize->add_setting('values_title', array(
+        'default' => 'Digital asset trading built for institutions',
+        'sanitize_callback' => 'sanitize_text_field',
+    ));
+    
+    $wp_customize->add_control('values_title', array(
+        'label' => __('Values Section Title', 'b2c2-template'),
+        'section' => 'b2c2_values',
+        'type' => 'text',
+    ));
+    
+    $wp_customize->add_setting('values_description', array(
+        'default' => 'B2C2 provides institutional-grade digital asset trading solutions with advanced technology, deep liquidity, and unparalleled execution quality.',
+        'sanitize_callback' => 'sanitize_textarea_field',
+    ));
+    
+    $wp_customize->add_control('values_description', array(
+        'label' => __('Values Section Description', 'b2c2-template'),
+        'section' => 'b2c2_values',
+        'type' => 'textarea',
+    ));
+
     // Homepage Statistics section
     $wp_customize->add_section('b2c2_stats', array(
         'title' => __('Homepage Statistics', 'b2c2-template'),

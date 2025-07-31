@@ -1,451 +1,233 @@
 <?php
 /**
- * The template for displaying the front page
- * Replicação EXATA do B2C2.com - Senior Developer Audit 2025
+ * Template Name: B2C2 Front Page - Replica Exata
+ * Description: Homepage que replica 100% o design do B2C2.com original
  */
 
-get_header(); ?>
+get_header();
+?>
 
 <main id="primary" class="site-main">
-    
-    <!-- Hero Section - EXATO como B2C2.com -->
-    <section class="hero-section" style="background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%); color: white; padding: 8rem 0; text-align: center; position: relative; overflow: hidden; min-height: 100vh; display: flex; align-items: center;">
-        <div class="container" style="position: relative; z-index: 2; max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
-            <h1 style="font-size: clamp(2.5rem, 5vw, 4rem); margin-bottom: 2rem; font-weight: 700; line-height: 1.2; max-width: 1000px; margin-left: auto; margin-right: auto;">
-                More than just a liquidity provider,<br>
-                B2C2 is a digital asset pioneer building<br>
-                the ecosystem of the future
-            </h1>
-            <p style="font-size: 1.3rem; margin-bottom: 3rem; max-width: 900px; margin-left: auto; margin-right: auto; opacity: 0.9; line-height: 1.6;">
-                B2C2's success is built on a foundation of proprietary crypto-native technology combined with an innovative range of products, making the firm the partner of choice for diverse institutions globally.
-            </p>
-        </div>
-        <!-- Decorative background elements -->
-        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 30% 50%, rgba(0,102,255,0.1) 0%, transparent 50%); z-index: 1;"></div>
-    </section>
 
-    <!-- Featured News Cards - Como no B2C2 original -->
-    <section class="featured-news" style="padding: 4rem 0; background: #f8f9fa;">
-        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
-            <div class="news-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem;">
-                <?php
-                // Query for latest featured news
-                $featured_query = new WP_Query(array(
-                    'post_type' => array('press_release', 'post'),
-                    'posts_per_page' => 4,
-                    'post_status' => 'publish',
-                    'orderby' => 'date',
-                    'order' => 'DESC',
-                    'meta_query' => array(
-                        array(
-                            'key' => 'featured',
-                            'value' => '1',
-                            'compare' => '='
-                        )
-                    )
-                ));
-                
-                if ($featured_query->have_posts()) :
-                    while ($featured_query->have_posts()) : $featured_query->the_post();
-                ?>
-                    <article class="featured-card" style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); transition: transform 0.3s ease;">
-                        <?php if (has_post_thumbnail()) : ?>
-                            <div class="card-image" style="width: 100%; height: 200px; overflow: hidden;">
-                                <?php the_post_thumbnail('medium_large', array('style' => 'width: 100%; height: 100%; object-fit: cover;')); ?>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <div class="card-content" style="padding: 2rem;">
-                            <span class="card-category" style="color: #6B7280; font-size: 0.875rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">
-                                <?php 
-                                if (get_post_type() === 'press_release') {
-                                    echo 'Press Release';
-                                } else {
-                                    $category = get_the_category();
-                                    echo $category ? $category[0]->name : 'News';
-                                }
-                                ?>
-                            </span>
-                            
-                            <h3 style="font-size: 1.25rem; font-weight: 600; margin: 1rem 0; line-height: 1.4;">
-                                <a href="<?php the_permalink(); ?>" style="color: #111827; text-decoration: none;">
-                                    <?php the_title(); ?>
-                                </a>
-                            </h3>
-                            
-                            <p style="color: #6B7280; font-size: 0.875rem; margin-bottom: 1rem;">
-                                <?php echo get_the_date('F j, Y'); ?>
-                            </p>
-                            
-                            <a href="<?php the_permalink(); ?>" style="color: #0066FF; font-weight: 500; text-decoration: none; font-size: 0.875rem;">
-                                Read more >
-                            </a>
-                        </div>
-                    </article>
-                <?php 
-                    endwhile;
-                    wp_reset_postdata();
-                endif;
-                ?>
-            </div>
-        </div>
-    </section>
-
-    <!-- Institutional Solutions Section - EXATO como B2C2 -->
-    <section class="institutional-solutions" id="solutions" style="padding: 6rem 0; background: white;">
-        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
-            <div class="section-header" style="text-align: center; margin-bottom: 4rem;">
-                <h2 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; margin-bottom: 1rem; color: #111827;">
-                    Institutional solutions
-                </h2>
-                <p style="font-size: 1.1rem; color: #6B7280; max-width: 600px; margin: 0 auto;">
-                    Our large and growing client base around the world trusts us to deliver seamless execution 24/7.
+    <!-- B2C2 Hero Section Exato -->
+    <section class="hero-section" style="background: #f8f9fa; padding: 5rem 0; position: relative;">
+        <div class="container" style="max-width: 1400px; margin: 0 auto; padding: 0 3rem;">
+            <div style="max-width: 700px;">
+                <h1 style="font-size: 4rem; font-weight: 700; color: #1a1a1a; line-height: 1.1; margin-bottom: 2rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; letter-spacing: -2px;">
+                    <?php echo get_theme_mod('hero_title', 'More than just a liquidity provider, B2C2 is a digital asset pioneer'); ?>
+                </h1>
+                <p style="font-size: 1.25rem; color: #666; line-height: 1.6; margin-bottom: 3rem; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+                    <?php echo get_theme_mod('hero_subtitle', 'We offer institutional clients advanced trading technology, deep liquidity pools, and innovative digital asset solutions across global markets.'); ?>
                 </p>
-                <a href="/solutions" style="color: #0066FF; font-weight: 500; text-decoration: none; margin-top: 1rem; display: inline-block;">
-                    Explore institutional solutions >
-                </a>
-            </div>
-            
-            <div class="solutions-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
-                <!-- Trading Overview -->
-                <div class="solution-card" style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 12px; padding: 2rem; text-align: center; transition: all 0.3s ease;">
-                    <div class="solution-icon" style="width: 60px; height: 60px; margin: 0 auto 1.5rem; background: #0066FF; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-chart-line" style="color: white; font-size: 1.5rem;"></i>
-                    </div>
-                    <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; color: #111827;">Trading overview</h3>
-                    <a href="/solutions/trading-overview" style="color: #0066FF; font-weight: 500; text-decoration: none; display: flex; align-items: center; justify-content: center;">
-                        <span style="margin-right: 0.5rem;">Learn more</span>
-                        <i class="fas fa-arrow-right" style="font-size: 0.75rem;"></i>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <a href="<?php echo get_theme_mod('hero_primary_link', '/solutions/trading-overview'); ?>" 
+                       style="background: #007bff; color: white; padding: 1rem 2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; transition: background 0.2s ease; display: inline-flex; align-items: center;">
+                        <?php echo get_theme_mod('hero_primary_text', 'Trading Overview'); ?>
                     </a>
-                </div>
-                
-                <!-- OTC Products -->
-                <div class="solution-card" style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 12px; padding: 2rem; text-align: center; transition: all 0.3s ease;">
-                    <div class="solution-icon" style="width: 60px; height: 60px; margin: 0 auto 1.5rem; background: #0066FF; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-cube" style="color: white; font-size: 1.5rem;"></i>
-                    </div>
-                    <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; color: #111827;">OTC Products</h3>
-                    <a href="/solutions/product" style="color: #0066FF; font-weight: 500; text-decoration: none; display: flex; align-items: center; justify-content: center;">
-                        <span style="margin-right: 0.5rem;">Learn more</span>
-                        <i class="fas fa-arrow-right" style="font-size: 0.75rem;"></i>
-                    </a>
-                </div>
-                
-                <!-- Liquidity Partner -->
-                <div class="solution-card" style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 12px; padding: 2rem; text-align: center; transition: all 0.3s ease;">
-                    <div class="solution-icon" style="width: 60px; height: 60px; margin: 0 auto 1.5rem; background: #0066FF; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-handshake" style="color: white; font-size: 1.5rem;"></i>
-                    </div>
-                    <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; color: #111827;">Liquidity Partner</h3>
-                    <a href="/solutions/liquidity-partner" style="color: #0066FF; font-weight: 500; text-decoration: none; display: flex; align-items: center; justify-content: center;">
-                        <span style="margin-right: 0.5rem;">Learn more</span>
-                        <i class="fas fa-arrow-right" style="font-size: 0.75rem;"></i>
-                    </a>
-                </div>
-                
-                <!-- Client Onboarding -->
-                <div class="solution-card" style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 12px; padding: 2rem; text-align: center; transition: all 0.3s ease;">
-                    <div class="solution-icon" style="width: 60px; height: 60px; margin: 0 auto 1.5rem; background: #0066FF; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-user-plus" style="color: white; font-size: 1.5rem;"></i>
-                    </div>
-                    <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; color: #111827;">Client onboarding</h3>
-                    <a href="/client-onboarding" style="color: #0066FF; font-weight: 500; text-decoration: none; display: flex; align-items: center; justify-content: center;">
-                        <span style="margin-right: 0.5rem;">Learn more</span>
-                        <i class="fas fa-arrow-right" style="font-size: 0.75rem;"></i>
+                    <a href="<?php echo get_theme_mod('hero_secondary_link', '/about'); ?>" 
+                       style="background: transparent; color: #007bff; padding: 1rem 2rem; border: 2px solid #007bff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; transition: all 0.2s ease;">
+                        <?php echo get_theme_mod('hero_secondary_text', 'About B2C2'); ?>
                     </a>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Latest News Section - Como no B2C2 -->
-    <section class="latest-news" style="padding: 6rem 0; background: #F9FAFB;">
-        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
-            <div class="section-header" style="margin-bottom: 3rem;">
-                <h2 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; margin-bottom: 1rem; color: #111827;">
-                    Latest news
-                </h2>
-            </div>
-            
-            <div class="news-list" style="display: grid; gap: 2rem;">
-                <?php
-                // Query for latest news
-                $latest_news = new WP_Query(array(
-                    'post_type' => array('press_release', 'post'),
-                    'posts_per_page' => 5,
-                    'post_status' => 'publish',
-                    'orderby' => 'date',
-                    'order' => 'DESC'
-                ));
+    <!-- B2C2 Values Section -->
+    <section style="background: white; padding: 5rem 0;">
+        <div class="container" style="max-width: 1400px; margin: 0 auto; padding: 0 3rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center;">
                 
-                if ($latest_news->have_posts()) :
-                    while ($latest_news->have_posts()) : $latest_news->the_post();
-                ?>
-                    <article class="news-item" style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 2rem;">
-                        <div class="news-logo" style="flex-shrink: 0; width: 60px; height: 60px; background: #111827; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                            <span style="color: white; font-weight: 700; font-size: 0.875rem;">B2C2</span>
-                        </div>
-                        
-                        <div class="news-content" style="flex-grow: 1;">
-                            <span style="color: #6B7280; font-size: 0.875rem; font-weight: 500;">
-                                <?php 
-                                if (get_post_type() === 'press_release') {
-                                    echo 'Press release';
-                                } else {
-                                    echo 'News';
-                                }
-                                ?>
-                            </span>
-                            <h3 style="font-size: 1.125rem; font-weight: 600; margin: 0.5rem 0; color: #111827;">
-                                <a href="<?php the_permalink(); ?>" style="color: inherit; text-decoration: none;">
-                                    <?php the_title(); ?>
-                                </a>
-                            </h3>
-                            <div style="display: flex; align-items: center; gap: 1rem;">
-                                <span style="color: #6B7280; font-size: 0.875rem;">
-                                    <?php echo get_the_date('F j, Y'); ?>
-                                </span>
-                                <a href="<?php the_permalink(); ?>" style="color: #0066FF; font-weight: 500; text-decoration: none; font-size: 0.875rem;">
-                                    Read more >
-                                </a>
-                            </div>
-                        </div>
-                    </article>
-                <?php 
-                    endwhile;
-                    wp_reset_postdata();
-                endif;
-                ?>
-            </div>
-        </div>
-    </section>
-
-    <!-- Events Section -->
-    <section class="events-section" style="padding: 6rem 0; background: white;">
-        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
-            <div class="section-header" style="margin-bottom: 3rem;">
-                <h2 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; margin-bottom: 1rem; color: #111827;">
-                    Events
-                </h2>
-            </div>
-            
-            <?php
-            $events_query = new WP_Query(array(
-                'post_type' => 'event',
-                'posts_per_page' => 3,
-                'post_status' => 'publish',
-                'orderby' => 'meta_value',
-                'meta_key' => 'event_date',
-                'order' => 'ASC'
-            ));
-            
-            if ($events_query->have_posts()) :
-            ?>
-                <div class="events-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
-                    <?php while ($events_query->have_posts()) : $events_query->the_post(); ?>
-                        <article class="event-card" style="background: #F9FAFB; padding: 2rem; border-radius: 12px; border: 1px solid #E5E7EB;">
-                            <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; color: #111827;">
-                                <?php the_title(); ?>
-                            </h3>
-                            <div class="event-meta" style="color: #6B7280; font-size: 0.875rem; margin-bottom: 1rem;">
-                                <?php 
-                                $event_date = get_field('event_date');
-                                if ($event_date) {
-                                    echo date('F j, Y', strtotime($event_date));
-                                }
-                                ?>
-                            </div>
-                            <div class="event-excerpt" style="color: #374151; margin-bottom: 1.5rem;">
-                                <?php the_excerpt(); ?>
-                            </div>
-                            <a href="<?php the_permalink(); ?>" style="color: #0066FF; font-weight: 500; text-decoration: none;">
-                                Learn more >
-                            </a>
-                        </article>
-                    <?php endwhile; ?>
-                </div>
-            <?php 
-                wp_reset_postdata();
-            else :
-            ?>
-                <p style="color: #6B7280; font-style: italic;">No items found.</p>
-            <?php endif; ?>
-        </div>
-    </section>
-
-    <!-- Newsletter Subscription - Como no B2C2 -->
-    <section class="newsletter-section" style="padding: 6rem 0; background: #111827; color: white;">
-        <div class="container" style="max-width: 800px; margin: 0 auto; padding: 0 2rem; text-align: center;">
-            <h2 style="font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; margin-bottom: 1rem;">
-                Subscribe
-            </h2>
-            <p style="font-size: 1.1rem; margin-bottom: 2rem; opacity: 0.9; line-height: 1.6;">
-                Sign up to our news alerts to receive our regular newsletter and institutional insights into the crypto market direct to your inbox.
-            </p>
-            
-            <form class="newsletter-form" style="display: flex; gap: 1rem; max-width: 400px; margin: 0 auto 2rem; flex-wrap: wrap;">
-                <input type="email" placeholder="Enter your email" required style="flex: 1; padding: 1rem; border: 1px solid #374151; border-radius: 6px; background: #1F2937; color: white; min-width: 250px;">
-                <button type="submit" style="padding: 1rem 2rem; background: #0066FF; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.3s ease;">
-                    Subscribe
-                </button>
-            </form>
-            
-            <p style="font-size: 0.75rem; color: #9CA3AF; line-height: 1.5;">
-                B2C2 does not transact with or provide any service to any retail investor or consumer. By subscribing to our content, you represent that you are not a retail investor or consumer. Please refer to our disclaimer for further information.
-            </p>
-        </div>
-    </section>
-
-    <!-- Institutional Insights - Como no B2C2 -->
-    <section class="insights-section" style="padding: 6rem 0; background: white;">
-        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
-            <div class="section-header" style="margin-bottom: 3rem;">
-                <h2 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; margin-bottom: 1rem; color: #111827;">
-                    Institutional Insights
-                </h2>
-            </div>
-            
-            <div class="insights-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem;">
-                <?php
-                // Query for insights
-                $insights_query = new WP_Query(array(
-                    'post_type' => 'insight',
-                    'posts_per_page' => 4,
-                    'post_status' => 'publish',
-                    'orderby' => 'date',
-                    'order' => 'DESC'
-                ));
-                
-                if ($insights_query->have_posts()) :
-                    while ($insights_query->have_posts()) : $insights_query->the_post();
-                ?>
-                    <article class="insight-card" style="background: white; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; transition: transform 0.3s ease;">
-                        <?php if (has_post_thumbnail()) : ?>
-                            <div class="insight-image" style="width: 100%; height: 200px; overflow: hidden;">
-                                <?php the_post_thumbnail('medium_large', array('style' => 'width: 100%; height: 100%; object-fit: cover;')); ?>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <div class="insight-content" style="padding: 2rem;">
-                            <span class="insight-category" style="color: #6B7280; font-size: 0.875rem; font-weight: 500;">
-                                Insights
-                            </span>
-                            
-                            <p style="color: #6B7280; font-size: 0.875rem; margin: 0.5rem 0;">
-                                <?php echo get_the_date('F j, Y'); ?>
-                            </p>
-                            
-                            <h3 style="font-size: 1.25rem; font-weight: 600; margin: 1rem 0; line-height: 1.4; color: #111827;">
-                                <a href="<?php the_permalink(); ?>" style="color: inherit; text-decoration: none;">
-                                    <?php the_title(); ?>
-                                </a>
-                            </h3>
-                            
-                            <a href="<?php the_permalink(); ?>" style="color: #0066FF; font-weight: 500; text-decoration: none; font-size: 0.875rem;">
-                                Read more >
-                            </a>
-                        </div>
-                    </article>
-                <?php 
-                    endwhile;
-                    wp_reset_postdata();
-                endif;
-                ?>
-            </div>
-        </div>
-    </section>
-
-    <!-- Statistics Section - Inspirado no B2C2 -->
-    <section class="stats-section" style="padding: 5rem 0; background: linear-gradient(135deg, #111827 0%, #1f2937 100%); color: white;">
-        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
-            <div style="text-align: center; margin-bottom: 3rem;">
-                <h2 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; margin-bottom: 1rem;">
-                    Trusted Globally
-                </h2>
-                <p style="font-size: 1.2rem; color: #d1d5db; max-width: 600px; margin: 0 auto;">
-                    Leading institutions worldwide rely on our expertise and technology
-                </p>
-            </div>
-            
-            <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 3rem; text-align: center;">
-                <div class="stat-item">
-                    <div style="font-size: 3rem; font-weight: 700; color: #0066FF; margin-bottom: 0.5rem;">$500B+</div>
-                    <p style="font-size: 1.1rem; color: #d1d5db;">Trading Volume</p>
-                </div>
-                <div class="stat-item">
-                    <div style="font-size: 3rem; font-weight: 700; color: #0066FF; margin-bottom: 0.5rem;">200+</div>
-                    <p style="font-size: 1.1rem; color: #d1d5db;">Institutional Clients</p>
-                </div>
-                <div class="stat-item">
-                    <div style="font-size: 3rem; font-weight: 700; color: #0066FF; margin-bottom: 0.5rem;">24/7</div>
-                    <p style="font-size: 1.1rem; color: #d1d5db;">Market Coverage</p>
-                </div>
-                <div class="stat-item">
-                    <div style="font-size: 3rem; font-weight: 700; color: #0066FF; margin-bottom: 0.5rem;">50+</div>
-                    <p style="font-size: 1.1rem; color: #d1d5db;">Digital Assets</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Technology Section -->
-    <section class="technology-section" style="padding: 6rem 0; background: #f8f9fa;">
-        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
-                <div class="tech-content">
-                    <h2 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; margin-bottom: 1.5rem; color: #111827;">
-                        Proprietary Technology
+                <!-- Left Content -->
+                <div>
+                    <h2 style="font-size: 2.5rem; font-weight: 700; color: #1a1a1a; margin-bottom: 2rem; font-family: -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.2;">
+                        <?php echo get_theme_mod('values_title', 'Digital asset trading built for institutions'); ?>
                     </h2>
-                    <p style="font-size: 1.1rem; color: #6B7280; line-height: 1.7; margin-bottom: 2rem;">
-                        Our cutting-edge technology stack powers seamless digital asset trading with institutional-grade infrastructure, advanced risk management, and real-time execution capabilities.
+                    <p style="font-size: 1.125rem; color: #666; line-height: 1.7; margin-bottom: 2rem;">
+                        <?php echo get_theme_mod('values_description', 'B2C2 provides institutional-grade digital asset trading solutions with advanced technology, deep liquidity, and unparalleled execution quality.'); ?>
                     </p>
                     
-                    <div class="tech-features" style="display: grid; gap: 1.5rem;">
-                        <div class="feature-item" style="display: flex; align-items: center; gap: 1rem;">
-                            <div style="width: 40px; height: 40px; background: #0066FF; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                                <i class="fas fa-bolt" style="color: white; font-size: 1rem;"></i>
-                            </div>
+                    <!-- Feature List -->
+                    <div style="space-y: 1rem;">
+                        <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem;">
+                            <div style="width: 8px; height: 8px; background: #007bff; border-radius: 50%; margin-top: 8px; flex-shrink: 0;"></div>
                             <div>
-                                <h4 style="font-weight: 600; color: #111827; margin-bottom: 0.25rem;">Ultra-Fast Execution</h4>
-                                <p style="color: #6B7280; font-size: 0.875rem;">Sub-millisecond order execution across global markets</p>
+                                <h4 style="font-weight: 600; color: #1a1a1a; margin: 0 0 0.5rem 0;">Deep Liquidity</h4>
+                                <p style="color: #666; margin: 0; font-size: 0.95rem;">Access to the deepest liquidity pools across global digital asset markets</p>
                             </div>
                         </div>
                         
-                        <div class="feature-item" style="display: flex; align-items: center; gap: 1rem;">
-                            <div style="width: 40px; height: 40px; background: #0066FF; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                                <i class="fas fa-shield-alt" style="color: white; font-size: 1rem;"></i>
-                            </div>
+                        <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem;">
+                            <div style="width: 8px; height: 8px; background: #007bff; border-radius: 50%; margin-top: 8px; flex-shrink: 0;"></div>
                             <div>
-                                <h4 style="font-weight: 600; color: #111827; margin-bottom: 0.25rem;">Advanced Security</h4>
-                                <p style="color: #6B7280; font-size: 0.875rem;">Bank-grade security and custody solutions</p>
+                                <h4 style="font-weight: 600; color: #1a1a1a; margin: 0 0 0.5rem 0;">Advanced Technology</h4>
+                                <p style="color: #666; margin: 0; font-size: 0.95rem;">Cutting-edge trading infrastructure built for institutional requirements</p>
                             </div>
                         </div>
                         
-                        <div class="feature-item" style="display: flex; align-items: center; gap: 1rem;">
-                            <div style="width: 40px; height: 40px; background: #0066FF; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                                <i class="fas fa-chart-area" style="color: white; font-size: 1rem;"></i>
-                            </div>
+                        <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem;">
+                            <div style="width: 8px; height: 8px; background: #007bff; border-radius: 50%; margin-top: 8px; flex-shrink: 0;"></div>
                             <div>
-                                <h4 style="font-weight: 600; color: #111827; margin-bottom: 0.25rem;">Deep Liquidity</h4>
-                                <p style="color: #6B7280; font-size: 0.875rem;">Access to the deepest liquidity pools globally</p>
+                                <h4 style="font-weight: 600; color: #1a1a1a; margin: 0 0 0.5rem 0;">Global Reach</h4>
+                                <p style="color: #666; margin: 0; font-size: 0.95rem;">24/7 market coverage across all major digital asset trading venues</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="tech-visual" style="text-align: center;">
-                    <div style="width: 100%; height: 400px; background: linear-gradient(135deg, #0066FF, #4338ca); border-radius: 16px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
-                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><defs><pattern id=\"grid\" width=\"10\" height=\"10\" patternUnits=\"userSpaceOnUse\"><path d=\"M 10 0 L 0 0 0 10\" fill=\"none\" stroke=\"%23ffffff\" stroke-width=\"0.5\" opacity=\"0.1\"/></pattern></defs><rect width=\"100\" height=\"100\" fill=\"url(%23grid)\"/></svg>'); opacity: 0.3;"></div>
-                        <div style="position: relative; z-index: 2;">
-                            <i class="fas fa-server" style="color: white; font-size: 4rem; margin-bottom: 1rem; opacity: 0.9;"></i>
-                            <p style="color: white; font-size: 1.1rem; opacity: 0.9;">Enterprise Infrastructure</p>
-                        </div>
+                <!-- Right Visual -->
+                <div style="background: linear-gradient(135deg, #007bff10, #28a74510); border-radius: 16px; height: 400px; display: flex; align-items: center; justify-content: center;">
+                    <div style="text-align: center; color: #666;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+                        <p style="font-size: 1.125rem; font-weight: 600;">Trading Dashboard</p>
+                        <p style="font-size: 0.95rem;">Real-time market data & execution</p>
                     </div>
                 </div>
+                
+            </div>
+        </div>
+    </section>
+
+    <!-- Statistics Section - B2C2 Style -->
+    <section style="background: #f8f9fa; padding: 4rem 0;">
+        <div class="container" style="max-width: 1400px; margin: 0 auto; padding: 0 3rem;">
+            
+            <div style="text-align: center; margin-bottom: 3rem;">
+                <h2 style="font-size: 2.5rem; font-weight: 700; color: #1a1a1a; margin-bottom: 1rem;">
+                    <?php echo get_theme_mod('stats_section_title', 'Trusted by leading institutions globally'); ?>
+                </h2>
+                <p style="font-size: 1.125rem; color: #666; max-width: 600px; margin: 0 auto;">
+                    <?php echo get_theme_mod('stats_section_subtitle', 'Our performance metrics demonstrate our commitment to institutional excellence'); ?>
+                </p>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 3rem;">
+                <?php
+                $stats = array(
+                    array(
+                        'number' => get_theme_mod('stat_1_number', '$500B+'),
+                        'label' => get_theme_mod('stat_1_label', 'Monthly Trading Volume')
+                    ),
+                    array(
+                        'number' => get_theme_mod('stat_2_number', '200+'),
+                        'label' => get_theme_mod('stat_2_label', 'Institutional Clients')
+                    ),
+                    array(
+                        'number' => get_theme_mod('stat_3_number', '24/7'),
+                        'label' => get_theme_mod('stat_3_label', 'Market Coverage')
+                    ),
+                    array(
+                        'number' => get_theme_mod('stat_4_number', '<15ms'),
+                        'label' => get_theme_mod('stat_4_label', 'Average Latency')
+                    )
+                );
+                
+                foreach($stats as $stat) :
+                ?>
+                <div style="text-align: center; background: white; padding: 2.5rem 2rem; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                    <div style="font-size: 3rem; font-weight: 700; color: #007bff; margin-bottom: 0.5rem; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+                        <?php echo esc_html($stat['number']); ?>
+                    </div>
+                    <div style="font-size: 1rem; color: #666; font-weight: 500;">
+                        <?php echo esc_html($stat['label']); ?>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </section>
+
+    <!-- Solutions Preview Section -->
+    <section style="background: white; padding: 5rem 0;">
+        <div class="container" style="max-width: 1400px; margin: 0 auto; padding: 0 3rem;">
+            
+            <div style="text-align: center; margin-bottom: 4rem;">
+                <h2 style="font-size: 2.5rem; font-weight: 700; color: #1a1a1a; margin-bottom: 1rem;">
+                    Comprehensive trading solutions
+                </h2>
+                <p style="font-size: 1.125rem; color: #666; max-width: 700px; margin: 0 auto;">
+                    From spot to derivatives, our comprehensive suite of trading solutions serves institutional clients across all digital asset markets.
+                </p>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem;">
+                
+                <!-- Solution 1 -->
+                <div style="padding: 2.5rem; border: 1px solid #e9ecef; border-radius: 12px; transition: border-color 0.2s ease;">
+                    <div style="width: 48px; height: 48px; background: #007bff15; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+                        <span style="font-size: 24px;">⚡</span>
+                    </div>
+                    <h3 style="font-size: 1.5rem; font-weight: 700; color: #1a1a1a; margin-bottom: 1rem;">
+                        Spot Trading
+                    </h3>
+                    <p style="color: #666; line-height: 1.6; margin-bottom: 1.5rem;">
+                        Access deep liquidity across all major digital assets with competitive spreads and institutional-grade execution.
+                    </p>
+                    <a href="/solutions/spot-trading" style="color: #007bff; text-decoration: none; font-weight: 600; font-size: 0.95rem;">
+                        Learn more →
+                    </a>
+                </div>
+                
+                <!-- Solution 2 -->
+                <div style="padding: 2.5rem; border: 1px solid #e9ecef; border-radius: 12px; transition: border-color 0.2s ease;">
+                    <div style="width: 48px; height: 48px; background: #007bff15; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+                        <span style="font-size: 24px;">📈</span>
+                    </div>
+                    <h3 style="font-size: 1.5rem; font-weight: 700; color: #1a1a1a; margin-bottom: 1rem;">
+                        Derivatives
+                    </h3>
+                    <p style="color: #666; line-height: 1.6; margin-bottom: 1.5rem;">
+                        Advanced derivatives trading with sophisticated risk management tools and market-leading technology.
+                    </p>
+                    <a href="/solutions/derivatives" style="color: #007bff; text-decoration: none; font-weight: 600; font-size: 0.95rem;">
+                        Learn more →
+                    </a>
+                </div>
+                
+                <!-- Solution 3 -->
+                <div style="padding: 2.5rem; border: 1px solid #e9ecef; border-radius: 12px; transition: border-color 0.2s ease;">
+                    <div style="width: 48px; height: 48px; background: #007bff15; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+                        <span style="font-size: 24px;">🔄</span>
+                    </div>
+                    <h3 style="font-size: 1.5rem; font-weight: 700; color: #1a1a1a; margin-bottom: 1rem;">
+                        Liquidity Solutions
+                    </h3>
+                    <p style="color: #666; line-height: 1.6; margin-bottom: 1.5rem;">
+                        Customized liquidity solutions designed to meet the specific needs of institutional trading operations.
+                    </p>
+                    <a href="/solutions/liquidity" style="color: #007bff; text-decoration: none; font-weight: 600; font-size: 0.95rem;">
+                        Learn more →
+                    </a>
+                </div>
+                
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section style="background: #1a1a1a; color: white; padding: 5rem 0;">
+        <div class="container" style="max-width: 1400px; margin: 0 auto; padding: 0 3rem; text-align: center;">
+            <h2 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 1.5rem; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+                Ready to elevate your digital asset trading?
+            </h2>
+            <p style="font-size: 1.125rem; color: #ccc; margin-bottom: 2.5rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+                Join leading institutions who trust B2C2 for their digital asset trading needs.
+            </p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="/contact" 
+                   style="background: #007bff; color: white; padding: 1rem 2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; transition: background 0.2s ease;">
+                    Get in touch
+                </a>
+                <a href="/about" 
+                   style="background: transparent; color: white; padding: 1rem 2rem; border: 2px solid white; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; transition: all 0.2s ease;">
+                    Learn about B2C2
+                </a>
             </div>
         </div>
     </section>
 
 </main>
 
-<?php get_footer(); ?>
+<?php
+get_footer();
+?>

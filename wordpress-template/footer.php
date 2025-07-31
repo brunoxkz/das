@@ -1,156 +1,231 @@
-        <footer id="colophon" class="site-footer" style="background: #111827; color: white; padding: 4rem 0 2rem;">
-                <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
-                        <div class="footer-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 3rem; margin-bottom: 3rem;">
-                                
-                                <!-- Company Info -->
-                                <div class="footer-section">
-                                        <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; color: white;">
-                                                <?php bloginfo('name'); ?>
-                                        </h3>
-                                        <p style="color: #d1d5db; line-height: 1.6; margin-bottom: 1.5rem;">
-                                                Leading digital asset liquidity provider serving institutional clients globally with cutting-edge technology and deep market expertise.
-                                        </p>
-                                        
-                                        <!-- Social Links -->
-                                        <div class="social-links" style="display: flex; gap: 1rem;">
-                                                <?php
-                                                $social_sites = array(
-                                                        'linkedin' => array('icon' => 'fab fa-linkedin', 'label' => 'LinkedIn'),
-                                                        'twitter' => array('icon' => 'fab fa-twitter', 'label' => 'Twitter'),
-                                                        'youtube' => array('icon' => 'fab fa-youtube', 'label' => 'YouTube')
-                                                );
-                                                
-                                                foreach ($social_sites as $social_site => $details) {
-                                                        $social_url = get_theme_mod($social_site, '');
-                                                        if ($social_url) {
-                                                                echo '<a href="' . esc_url($social_url) . '" style="color: #9ca3af; font-size: 1.25rem; transition: color 0.3s ease;" target="_blank" rel="noopener" aria-label="' . $details['label'] . '">
-                                                                        <i class="' . $details['icon'] . '"></i>
-                                                                </a>';
-                                                        }
-                                                }
-                                                ?>
-                                        </div>
-                                </div>
-                                
-                                <!-- Solutions -->
-                                <div class="footer-section">
-                                        <h4 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1.5rem; color: white;">Solutions</h4>
-                                        <ul style="list-style: none; padding: 0; margin: 0;">
-                                                <li style="margin-bottom: 0.75rem;">
-                                                        <a href="/solutions/trading-overview" style="color: #d1d5db; text-decoration: none; transition: color 0.3s ease;">Trading Overview</a>
-                                                </li>
-                                                <li style="margin-bottom: 0.75rem;">
-                                                        <a href="/solutions/product" style="color: #d1d5db; text-decoration: none; transition: color 0.3s ease;">OTC Products</a>
-                                                </li>
-                                                <li style="margin-bottom: 0.75rem;">
-                                                        <a href="/solutions/liquidity-partner" style="color: #d1d5db; text-decoration: none; transition: color 0.3s ease;">Liquidity Partner</a>
-                                                </li>
-                                                <li style="margin-bottom: 0.75rem;">
-                                                        <a href="/client-onboarding" style="color: #d1d5db; text-decoration: none; transition: color 0.3s ease;">Client Onboarding</a>
-                                                </li>
-                                        </ul>
-                                </div>
-                                
-                                <!-- Company -->
-                                <div class="footer-section">
-                                        <h4 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1.5rem; color: white;">Company</h4>
-                                        <ul style="list-style: none; padding: 0; margin: 0;">
-                                                <li style="margin-bottom: 0.75rem;">
-                                                        <a href="/about" style="color: #d1d5db; text-decoration: none; transition: color 0.3s ease;">About</a>
-                                                </li>
-                                                <li style="margin-bottom: 0.75rem;">
-                                                        <a href="/insights" style="color: #d1d5db; text-decoration: none; transition: color 0.3s ease;">Insights</a>
-                                                </li>
-                                                <li style="margin-bottom: 0.75rem;">
-                                                        <a href="/press-releases" style="color: #d1d5db; text-decoration: none; transition: color 0.3s ease;">Press Releases</a>
-                                                </li>
-                                                <li style="margin-bottom: 0.75rem;">
-                                                        <a href="/careers" style="color: #d1d5db; text-decoration: none; transition: color 0.3s ease;">Careers</a>
-                                                </li>
-                                        </ul>
-                                </div>
-                                
-                                <!-- Legal -->
-                                <div class="footer-section">
-                                        <h4 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1.5rem; color: white;">Legal</h4>
-                                        <ul style="list-style: none; padding: 0; margin: 0;">
-                                                <li style="margin-bottom: 0.75rem;">
-                                                        <a href="/privacy-policy" style="color: #d1d5db; text-decoration: none; transition: color 0.3s ease;">Privacy Policy</a>
-                                                </li>
-                                                <li style="margin-bottom: 0.75rem;">
-                                                        <a href="/terms-of-service" style="color: #d1d5db; text-decoration: none; transition: color 0.3s ease;">Terms of Service</a>
-                                                </li>
-                                                <li style="margin-bottom: 0.75rem;">
-                                                        <a href="/risk-disclosure" style="color: #d1d5db; text-decoration: none; transition: color 0.3s ease;">Risk Disclosure</a>
-                                                </li>
-                                                <li style="margin-bottom: 0.75rem;">
-                                                        <a href="/contact" style="color: #d1d5db; text-decoration: none; transition: color 0.3s ease;">Contact</a>
-                                                </li>
-                                        </ul>
-                                </div>
-                        </div>
-                        
-                        <!-- Footer Bottom -->
-                        <div class="footer-bottom" style="padding-top: 2rem; border-top: 1px solid #374151; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                                <div class="copyright" style="color: #9ca3af; font-size: 0.875rem;">
-                                        <?php 
-                                        $footer_text = get_theme_mod('footer_text', '© ' . date('Y') . ' ' . get_bloginfo('name') . '. All rights reserved.');
-                                        echo esc_html($footer_text);
-                                        ?>
-                                </div>
-                                
-                                <div class="footer-disclaimer" style="color: #9ca3af; font-size: 0.75rem; max-width: 600px; text-align: right;">
-                                        B2C2 does not transact with or provide any services to retail investors or consumers.
-                                </div>
-                        </div>
+    <!-- B2C2 Footer Minimalista -->
+    <footer id="colophon" class="site-footer" style="background: white; border-top: 1px solid #e5e7eb; padding: 3rem 0 2rem;">
+        <div class="container" style="max-width: 1400px; margin: 0 auto; padding: 0 3rem;">
+            
+            <!-- Main Footer Content -->
+            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 4rem; margin-bottom: 3rem;">
+                
+                <!-- Company Info -->
+                <div>
+                    <div style="font-size: 24px; font-weight: 700; margin-bottom: 1.5rem; color: #1a1a1a; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+                        B2C2
+                    </div>
+                    <p style="color: #666; line-height: 1.6; margin-bottom: 2rem; max-width: 300px; font-size: 14px;">
+                        <?php echo get_theme_mod('footer_description', 'More than just a liquidity provider, B2C2 is a digital asset pioneer building the ecosystem of the future.'); ?>
+                    </p>
                 </div>
-        </footer><!-- #colophon -->
+                
+                <!-- Solutions -->
+                <div>
+                    <h4 style="font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Solutions
+                    </h4>
+                    <ul style="list-style: none; margin: 0; padding: 0;">
+                        <li style="margin-bottom: 0.75rem;">
+                            <a href="/solutions/trading-overview" style="color: #666; text-decoration: none; font-size: 14px; transition: color 0.2s ease;">
+                                Trading Overview
+                            </a>
+                        </li>
+                        <li style="margin-bottom: 0.75rem;">
+                            <a href="/solutions/spot-trading" style="color: #666; text-decoration: none; font-size: 14px; transition: color 0.2s ease;">
+                                Spot Trading
+                            </a>
+                        </li>
+                        <li style="margin-bottom: 0.75rem;">
+                            <a href="/solutions/derivatives" style="color: #666; text-decoration: none; font-size: 14px; transition: color 0.2s ease;">
+                                Derivatives
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Company -->
+                <div>
+                    <h4 style="font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Company
+                    </h4>
+                    <ul style="list-style: none; margin: 0; padding: 0;">
+                        <li style="margin-bottom: 0.75rem;">
+                            <a href="/about" style="color: #666; text-decoration: none; font-size: 14px; transition: color 0.2s ease;">
+                                About
+                            </a>
+                        </li>
+                        <li style="margin-bottom: 0.75rem;">
+                            <a href="/insights" style="color: #666; text-decoration: none; font-size: 14px; transition: color 0.2s ease;">
+                                Insights
+                            </a>
+                        </li>
+                        <li style="margin-bottom: 0.75rem;">
+                            <a href="/join-b2c2" style="color: #666; text-decoration: none; font-size: 14px; transition: color 0.2s ease;">
+                                Join B2C2
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Legal -->
+                <div>
+                    <h4 style="font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Legal
+                    </h4>
+                    <ul style="list-style: none; margin: 0; padding: 0;">
+                        <li style="margin-bottom: 0.75rem;">
+                            <a href="/disclosure" style="color: #666; text-decoration: none; font-size: 14px; transition: color 0.2s ease;">
+                                Disclosure
+                            </a>
+                        </li>
+                        <li style="margin-bottom: 0.75rem;">
+                            <a href="/regulatory-permissions" style="color: #666; text-decoration: none; font-size: 14px; transition: color 0.2s ease;">
+                                Regulatory Permissions
+                            </a>
+                        </li>
+                        <li style="margin-bottom: 0.75rem;">
+                            <a href="/privacy-policy" style="color: #666; text-decoration: none; font-size: 14px; transition: color 0.2s ease;">
+                                Privacy Policy
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+            </div>
+            
+            <!-- Bottom Bar -->
+            <div style="border-top: 1px solid #e5e7eb; padding-top: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                
+                <!-- Copyright -->
+                <div style="color: #999; font-size: 14px;">
+                    <?php echo '© ' . date('Y') . ' ' . get_bloginfo('name') . '. All rights reserved.'; ?>
+                </div>
+                
+                <!-- Social Links -->
+                <div style="display: flex; gap: 1.5rem;">
+                    <?php
+                    $social_links = array(
+                        'linkedin' => get_theme_mod('linkedin'),
+                        'twitter' => get_theme_mod('twitter')
+                    );
+                    
+                    foreach ($social_links as $platform => $url) {
+                        if ($url) {
+                            $platform_name = ucfirst($platform);
+                            echo '<a href="' . esc_url($url) . '" target="_blank" style="color: #999; text-decoration: none; transition: color 0.2s ease; font-size: 14px;">
+                                    ' . $platform_name . '
+                                  </a>';
+                        }
+                    }
+                    ?>
+                </div>
+                
+            </div>
+            
+        </div>
+    </footer>
+
 </div><!-- #page -->
 
 <?php wp_footer(); ?>
 
-<!-- Mobile Menu Script -->
+<!-- B2C2 Mobile Menu Script -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const menuToggle = document.querySelector('.mobile-menu-toggle');
-    const primaryMenu = document.querySelector('#primary-menu');
+    const menuToggle = document.querySelector('.menu-toggle');
+    const navMenu = document.querySelector('.nav-menu');
     
-    if (menuToggle && primaryMenu) {
+    if (menuToggle && navMenu) {
         menuToggle.addEventListener('click', function() {
-            const expanded = this.getAttribute('aria-expanded') === 'true' || false;
-            this.setAttribute('aria-expanded', !expanded);
-            primaryMenu.classList.toggle('is-open');
-            document.body.classList.toggle('menu-open');
-        });
-    }
-    
-    // Header scroll effect
-    const header = document.querySelector('.site-header');
-    if (header) {
-        window.addEventListener('scroll', function() {
-            if (window.scrollY > 100) {
-                header.classList.add('scrolled');
-            } else {
-                header.classList.remove('scrolled');
-            }
-        });
-    }
-    
-    // Newsletter form handling
-    const newsletterForm = document.querySelector('.newsletter-form');
-    if (newsletterForm) {
-        newsletterForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const email = this.querySelector('input[name="newsletter_email"]').value;
+            const isOpen = navMenu.style.display === 'flex';
+            navMenu.style.display = isOpen ? 'none' : 'flex';
             
-            // Here you can add your newsletter subscription logic
-            // For now, just show a simple alert
-            alert('Thank you for subscribing! We\'ll be in touch soon.');
-            this.reset();
+            // Animate hamburger lines
+            const lines = this.querySelectorAll('span');
+            if (lines.length >= 3) {
+                if (isOpen) {
+                    lines[0].style.transform = 'rotate(0deg)';
+                    lines[1].style.opacity = '1';
+                    lines[2].style.transform = 'rotate(0deg)';
+                } else {
+                    lines[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                    lines[1].style.opacity = '0';
+                    lines[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+                }
+            }
         });
     }
 });
 </script>
+
+<!-- B2C2 CSS for Mobile -->
+<style>
+@media (max-width: 768px) {
+    .header-content {
+        flex-wrap: wrap;
+    }
+    
+    .menu-toggle {
+        display: block !important;
+    }
+    
+    .nav-menu {
+        display: none !important;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        flex-direction: column;
+        padding: 2rem;
+        z-index: 1000;
+    }
+    
+    .nav-menu ul {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+    
+    .footer-content {
+        grid-template-columns: 1fr !important;
+        gap: 2rem !important;
+    }
+    
+    .hero-section h1 {
+        font-size: 2.5rem !important;
+        line-height: 1.2 !important;
+    }
+    
+    .values-section {
+        grid-template-columns: 1fr !important;
+        gap: 3rem !important;
+    }
+    
+    .solutions-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1.5rem !important;
+    }
+    
+    .container {
+        padding: 0 1.5rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .hero-section {
+        padding: 3rem 0 !important;
+    }
+    
+    .hero-section h1 {
+        font-size: 2rem !important;
+    }
+}
+</style>
 
 </body>
 </html>
