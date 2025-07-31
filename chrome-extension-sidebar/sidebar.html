@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do Sidebar</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📝 To-Do Manager</h1>
+            <button id="addColumnBtn" class="add-column-btn">+ Nova Coluna</button>
+        </header>
+        
+        <div class="board" id="todoBoard">
+            <!-- Colunas serão inseridas dinamicamente aqui -->
+        </div>
+        
+        <!-- Modal para adicionar/editar tarefa -->
+        <div id="taskModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3 id="modalTitle">Adicionar Tarefa</h3>
+                <input type="text" id="taskInput" placeholder="Digite a tarefa..." maxlength="200">
+                <div class="modal-buttons">
+                    <button id="saveTaskBtn" class="save-btn">Salvar</button>
+                    <button id="cancelTaskBtn" class="cancel-btn">Cancelar</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal para adicionar/editar coluna -->
+        <div id="columnModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3 id="columnModalTitle">Adicionar Coluna</h3>
+                <input type="text" id="columnInput" placeholder="Nome da coluna..." maxlength="50">
+                <div class="modal-buttons">
+                    <button id="saveColumnBtn" class="save-btn">Salvar</button>
+                    <button id="cancelColumnBtn" class="cancel-btn">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="sidebar.js"></script>
+</body>
+</html>
