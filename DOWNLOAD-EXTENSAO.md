@@ -58,4 +58,15 @@
 - Botões com feedback visual
 - Modal system elegante
 
-**✅ NOVA VERSÃO PRONTA PARA DOWNLOAD E INSTALAÇÃO!**
+### **📦 Arquivos de Download:**
+- **Versão 2.0 (NOVA):** `sidebar-todo-pomodoro-v2.0-screen-split.zip` (24K) - **RECOMENDADA**
+- **Versão 1.0.1:** `sidebar-todo-pomodoro-v1.0.1.zip` (15K) - Versão anterior
+
+### **🏆 Por que usar a v2.0?**
+- **Sidebar REAL que divide a tela** (não é painel lateral)
+- **Design mais profissional** preto e branco
+- **Layout mais responsivo** com listas verticais
+- **Botão para fechar** quando necessário
+- **Melhor experiência** de uso geral
+
+**✅ EXTENSÃO v2.0 PRONTA PARA DOWNLOAD E INSTALAÇÃO!**

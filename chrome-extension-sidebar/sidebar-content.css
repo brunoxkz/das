@@ -1,0 +1,568 @@
+/* CSS para Content Script - Sidebar fixa que divide a tela */
+
+/* Container principal da sidebar */
+#productivity-sidebar-container {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 280px !important;
+    height: 100vh !important;
+    z-index: 2147483647 !important; /* Máximo z-index para ficar por cima de tudo */
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Conteúdo da sidebar */
+#productivity-sidebar {
+    width: 100% !important;
+    height: 100% !important;
+    background: #ffffff !important;
+    border-right: 2px solid #000000 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    color: #000000 !important;
+}
+
+/* Scrollbar customizada para a sidebar */
+#productivity-sidebar::-webkit-scrollbar {
+    width: 6px !important;
+}
+
+#productivity-sidebar::-webkit-scrollbar-track {
+    background: #f0f0f0 !important;
+}
+
+#productivity-sidebar::-webkit-scrollbar-thumb {
+    background: #000000 !important;
+    border-radius: 3px !important;
+}
+
+#productivity-sidebar::-webkit-scrollbar-thumb:hover {
+    background: #333333 !important;
+}
+
+/* Botão de fechar sidebar */
+.close-sidebar {
+    position: absolute !important;
+    top: 8px !important;
+    right: 8px !important;
+    width: 24px !important;
+    height: 24px !important;
+    background: #000000 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 50% !important;
+    cursor: pointer !important;
+    font-size: 16px !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 10 !important;
+    transition: all 0.2s ease !important;
+}
+
+.close-sidebar:hover {
+    background: #333333 !important;
+    transform: scale(1.1) !important;
+}
+
+/* Header */
+.header {
+    padding: 15px 12px 10px 12px !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    background: #ffffff !important;
+}
+
+.header h1 {
+    margin: 0 !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: #000000 !important;
+    text-align: center !important;
+}
+
+/* Seção Pomodoro */
+.pomodoro-section {
+    padding: 15px 12px !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    background: #ffffff !important;
+}
+
+.motivation-text {
+    text-align: center !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
+    color: #666666 !important;
+    margin-bottom: 12px !important;
+    letter-spacing: 1px !important;
+}
+
+.pomodoro-timer {
+    text-align: center !important;
+}
+
+.timer-display {
+    font-size: 28px !important;
+    font-weight: bold !important;
+    color: #000000 !important;
+    margin-bottom: 5px !important;
+    font-family: 'Courier New', monospace !important;
+}
+
+.timer-phase {
+    font-size: 11px !important;
+    color: #666666 !important;
+    margin-bottom: 12px !important;
+}
+
+.timer-controls {
+    display: flex !important;
+    gap: 6px !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+}
+
+.timer-btn {
+    padding: 6px 10px !important;
+    border: 1px solid #000000 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+    white-space: nowrap !important;
+}
+
+.timer-btn:hover {
+    background: #f0f0f0 !important;
+}
+
+.timer-btn.primary {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+.timer-btn.primary:hover {
+    background: #333333 !important;
+}
+
+/* Controles de som ambiente */
+.ambient-controls {
+    display: none !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    margin-top: 10px !important;
+    justify-content: center !important;
+}
+
+.ambient-btn {
+    padding: 4px 6px !important;
+    border: 1px solid #ccc !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    border-radius: 3px !important;
+    cursor: pointer !important;
+    font-size: 9px !important;
+    transition: all 0.2s ease !important;
+}
+
+.ambient-btn:hover {
+    background: #f0f0f0 !important;
+    border-color: #000000 !important;
+}
+
+.ambient-btn.active {
+    background: #000000 !important;
+    color: #ffffff !important;
+    border-color: #000000 !important;
+}
+
+/* Conteúdo principal */
+.main-content {
+    padding: 0 !important;
+    flex: 1 !important;
+    overflow-y: auto !important;
+}
+
+/* Seção Todo */
+.todo-section {
+    padding: 15px 12px !important;
+}
+
+.todo-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 12px !important;
+    gap: 8px !important;
+}
+
+.todo-header h2 {
+    margin: 0 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #000000 !important;
+    flex: 1 !important;
+}
+
+.add-column-btn {
+    padding: 6px 10px !important;
+    border: 1px solid #000000 !important;
+    background: #000000 !important;
+    color: #ffffff !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+    white-space: nowrap !important;
+}
+
+.add-column-btn:hover {
+    background: #333333 !important;
+}
+
+/* Container de colunas (layout vertical) */
+.columns-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+}
+
+/* Coluna individual */
+.column {
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 6px !important;
+    background: #ffffff !important;
+    overflow: hidden !important;
+}
+
+.column-header {
+    padding: 10px 12px !important;
+    background: #f8f8f8 !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.column-title {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #000000 !important;
+    flex: 1 !important;
+}
+
+.column-actions {
+    display: flex !important;
+    gap: 4px !important;
+}
+
+.column-btn {
+    padding: 4px 6px !important;
+    border: 1px solid #ccc !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    border-radius: 3px !important;
+    cursor: pointer !important;
+    font-size: 9px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+}
+
+.column-btn:hover {
+    background: #f0f0f0 !important;
+    border-color: #000000 !important;
+}
+
+.column-btn.danger:hover {
+    background: #ffebee !important;
+    border-color: #f44336 !important;
+    color: #f44336 !important;
+}
+
+/* Lista de tarefas */
+.tasks-list {
+    padding: 8px !important;
+    min-height: 40px !important;
+    max-height: 200px !important;
+    overflow-y: auto !important;
+}
+
+.task-item {
+    padding: 8px !important;
+    margin-bottom: 6px !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 4px !important;
+    background: #ffffff !important;
+    cursor: move !important;
+    transition: all 0.2s ease !important;
+}
+
+.task-item:hover {
+    border-color: #000000 !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.task-item:last-child {
+    margin-bottom: 0 !important;
+}
+
+.task-content {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.task-text {
+    flex: 1 !important;
+    font-size: 11px !important;
+    color: #000000 !important;
+    word-wrap: break-word !important;
+    line-height: 1.3 !important;
+}
+
+.task-actions {
+    display: flex !important;
+    gap: 3px !important;
+}
+
+.task-btn {
+    padding: 3px 5px !important;
+    border: 1px solid #ccc !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    border-radius: 2px !important;
+    cursor: pointer !important;
+    font-size: 8px !important;
+    transition: all 0.2s ease !important;
+}
+
+.task-btn:hover {
+    background: #f0f0f0 !important;
+    border-color: #000000 !important;
+}
+
+.task-btn.danger:hover {
+    background: #ffebee !important;
+    border-color: #f44336 !important;
+    color: #f44336 !important;
+}
+
+/* Estado vazio */
+.empty-state {
+    text-align: center !important;
+    font-size: 11px !important;
+    color: #666666 !important;
+    padding: 15px 8px !important;
+    font-style: italic !important;
+}
+
+/* Modais */
+.modal {
+    display: none !important;
+    position: fixed !important;
+    z-index: 2147483648 !important; /* Ainda maior que a sidebar */
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+.modal-content {
+    background-color: #ffffff !important;
+    margin: 15% auto !important;
+    padding: 20px !important;
+    border: 2px solid #000000 !important;
+    border-radius: 8px !important;
+    width: 280px !important;
+    max-width: 90% !important;
+    position: relative !important;
+    animation: modalSlideIn 0.3s ease !important;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0 !important;
+        transform: translateY(-50px) !important;
+    }
+    to {
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+    }
+}
+
+.modal-content .close {
+    position: absolute !important;
+    top: 8px !important;
+    right: 12px !important;
+    font-size: 20px !important;
+    font-weight: bold !important;
+    cursor: pointer !important;
+    color: #000000 !important;
+}
+
+.modal-content .close:hover {
+    color: #666666 !important;
+}
+
+.modal-content h2 {
+    margin: 0 0 15px 0 !important;
+    font-size: 16px !important;
+    color: #000000 !important;
+}
+
+.modal-content input {
+    width: 100% !important;
+    padding: 10px !important;
+    border: 1px solid #ccc !important;
+    border-radius: 4px !important;
+    font-size: 14px !important;
+    margin-bottom: 15px !important;
+    box-sizing: border-box !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+}
+
+.modal-content input:focus {
+    outline: none !important;
+    border-color: #000000 !important;
+}
+
+.modal-actions {
+    display: flex !important;
+    gap: 10px !important;
+    justify-content: flex-end !important;
+}
+
+.modal-btn {
+    padding: 8px 16px !important;
+    border: 1px solid #000000 !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+}
+
+.modal-btn.primary {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+.modal-btn.primary:hover {
+    background: #333333 !important;
+}
+
+.modal-btn.secondary {
+    background: #ffffff !important;
+    color: #000000 !important;
+}
+
+.modal-btn.secondary:hover {
+    background: #f0f0f0 !important;
+}
+
+/* Responsividade extrema para sidebars muito pequenas */
+@media (max-width: 400px) {
+    #productivity-sidebar-container {
+        width: 240px !important;
+    }
+    
+    .timer-display {
+        font-size: 24px !important;
+    }
+    
+    .timer-controls {
+        flex-direction: column !important;
+        gap: 4px !important;
+    }
+    
+    .timer-btn {
+        width: 100% !important;
+        font-size: 9px !important;
+    }
+    
+    .column-actions {
+        flex-direction: column !important;
+        gap: 2px !important;
+    }
+    
+    .column-btn {
+        font-size: 8px !important;
+        padding: 3px 4px !important;
+    }
+}
+
+/* Ainda mais responsivo para telas muito pequenas */
+@media (max-width: 300px) {
+    #productivity-sidebar-container {
+        width: 200px !important;
+    }
+    
+    .header h1 {
+        font-size: 14px !important;
+    }
+    
+    .timer-display {
+        font-size: 20px !important;
+    }
+    
+    .todo-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 6px !important;
+    }
+    
+    .add-column-btn {
+        font-size: 9px !important;
+    }
+}
+
+/* Para telas extremamente pequenas */
+@media (max-width: 250px) {
+    #productivity-sidebar-container {
+        width: 180px !important;
+    }
+    
+    .pomodoro-section, .todo-section, .header {
+        padding: 10px 8px !important;
+    }
+    
+    .timer-display {
+        font-size: 18px !important;
+    }
+    
+    .column-header {
+        padding: 8px !important;
+    }
+    
+    .task-item {
+        padding: 6px !important;
+    }
+}
+
+/* Garantir que nada interfira com a sidebar */
+#productivity-sidebar * {
+    box-sizing: border-box !important;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+/* Reset para evitar conflitos com estilos da página */
+#productivity-sidebar button,
+#productivity-sidebar input,
+#productivity-sidebar div,
+#productivity-sidebar h1,
+#productivity-sidebar h2 {
+    all: revert !important;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
