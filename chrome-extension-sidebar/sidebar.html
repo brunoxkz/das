@@ -13,6 +13,37 @@
             <button id="addColumnBtn" class="add-column-btn">+ Nova Coluna</button>
         </header>
         
+        <!-- Sistema Pomodoro -->
+        <div class="pomodoro-section">
+            <div class="pomodoro-timer">
+                <div class="timer-display" id="timerDisplay">25:00</div>
+                <div class="timer-phase" id="timerPhase">Foco</div>
+                <div class="timer-controls">
+                    <button id="startPauseBtn" class="timer-btn start">▶️</button>
+                    <button id="resetBtn" class="timer-btn reset">⏹️</button>
+                    <button id="soundBtn" class="timer-btn sound">🔊</button>
+                </div>
+            </div>
+            <div class="pomodoro-progress">
+                <div class="progress-dots" id="progressDots">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+                <div class="sound-selector" id="soundSelector" style="display: none;">
+                    <select id="ambientSound">
+                        <option value="">Silêncio</option>
+                        <option value="rain">Chuva</option>
+                        <option value="ocean">Oceano</option>
+                        <option value="forest">Floresta</option>
+                        <option value="cafe">Café</option>
+                        <option value="white">Ruído Branco</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
         <div class="board" id="todoBoard">
             <!-- Colunas serão inseridas dinamicamente aqui -->
         </div>

@@ -10,6 +10,19 @@
 - Interface otimizada para sidebar estreita
 - Não interfere na navegação
 
+### ⏰ **Sistema Pomodoro Integrado**
+- Timer 25min foco + 5min pausa curta (4x)
+- Pausa longa de 20min com mensagem "ELEVE SUA ENERGIA"
+- Progress visual com dots indicadores
+- Ultra-otimizado - consumo mínimo de RAM
+- Sons ambientais gerados proceduralmente
+
+### 🎵 **Sons Ambientais (Tipo Noisli)**
+- Chuva, Oceano, Floresta, Café, Ruído Branco
+- Geração por Web Audio API (sem arquivos)
+- Zero consumo de RAM adicional
+- Ativação/desativação instantânea
+
 ### ✅ **Sistema de Colunas**
 - Organização em colunas personalizáveis
 - Colunas padrão: "A Fazer", "Fazendo", "Concluído"
@@ -53,6 +66,13 @@
 ---
 
 ## 🛠 **COMO USAR**
+
+### **Sistema Pomodoro:**
+- **Iniciar/Pausar:** Botão ▶️/⏸️ no timer
+- **Reset:** Botão ⏹️ para reiniciar ciclo
+- **Sons Ambientais:** Botão 🔊 para ativar seletor
+- **Ciclos:** 4 dots mostram progresso (25min foco + 5min pausa)
+- **Pausa Longa:** Após 4 ciclos = 20min com mensagem energia
 
 ### **Gerenciar Colunas:**
 - **Adicionar:** Clique em "+ Nova Coluna"

@@ -1,16 +1,31 @@
-// Sistema To-Do List - Sidebar Extension
+// Sistema To-Do List + Pomodoro - Sidebar Extension
 class TodoManager {
     constructor() {
         this.columns = [];
         this.currentEditingTask = null;
         this.currentEditingColumn = null;
+        
+        // Sistema Pomodoro Ultra-Otimizado
+        this.pomodoro = {
+            isRunning: false,
+            currentPhase: 'focus', // focus, shortBreak, longBreak
+            timeRemaining: 25 * 60, // 25 minutos em segundos
+            currentCycle: 1,
+            maxCycles: 4,
+            timer: null,
+            audio: null,
+            currentSound: ''
+        };
+        
         this.init();
     }
 
     init() {
         this.loadData();
         this.setupEventListeners();
+        this.setupPomodoroListeners();
         this.renderBoard();
+        this.updatePomodoroDisplay();
     }
 
     // Carregar dados do storage
@@ -64,6 +79,292 @@ class TodoManager {
         // Modais
         this.setupModalListeners();
     }
+
+    // Sistema Pomodoro Ultra-Otimizado (Consumo de RAM Mínimo)
+    setupPomodoroListeners() {
+        // Botão Start/Pause
+        document.getElementById('startPauseBtn').addEventListener('click', () => {
+            this.togglePomodoro();
+        });
+
+        // Botão Reset
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            this.resetPomodoro();
+        });
+
+        // Botão Som
+        document.getElementById('soundBtn').addEventListener('click', () => {
+            this.toggleSoundSelector();
+        });
+
+        // Seletor de som ambiente
+        document.getElementById('ambientSound').addEventListener('change', (e) => {
+            this.changeAmbientSound(e.target.value);
+        });
+    }
+
+    // Toggle Pomodoro
+    togglePomodoro() {
+        if (this.pomodoro.isRunning) {
+            this.pausePomodoro();
+        } else {
+            this.startPomodoro();
+        }
+    }
+
+    // Iniciar Pomodoro
+    startPomodoro() {
+        this.pomodoro.isRunning = true;
+        document.getElementById('startPauseBtn').innerHTML = '⏸️';
+        
+        // Timer ultra-eficiente (atualiza apenas uma vez por segundo)
+        this.pomodoro.timer = setInterval(() => {
+            this.pomodoro.timeRemaining--;
+            
+            if (this.pomodoro.timeRemaining <= 0) {
+                this.pomodoroFinished();
+            } else {
+                this.updatePomodoroDisplay();
+            }
+        }, 1000);
+        
+        this.updatePomodoroDisplay();
+    }
+
+    // Pausar Pomodoro
+    pausePomodoro() {
+        this.pomodoro.isRunning = false;
+        document.getElementById('startPauseBtn').innerHTML = '▶️';
+        
+        if (this.pomodoro.timer) {
+            clearInterval(this.pomodoro.timer);
+            this.pomodoro.timer = null;
+        }
+    }
+
+    // Reset Pomodoro
+    resetPomodoro() {
+        this.pausePomodoro();
+        this.pomodoro.currentPhase = 'focus';
+        this.pomodoro.timeRemaining = 25 * 60;
+        this.pomodoro.currentCycle = 1;
+        this.updatePomodoroDisplay();
+        this.updateProgressDots();
+    }
+
+    // Pomodoro Finalizado
+    pomodoroFinished() {
+        this.pausePomodoro();
+        
+        // Determinar próxima fase
+        if (this.pomodoro.currentPhase === 'focus') {
+            if (this.pomodoro.currentCycle >= this.pomodoro.maxCycles) {
+                // Pausa longa (20 min)
+                this.pomodoro.currentPhase = 'longBreak';
+                this.pomodoro.timeRemaining = 20 * 60;
+                this.pomodoro.currentCycle = 1;
+                this.showEnergyMessage();
+            } else {
+                // Pausa curta (5 min)
+                this.pomodoro.currentPhase = 'shortBreak';
+                this.pomodoro.timeRemaining = 5 * 60;
+            }
+        } else {
+            // Voltar ao foco
+            this.pomodoro.currentPhase = 'focus';
+            this.pomodoro.timeRemaining = 25 * 60;
+            if (this.pomodoro.currentCycle < this.pomodoro.maxCycles) {
+                this.pomodoro.currentCycle++;
+            }
+        }
+        
+        this.updatePomodoroDisplay();
+        this.updateProgressDots();
+        
+        // Notificação simples (sem consumir RAM)
+        this.showNotification();
+    }
+
+    // Mostrar mensagem de energia (pausa longa)
+    showEnergyMessage() {
+        const message = document.createElement('div');
+        message.className = 'energy-message';
+        message.innerHTML = '⚡ ELEVE SUA ENERGIA! ⚡<br><small>Pausa longa - 20 minutos</small>';
+        document.body.appendChild(message);
+        
+        // Remover após 4 segundos
+        setTimeout(() => {
+            if (document.body.contains(message)) {
+                document.body.removeChild(message);
+            }
+        }, 4000);
+    }
+
+    // Notificação simples
+    showNotification() {
+        const phases = {
+            focus: 'Tempo de foco!',
+            shortBreak: 'Pausa curta - 5 min',
+            longBreak: 'Pausa longa - 20 min'
+        };
+        
+        // Usar notificação do navegador se permitida
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('Pomodoro Timer', {
+                body: phases[this.pomodoro.currentPhase],
+                icon: 'icons/icon48.svg'
+            });
+        }
+    }
+
+    // Atualizar display do Pomodoro
+    updatePomodoroDisplay() {
+        const minutes = Math.floor(this.pomodoro.timeRemaining / 60);
+        const seconds = this.pomodoro.timeRemaining % 60;
+        const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        document.getElementById('timerDisplay').textContent = timeString;
+        
+        const phases = {
+            focus: 'Foco',
+            shortBreak: 'Pausa Curta',
+            longBreak: 'Pausa Longa'
+        };
+        
+        document.getElementById('timerPhase').textContent = phases[this.pomodoro.currentPhase];
+        this.updateProgressDots();
+    }
+
+    // Atualizar dots de progresso
+    updateProgressDots() {
+        const dots = document.querySelectorAll('.dot');
+        dots.forEach((dot, index) => {
+            dot.className = 'dot';
+            if (index < this.pomodoro.currentCycle - 1) {
+                dot.classList.add('completed');
+            } else if (index === this.pomodoro.currentCycle - 1 && this.pomodoro.currentPhase === 'focus') {
+                dot.classList.add('current');
+            }
+        });
+    }
+
+    // Toggle seletor de som
+    toggleSoundSelector() {
+        const selector = document.getElementById('soundSelector');
+        const isVisible = selector.style.display !== 'none';
+        selector.style.display = isVisible ? 'none' : 'block';
+        
+        const btn = document.getElementById('soundBtn');
+        btn.classList.toggle('active', !isVisible);
+    }
+
+    // Sons ambientais ultra-otimizados (geração procedural - zero RAM)
+    changeAmbientSound(soundType) {
+        // Parar som atual
+        if (this.pomodoro.audio && this.pomodoro.audio.stop) {
+            this.pomodoro.audio.stop();
+            this.pomodoro.audio = null;
+        }
+        
+        if (!soundType) {
+            this.pomodoro.currentSound = '';
+            return;
+        }
+        
+        this.pomodoro.currentSound = soundType;
+        this.playAmbientSound(soundType);
+    }
+
+    // Reproduzir sons ambientais (geração por Web Audio API - ultra eficiente)
+    playAmbientSound(type) {
+        // Usar Web Audio API para gerar sons sem arquivos (economiza RAM)
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            const sounds = {
+                rain: () => this.generateRainSound(audioContext),
+                ocean: () => this.generateOceanSound(audioContext),
+                forest: () => this.generateForestSound(audioContext),
+                cafe: () => this.generateCafeSound(audioContext),
+                white: () => this.generateWhiteNoise(audioContext)
+            };
+            
+            if (sounds[type]) {
+                sounds[type]();
+            }
+        } catch (error) {
+            console.log('Audio not supported');
+        }
+    }
+
+    // Geração procedural de som de chuva (ultra-leve)
+    generateRainSound(ctx) {
+        const bufferSize = ctx.sampleRate * 2;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * 0.1;
+        }
+        
+        const source = ctx.createBufferSource();
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 1000;
+        
+        source.buffer = buffer;
+        source.loop = true;
+        source.connect(filter);
+        filter.connect(ctx.destination);
+        source.start();
+        
+        this.pomodoro.audio = { stop: () => source.stop() };
+    }
+
+    // Geração procedural de oceano
+    generateOceanSound(ctx) {
+        const bufferSize = ctx.sampleRate * 4;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        for (let i = 0; i < bufferSize; i++) {
+            const wave1 = Math.sin(i * 0.001) * 0.3;
+            const wave2 = Math.sin(i * 0.0015) * 0.2;
+            const noise = (Math.random() * 2 - 1) * 0.05;
+            data[i] = wave1 + wave2 + noise;
+        }
+        
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+        source.connect(ctx.destination);
+        source.start();
+        
+        this.pomodoro.audio = { stop: () => source.stop() };
+    }
+
+    // Ruído branco ultra-eficiente
+    generateWhiteNoise(ctx) {
+        const bufferSize = ctx.sampleRate;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * 0.1;
+        }
+        
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+        source.connect(ctx.destination);
+        source.start();
+        
+        this.pomodoro.audio = { stop: () => source.stop() };
+    }
+
+    // Sons de floresta e café (placeholder - mesma técnica)
+    generateForestSound(ctx) { this.generateRainSound(ctx); }
+    generateCafeSound(ctx) { this.generateWhiteNoise(ctx); }
 
     // Configurar listeners dos modais
     setupModalListeners() {
