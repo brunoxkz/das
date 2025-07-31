@@ -1,11 +1,12 @@
 # 🚀 Guia de Instalação - Sidebar To-Do + Pomodoro
 
 ## ✅ **PROBLEMAS CORRIGIDOS:**
+- ❌ **Erro "Cannot read properties of undefined (reading 'open')"** - RESOLVIDO
 - Removido popup.html desnecessário
 - Removido content.js que causava conflitos
 - Simplificado manifest.json para máxima compatibilidade
-- Removidas permissões desnecessárias
-- Background.js ultra-simplificado
+- Background.js com verificação de compatibilidade e fallback
+- Sistema funciona em qualquer versão do Chrome/Opera
 
 ## 📋 **INSTALAÇÃO PASSO A PASSO:**
 
@@ -33,10 +34,16 @@
    - Sons: Clique 🔊 para ativar ambientais
    - Reset: Botão ⏹️ para reiniciar
 
-### **4. Solução de Problemas**
+### **4. Como Funciona Agora**
+- **Chrome moderno (114+):** Abre sidebar real do lado direito
+- **Chrome mais antigo:** Abre em nova aba fixa (funciona igual)
+- **Ambos os modos:** Pomodoro e To-Do funcionam perfeitamente
+
+### **5. Solução de Problemas**
 - **Se não aparece:** Recarregar a página atual
 - **Se dá erro:** Verificar se todos os arquivos estão na pasta
 - **Se sidebar não abre:** Clicar novamente no ícone da extensão
+- **Erro no console:** Agora está corrigido com fallback automático
 
 ## 🎯 **FUNCIONALIDADES:**
 - ⏰ **Pomodoro:** Sistema completo 25min + pausas

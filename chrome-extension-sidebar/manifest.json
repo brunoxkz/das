@@ -5,7 +5,8 @@
   "description": "To-do list em colunas com sistema Pomodoro e sons ambientais na sidebar",
   "permissions": [
     "storage",
-    "sidePanel"
+    "sidePanel",
+    "tabs"
   ],
   "side_panel": {
     "default_path": "sidebar.html"
