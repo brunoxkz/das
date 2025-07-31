@@ -59,7 +59,8 @@
 - Modal system elegante
 
 ### **📦 Arquivos de Download:**
-- **Versão 2.1 (NOVA):** `sidebar-todo-pomodoro-v2.1-dark-theme.zip` (23K) - **RECOMENDADA** 🔥
+- **Versão 2.1 FIXED (NOVA):** `sidebar-todo-pomodoro-v2.1-dark-theme-fixed.zip` (23K) - **RECOMENDADA** 🔥
+- **Versão 2.1:** `sidebar-todo-pomodoro-v2.1-dark-theme.zip` (23K) - Versão com bugs corrigidos
 - **Versão 2.0:** `sidebar-todo-pomodoro-v2.0-screen-split.zip` (24K) - Versão anterior
 - **Versão 1.0.1:** `sidebar-todo-pomodoro-v1.0.1.zip` (15K) - Primeira versão
 

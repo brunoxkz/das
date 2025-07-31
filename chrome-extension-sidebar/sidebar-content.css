@@ -373,7 +373,9 @@ body {
 }
 
 body.sidebar-active {
-    margin-left: 350px !important;
+    margin-left: 320px !important;
+    max-width: calc(100vw - 320px) !important;
+    overflow-x: hidden !important;
 }
 
 /* Responsividade */
@@ -383,7 +385,8 @@ body.sidebar-active {
     }
     
     body.sidebar-active {
-        margin-left: 300px !important;
+        margin-left: 280px !important;
+        max-width: calc(100vw - 280px) !important;
     }
     
     .timer-time {
@@ -401,7 +404,8 @@ body.sidebar-active {
     }
     
     body.sidebar-active {
-        margin-left: 250px !important;
+        margin-left: 230px !important;
+        max-width: calc(100vw - 230px) !important;
     }
     
     .sidebar-section {

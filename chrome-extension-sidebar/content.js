@@ -82,7 +82,17 @@
         document.body.appendChild(sidebarContainer);
         adjustPageLayout(true);
         initializeSidebarApp();
-        document.getElementById('closeSidebarBtn').addEventListener('click', toggleSidebar);
+        
+        // Configurar o botão de fechar com verificação robusta
+        const closeBtn = document.getElementById('closeSidebarBtn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleSidebar();
+            });
+        }
+        
         isVisible = true;
     }
 
@@ -92,8 +102,13 @@
         if (show) {
             body.classList.add('sidebar-active');
             body.style.transition = 'margin-left 0.3s ease';
+            // Evitar que a página seja empurrada demais
+            body.style.boxSizing = 'border-box';
         } else {
             body.classList.remove('sidebar-active');
+            body.style.marginLeft = '0';
+            body.style.maxWidth = '100%';
+            body.style.overflow = 'visible';
         }
     }
 
