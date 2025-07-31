@@ -59,14 +59,24 @@
 - Modal system elegante
 
 ### **📦 Arquivos de Download:**
-- **Versão 2.0 (NOVA):** `sidebar-todo-pomodoro-v2.0-screen-split.zip` (24K) - **RECOMENDADA**
-- **Versão 1.0.1:** `sidebar-todo-pomodoro-v1.0.1.zip` (15K) - Versão anterior
+- **Versão 2.1 (NOVA):** `sidebar-todo-pomodoro-v2.1-dark-theme.zip` (23K) - **RECOMENDADA** 🔥
+- **Versão 2.0:** `sidebar-todo-pomodoro-v2.0-screen-split.zip` (24K) - Versão anterior
+- **Versão 1.0.1:** `sidebar-todo-pomodoro-v1.0.1.zip` (15K) - Primeira versão
 
-### **🏆 Por que usar a v2.0?**
+### **🏆 Por que usar a v2.1?**
+- **Design Dark Moderno**: Interface elegante com gradientes verdes e efeitos visuais
 - **Sidebar REAL que divide a tela** (não é painel lateral)
-- **Design mais profissional** preto e branco
-- **Layout mais responsivo** com listas verticais
-- **Botão para fechar** quando necessário
-- **Melhor experiência** de uso geral
+- **Animações fluidas** com transições suaves e efeitos hover
+- **Layout ultra-responsivo** que se adapta perfeitamente
+- **Botão para fechar** com animações de rotação
+- **Experiência premium** com tema escuro profissional
 
-**✅ EXTENSÃO v2.0 PRONTA PARA DOWNLOAD E INSTALAÇÃO!**
+### **🎨 Novidades da v2.1:**
+- ✨ **Tema escuro moderno** com gradientes e glassmorphism
+- 🌟 **Efeitos de brilho** no timer e elementos interativos
+- 🎯 **Scrollbar customizada** com design verde neon
+- 💫 **Botões com transformações** e feedback visual avançado
+- 🔥 **Backdrop blur** e sombras modernas
+- ⚡ **Performance otimizada** mantendo visual premium
+
+**✅ EXTENSÃO v2.1 DARK THEME PRONTA PARA DOWNLOAD E INSTALAÇÃO!**

@@ -1,568 +1,441 @@
-/* CSS para Content Script - Sidebar fixa que divide a tela */
+/* CSS para Content Script - Sidebar Dark Theme Moderna */
 
 /* Container principal da sidebar */
 #productivity-sidebar-container {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    width: 280px !important;
+    width: 350px !important;
     height: 100vh !important;
-    z-index: 2147483647 !important; /* Máximo z-index para ficar por cima de tudo */
-    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1) !important;
+    z-index: 2147483647 !important;
+    font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    box-shadow: 2px 0 20px rgba(0, 0, 0, 0.4) !important;
+    backdrop-filter: blur(10px) !important;
 }
 
 /* Conteúdo da sidebar */
 #productivity-sidebar {
     width: 100% !important;
     height: 100% !important;
-    background: #ffffff !important;
-    border-right: 2px solid #000000 !important;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1e1e1e 100%) !important;
+    border-right: 3px solid #00ff88 !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     padding: 0 !important;
     margin: 0 !important;
     box-sizing: border-box !important;
-    color: #000000 !important;
+    color: #ffffff !important;
+    position: relative !important;
 }
 
-/* Scrollbar customizada para a sidebar */
+/* Scrollbar customizada */
 #productivity-sidebar::-webkit-scrollbar {
-    width: 6px !important;
+    width: 8px !important;
 }
 
 #productivity-sidebar::-webkit-scrollbar-track {
-    background: #f0f0f0 !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 4px !important;
 }
 
 #productivity-sidebar::-webkit-scrollbar-thumb {
-    background: #000000 !important;
-    border-radius: 3px !important;
+    background: linear-gradient(135deg, #00ff88, #00cc6a) !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 #productivity-sidebar::-webkit-scrollbar-thumb:hover {
-    background: #333333 !important;
+    background: linear-gradient(135deg, #00cc6a, #009954) !important;
 }
 
-/* Botão de fechar sidebar */
-.close-sidebar {
+/* Header da sidebar */
+.sidebar-header {
+    background: linear-gradient(135deg, #00ff88, #00cc6a) !important;
+    color: #000000 !important;
+    padding: 20px 15px !important;
+    text-align: center !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    position: relative !important;
+    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3) !important;
+}
+
+.sidebar-header h1 {
+    margin: 0 !important;
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    color: #000000 !important;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3) !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* Botão de fechar */
+.close-sidebar-btn {
     position: absolute !important;
-    top: 8px !important;
-    right: 8px !important;
-    width: 24px !important;
-    height: 24px !important;
-    background: #000000 !important;
+    top: 15px !important;
+    right: 15px !important;
+    background: rgba(0, 0, 0, 0.7) !important;
     color: #ffffff !important;
     border: none !important;
+    width: 32px !important;
+    height: 32px !important;
     border-radius: 50% !important;
     cursor: pointer !important;
-    font-size: 16px !important;
-    line-height: 1 !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    z-index: 10 !important;
-    transition: all 0.2s ease !important;
+    z-index: 1000 !important;
+    transition: all 0.3s ease !important;
 }
 
-.close-sidebar:hover {
-    background: #333333 !important;
-    transform: scale(1.1) !important;
+.close-sidebar-btn:hover {
+    background: rgba(255, 0, 0, 0.8) !important;
+    transform: scale(1.1) rotate(90deg) !important;
+    box-shadow: 0 2px 15px rgba(255, 0, 0, 0.4) !important;
 }
 
-/* Header */
-.header {
-    padding: 15px 12px 10px 12px !important;
-    border-bottom: 1px solid #e0e0e0 !important;
-    background: #ffffff !important;
+/* Seções da sidebar */
+.sidebar-section {
+    margin: 20px 15px !important;
+    padding: 20px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(0, 255, 136, 0.2) !important;
+    backdrop-filter: blur(10px) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
 }
 
-.header h1 {
-    margin: 0 !important;
-    font-size: 16px !important;
+.sidebar-section h2 {
+    margin: 0 0 15px 0 !important;
+    font-size: 18px !important;
     font-weight: 600 !important;
-    color: #000000 !important;
-    text-align: center !important;
-}
-
-/* Seção Pomodoro */
-.pomodoro-section {
-    padding: 15px 12px !important;
-    border-bottom: 1px solid #e0e0e0 !important;
-    background: #ffffff !important;
-}
-
-.motivation-text {
-    text-align: center !important;
-    font-size: 11px !important;
-    font-weight: bold !important;
-    color: #666666 !important;
-    margin-bottom: 12px !important;
+    color: #00ff88 !important;
+    text-transform: uppercase !important;
     letter-spacing: 1px !important;
+    border-bottom: 2px solid #00ff88 !important;
+    padding-bottom: 8px !important;
 }
 
-.pomodoro-timer {
-    text-align: center !important;
-}
-
+/* Timer Pomodoro */
 .timer-display {
-    font-size: 28px !important;
-    font-weight: bold !important;
-    color: #000000 !important;
-    margin-bottom: 5px !important;
+    text-align: center !important;
+    margin: 20px 0 !important;
+    padding: 25px !important;
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 204, 106, 0.1)) !important;
+    border-radius: 15px !important;
+    border: 2px solid #00ff88 !important;
+}
+
+.timer-time {
+    font-size: 36px !important;
+    font-weight: 700 !important;
+    color: #00ff88 !important;
+    margin: 10px 0 !important;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5) !important;
     font-family: 'Courier New', monospace !important;
 }
 
-.timer-phase {
-    font-size: 11px !important;
-    color: #666666 !important;
-    margin-bottom: 12px !important;
+.timer-session {
+    font-size: 14px !important;
+    color: #cccccc !important;
+    margin: 5px 0 !important;
 }
 
-.timer-controls {
-    display: flex !important;
-    gap: 6px !important;
-    justify-content: center !important;
-    flex-wrap: wrap !important;
-}
-
-.timer-btn {
-    padding: 6px 10px !important;
-    border: 1px solid #000000 !important;
-    background: #ffffff !important;
-    color: #000000 !important;
-    border-radius: 4px !important;
-    cursor: pointer !important;
-    font-size: 10px !important;
+.timer-status {
+    font-size: 16px !important;
+    color: #ffffff !important;
+    margin: 10px 0 !important;
     font-weight: 500 !important;
-    transition: all 0.2s ease !important;
-    white-space: nowrap !important;
 }
 
-.timer-btn:hover {
-    background: #f0f0f0 !important;
-}
-
-.timer-btn.primary {
-    background: #000000 !important;
-    color: #ffffff !important;
-}
-
-.timer-btn.primary:hover {
-    background: #333333 !important;
-}
-
-/* Controles de som ambiente */
-.ambient-controls {
-    display: none !important;
-    flex-wrap: wrap !important;
-    gap: 4px !important;
-    margin-top: 10px !important;
-    justify-content: center !important;
-}
-
-.ambient-btn {
-    padding: 4px 6px !important;
-    border: 1px solid #ccc !important;
-    background: #ffffff !important;
+/* Botões */
+.btn {
+    background: linear-gradient(135deg, #00ff88, #00cc6a) !important;
     color: #000000 !important;
-    border-radius: 3px !important;
+    border: none !important;
+    padding: 12px 18px !important;
+    border-radius: 8px !important;
     cursor: pointer !important;
-    font-size: 9px !important;
-    transition: all 0.2s ease !important;
-}
-
-.ambient-btn:hover {
-    background: #f0f0f0 !important;
-    border-color: #000000 !important;
-}
-
-.ambient-btn.active {
-    background: #000000 !important;
-    color: #ffffff !important;
-    border-color: #000000 !important;
-}
-
-/* Conteúdo principal */
-.main-content {
-    padding: 0 !important;
-    flex: 1 !important;
-    overflow-y: auto !important;
-}
-
-/* Seção Todo */
-.todo-section {
-    padding: 15px 12px !important;
-}
-
-.todo-header {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    margin-bottom: 12px !important;
-    gap: 8px !important;
-}
-
-.todo-header h2 {
-    margin: 0 !important;
     font-size: 14px !important;
     font-weight: 600 !important;
-    color: #000000 !important;
-    flex: 1 !important;
+    margin: 5px !important;
+    transition: all 0.3s ease !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 4px 10px rgba(0, 255, 136, 0.3) !important;
 }
 
-.add-column-btn {
-    padding: 6px 10px !important;
-    border: 1px solid #000000 !important;
-    background: #000000 !important;
+.btn:hover {
+    background: linear-gradient(135deg, #00cc6a, #009954) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 15px rgba(0, 255, 136, 0.4) !important;
+}
+
+.btn:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 5px rgba(0, 255, 136, 0.3) !important;
+}
+
+/* Botões de Som */
+.sound-buttons {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    margin: 15px 0 !important;
+}
+
+.sound-btn {
+    background: rgba(255, 255, 255, 0.1) !important;
     color: #ffffff !important;
-    border-radius: 4px !important;
+    border: 1px solid rgba(0, 255, 136, 0.3) !important;
+    padding: 10px 12px !important;
+    border-radius: 6px !important;
     cursor: pointer !important;
-    font-size: 10px !important;
+    font-size: 12px !important;
     font-weight: 500 !important;
-    transition: all 0.2s ease !important;
-    white-space: nowrap !important;
+    transition: all 0.3s ease !important;
 }
 
-.add-column-btn:hover {
-    background: #333333 !important;
+.sound-btn:hover, .sound-btn.active {
+    background: rgba(0, 255, 136, 0.2) !important;
+    border-color: #00ff88 !important;
+    color: #00ff88 !important;
+    transform: scale(1.05) !important;
 }
 
-/* Container de colunas (layout vertical) */
-.columns-container {
+/* Listas de Tarefas */
+.todo-lists {
     display: flex !important;
     flex-direction: column !important;
-    gap: 12px !important;
+    gap: 20px !important;
 }
 
-/* Coluna individual */
-.column {
-    border: 1px solid #e0e0e0 !important;
-    border-radius: 6px !important;
-    background: #ffffff !important;
-    overflow: hidden !important;
+.todo-list {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-radius: 10px !important;
+    padding: 15px !important;
+    border: 1px solid rgba(0, 255, 136, 0.15) !important;
 }
 
-.column-header {
-    padding: 10px 12px !important;
-    background: #f8f8f8 !important;
-    border-bottom: 1px solid #e0e0e0 !important;
+.list-header {
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
-    gap: 8px !important;
+    margin-bottom: 15px !important;
+    padding-bottom: 10px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-.column-title {
-    font-size: 12px !important;
+.list-title {
+    font-size: 16px !important;
     font-weight: 600 !important;
-    color: #000000 !important;
-    flex: 1 !important;
+    color: #ffffff !important;
+    margin: 0 !important;
 }
 
-.column-actions {
-    display: flex !important;
-    gap: 4px !important;
-}
-
-.column-btn {
-    padding: 4px 6px !important;
-    border: 1px solid #ccc !important;
-    background: #ffffff !important;
+.add-task-btn {
+    background: linear-gradient(135deg, #00ff88, #00cc6a) !important;
     color: #000000 !important;
-    border-radius: 3px !important;
+    border: none !important;
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 50% !important;
     cursor: pointer !important;
-    font-size: 9px !important;
-    font-weight: 500 !important;
-    transition: all 0.2s ease !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 8px rgba(0, 255, 136, 0.3) !important;
 }
 
-.column-btn:hover {
-    background: #f0f0f0 !important;
-    border-color: #000000 !important;
+.add-task-btn:hover {
+    transform: scale(1.1) rotate(90deg) !important;
+    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.5) !important;
 }
 
-.column-btn.danger:hover {
-    background: #ffebee !important;
-    border-color: #f44336 !important;
-    color: #f44336 !important;
-}
-
-/* Lista de tarefas */
-.tasks-list {
-    padding: 8px !important;
-    min-height: 40px !important;
-    max-height: 200px !important;
-    overflow-y: auto !important;
-}
-
+/* Itens de Tarefa */
 .task-item {
-    padding: 8px !important;
-    margin-bottom: 6px !important;
-    border: 1px solid #e0e0e0 !important;
-    border-radius: 4px !important;
-    background: #ffffff !important;
-    cursor: move !important;
-    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 12px !important;
+    margin: 8px 0 !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 8px !important;
+    border-left: 3px solid #00ff88 !important;
+    transition: all 0.3s ease !important;
 }
 
 .task-item:hover {
-    border-color: #000000 !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-}
-
-.task-item:last-child {
-    margin-bottom: 0 !important;
-}
-
-.task-content {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    gap: 8px !important;
+    background: rgba(0, 255, 136, 0.1) !important;
+    transform: translateX(5px) !important;
 }
 
 .task-text {
+    color: #ffffff !important;
+    font-size: 14px !important;
     flex: 1 !important;
-    font-size: 11px !important;
-    color: #000000 !important;
-    word-wrap: break-word !important;
-    line-height: 1.3 !important;
+    margin-right: 10px !important;
 }
 
 .task-actions {
     display: flex !important;
-    gap: 3px !important;
+    gap: 5px !important;
 }
 
-.task-btn {
-    padding: 3px 5px !important;
-    border: 1px solid #ccc !important;
-    background: #ffffff !important;
-    color: #000000 !important;
-    border-radius: 2px !important;
+.edit-task-btn, .delete-task-btn {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    border: none !important;
+    width: 25px !important;
+    height: 25px !important;
+    border-radius: 4px !important;
     cursor: pointer !important;
-    font-size: 8px !important;
-    transition: all 0.2s ease !important;
+    font-size: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.3s ease !important;
 }
 
-.task-btn:hover {
-    background: #f0f0f0 !important;
-    border-color: #000000 !important;
+.edit-task-btn:hover {
+    background: rgba(0, 123, 255, 0.7) !important;
 }
 
-.task-btn.danger:hover {
-    background: #ffebee !important;
-    border-color: #f44336 !important;
-    color: #f44336 !important;
-}
-
-/* Estado vazio */
-.empty-state {
-    text-align: center !important;
-    font-size: 11px !important;
-    color: #666666 !important;
-    padding: 15px 8px !important;
-    font-style: italic !important;
+.delete-task-btn:hover {
+    background: rgba(255, 0, 0, 0.7) !important;
 }
 
 /* Modais */
 .modal {
-    display: none !important;
     position: fixed !important;
-    z-index: 2147483648 !important; /* Ainda maior que a sidebar */
-    left: 0 !important;
     top: 0 !important;
+    left: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    background-color: rgba(0, 0, 0, 0.5) !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 10000 !important;
+    backdrop-filter: blur(5px) !important;
 }
 
 .modal-content {
-    background-color: #ffffff !important;
-    margin: 15% auto !important;
-    padding: 20px !important;
-    border: 2px solid #000000 !important;
-    border-radius: 8px !important;
-    width: 280px !important;
-    max-width: 90% !important;
-    position: relative !important;
-    animation: modalSlideIn 0.3s ease !important;
+    background: linear-gradient(135deg, #1a1a1a, #2d2d2d) !important;
+    color: #ffffff !important;
+    padding: 25px !important;
+    border-radius: 15px !important;
+    width: 90% !important;
+    max-width: 400px !important;
+    border: 2px solid #00ff88 !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
 }
 
-@keyframes modalSlideIn {
-    from {
-        opacity: 0 !important;
-        transform: translateY(-50px) !important;
-    }
-    to {
-        opacity: 1 !important;
-        transform: translateY(0) !important;
-    }
-}
-
-.modal-content .close {
-    position: absolute !important;
-    top: 8px !important;
-    right: 12px !important;
+.modal-content h3 {
+    margin: 0 0 20px 0 !important;
+    color: #00ff88 !important;
     font-size: 20px !important;
-    font-weight: bold !important;
-    cursor: pointer !important;
-    color: #000000 !important;
-}
-
-.modal-content .close:hover {
-    color: #666666 !important;
-}
-
-.modal-content h2 {
-    margin: 0 0 15px 0 !important;
-    font-size: 16px !important;
-    color: #000000 !important;
+    font-weight: 600 !important;
 }
 
 .modal-content input {
     width: 100% !important;
-    padding: 10px !important;
-    border: 1px solid #ccc !important;
-    border-radius: 4px !important;
+    padding: 12px !important;
+    border: 1px solid rgba(0, 255, 136, 0.3) !important;
+    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
     font-size: 14px !important;
-    margin-bottom: 15px !important;
+    margin-bottom: 20px !important;
     box-sizing: border-box !important;
-    color: #000000 !important;
-    background: #ffffff !important;
 }
 
 .modal-content input:focus {
     outline: none !important;
-    border-color: #000000 !important;
+    border-color: #00ff88 !important;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.3) !important;
 }
 
-.modal-actions {
+.modal-buttons {
     display: flex !important;
     gap: 10px !important;
     justify-content: flex-end !important;
 }
 
-.modal-btn {
-    padding: 8px 16px !important;
-    border: 1px solid #000000 !important;
-    border-radius: 4px !important;
-    cursor: pointer !important;
-    font-size: 12px !important;
-    font-weight: 500 !important;
-    transition: all 0.2s ease !important;
+/* Efeito de mudança do site quando sidebar aparece */
+body {
+    margin-left: 0 !important;
+    transition: margin-left 0.3s ease !important;
 }
 
-.modal-btn.primary {
-    background: #000000 !important;
-    color: #ffffff !important;
+body.sidebar-active {
+    margin-left: 350px !important;
 }
 
-.modal-btn.primary:hover {
-    background: #333333 !important;
-}
-
-.modal-btn.secondary {
-    background: #ffffff !important;
-    color: #000000 !important;
-}
-
-.modal-btn.secondary:hover {
-    background: #f0f0f0 !important;
-}
-
-/* Responsividade extrema para sidebars muito pequenas */
-@media (max-width: 400px) {
+/* Responsividade */
+@media (max-width: 768px) {
     #productivity-sidebar-container {
-        width: 240px !important;
+        width: 300px !important;
     }
     
-    .timer-display {
-        font-size: 24px !important;
+    body.sidebar-active {
+        margin-left: 300px !important;
     }
     
-    .timer-controls {
-        flex-direction: column !important;
-        gap: 4px !important;
+    .timer-time {
+        font-size: 28px !important;
     }
     
-    .timer-btn {
-        width: 100% !important;
-        font-size: 9px !important;
-    }
-    
-    .column-actions {
-        flex-direction: column !important;
-        gap: 2px !important;
-    }
-    
-    .column-btn {
-        font-size: 8px !important;
-        padding: 3px 4px !important;
+    .sound-buttons {
+        grid-template-columns: 1fr !important;
     }
 }
 
-/* Ainda mais responsivo para telas muito pequenas */
-@media (max-width: 300px) {
+@media (max-width: 480px) {
     #productivity-sidebar-container {
-        width: 200px !important;
+        width: 250px !important;
     }
     
-    .header h1 {
-        font-size: 14px !important;
+    body.sidebar-active {
+        margin-left: 250px !important;
     }
     
-    .timer-display {
-        font-size: 20px !important;
-    }
-    
-    .todo-header {
-        flex-direction: column !important;
-        align-items: stretch !important;
-        gap: 6px !important;
-    }
-    
-    .add-column-btn {
-        font-size: 9px !important;
+    .sidebar-section {
+        margin: 15px 10px !important;
+        padding: 15px !important;
     }
 }
 
-/* Para telas extremamente pequenas */
-@media (max-width: 250px) {
-    #productivity-sidebar-container {
-        width: 180px !important;
+/* Animação de entrada */
+@keyframes slideIn {
+    from {
+        transform: translateX(-100%) !important;
+        opacity: 0 !important;
     }
-    
-    .pomodoro-section, .todo-section, .header {
-        padding: 10px 8px !important;
-    }
-    
-    .timer-display {
-        font-size: 18px !important;
-    }
-    
-    .column-header {
-        padding: 8px !important;
-    }
-    
-    .task-item {
-        padding: 6px !important;
+    to {
+        transform: translateX(0) !important;
+        opacity: 1 !important;
     }
 }
 
-/* Garantir que nada interfira com a sidebar */
-#productivity-sidebar * {
-    box-sizing: border-box !important;
-    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif !important;
+#productivity-sidebar-container {
+    animation: slideIn 0.3s ease-out !important;
 }
 
-/* Reset para evitar conflitos com estilos da página */
-#productivity-sidebar button,
-#productivity-sidebar input,
-#productivity-sidebar div,
-#productivity-sidebar h1,
-#productivity-sidebar h2 {
-    all: revert !important;
-    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif !important;
+/* Glowing effects */
+@keyframes glow {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(0, 255, 136, 0.3) !important;
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(0, 255, 136, 0.6) !important;
+    }
+}
+
+.timer-display {
+    animation: glow 2s ease-in-out infinite !important;
 }
