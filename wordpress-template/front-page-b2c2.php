@@ -355,6 +355,97 @@ get_header(); ?>
         </div>
     </section>
 
+    <!-- Statistics Section - Inspirado no B2C2 -->
+    <section class="stats-section" style="padding: 5rem 0; background: linear-gradient(135deg, #111827 0%, #1f2937 100%); color: white;">
+        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
+            <div style="text-align: center; margin-bottom: 3rem;">
+                <h2 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; margin-bottom: 1rem;">
+                    Trusted Globally
+                </h2>
+                <p style="font-size: 1.2rem; color: #d1d5db; max-width: 600px; margin: 0 auto;">
+                    Leading institutions worldwide rely on our expertise and technology
+                </p>
+            </div>
+            
+            <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 3rem; text-align: center;">
+                <div class="stat-item">
+                    <div style="font-size: 3rem; font-weight: 700; color: #0066FF; margin-bottom: 0.5rem;">$500B+</div>
+                    <p style="font-size: 1.1rem; color: #d1d5db;">Trading Volume</p>
+                </div>
+                <div class="stat-item">
+                    <div style="font-size: 3rem; font-weight: 700; color: #0066FF; margin-bottom: 0.5rem;">200+</div>
+                    <p style="font-size: 1.1rem; color: #d1d5db;">Institutional Clients</p>
+                </div>
+                <div class="stat-item">
+                    <div style="font-size: 3rem; font-weight: 700; color: #0066FF; margin-bottom: 0.5rem;">24/7</div>
+                    <p style="font-size: 1.1rem; color: #d1d5db;">Market Coverage</p>
+                </div>
+                <div class="stat-item">
+                    <div style="font-size: 3rem; font-weight: 700; color: #0066FF; margin-bottom: 0.5rem;">50+</div>
+                    <p style="font-size: 1.1rem; color: #d1d5db;">Digital Assets</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technology Section -->
+    <section class="technology-section" style="padding: 6rem 0; background: #f8f9fa;">
+        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
+                <div class="tech-content">
+                    <h2 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; margin-bottom: 1.5rem; color: #111827;">
+                        Proprietary Technology
+                    </h2>
+                    <p style="font-size: 1.1rem; color: #6B7280; line-height: 1.7; margin-bottom: 2rem;">
+                        Our cutting-edge technology stack powers seamless digital asset trading with institutional-grade infrastructure, advanced risk management, and real-time execution capabilities.
+                    </p>
+                    
+                    <div class="tech-features" style="display: grid; gap: 1.5rem;">
+                        <div class="feature-item" style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="width: 40px; height: 40px; background: #0066FF; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-bolt" style="color: white; font-size: 1rem;"></i>
+                            </div>
+                            <div>
+                                <h4 style="font-weight: 600; color: #111827; margin-bottom: 0.25rem;">Ultra-Fast Execution</h4>
+                                <p style="color: #6B7280; font-size: 0.875rem;">Sub-millisecond order execution across global markets</p>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-item" style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="width: 40px; height: 40px; background: #0066FF; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-shield-alt" style="color: white; font-size: 1rem;"></i>
+                            </div>
+                            <div>
+                                <h4 style="font-weight: 600; color: #111827; margin-bottom: 0.25rem;">Advanced Security</h4>
+                                <p style="color: #6B7280; font-size: 0.875rem;">Bank-grade security and custody solutions</p>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-item" style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="width: 40px; height: 40px; background: #0066FF; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-chart-area" style="color: white; font-size: 1rem;"></i>
+                            </div>
+                            <div>
+                                <h4 style="font-weight: 600; color: #111827; margin-bottom: 0.25rem;">Deep Liquidity</h4>
+                                <p style="color: #6B7280; font-size: 0.875rem;">Access to the deepest liquidity pools globally</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tech-visual" style="text-align: center;">
+                    <div style="width: 100%; height: 400px; background: linear-gradient(135deg, #0066FF, #4338ca); border-radius: 16px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><defs><pattern id=\"grid\" width=\"10\" height=\"10\" patternUnits=\"userSpaceOnUse\"><path d=\"M 10 0 L 0 0 0 10\" fill=\"none\" stroke=\"%23ffffff\" stroke-width=\"0.5\" opacity=\"0.1\"/></pattern></defs><rect width=\"100\" height=\"100\" fill=\"url(%23grid)\"/></svg>'); opacity: 0.3;"></div>
+                        <div style="position: relative; z-index: 2;">
+                            <i class="fas fa-server" style="color: white; font-size: 4rem; margin-bottom: 1rem; opacity: 0.9;"></i>
+                            <p style="color: white; font-size: 1.1rem; opacity: 0.9;">Enterprise Infrastructure</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
 </main>
 
 <?php get_footer(); ?>

@@ -1,18 +1,25 @@
-# Vendzz - Quiz Funnel Platform
+# Dual Project: Browser Extension + WordPress Theme
 
 ## Overview
-Vendzz is a comprehensive dynamic quiz funnel and email marketing platform designed for lead capture and advanced campaign management. It supports dual payment gateways (Stripe + Pagar.me) and full internationalization. The platform aims to revolutionize lead generation and email marketing through interactive quizzes, offering a robust solution for businesses to capture leads, segment audiences, and drive conversions. Its core capabilities include visual quiz building, sophisticated lead segmentation (including ultra-granular and anti-webview systems), and multi-channel marketing automation (SMS, Email, WhatsApp, Voice, Telegram). The long-term vision is to scale to millions of users globally, becoming the fastest and most efficient platform in its niche.
+Two concurrent development projects: 
+1) **Chrome/Opera Browser Extension** - Screen-splitting sidebar with productivity tools (to-do list, Pomodoro timer, ambient sounds) with universal website compatibility
+2) **WordPress Theme** - Professional B2C2.com replica theme for fintech/blockchain companies with complete Elementor compatibility
+
+## Recent Changes (January 31, 2025)
+- **WordPress Theme Major Enhancement**: Significantly expanded front-page-b2c2.php with new Statistics and Technology sections
+- **Complete Template Suite**: Created page-solutions.php, page-insights.php, page-contact.php with B2C2-style design
+- **Enhanced Elementor Support**: Updated template-elementor.php for improved compatibility
+- **Professional Header/Footer**: Completely redesigned header.php and footer.php to match B2C2 corporate style
+- **Advanced Responsive CSS**: Added comprehensive mobile-first responsive design to style-b2c2-advanced.css
+- **Complete Documentation**: Created B2C2-THEME-DOCUMENTATION.md with installation and customization guide
 
 ## User Preferences
-Preferred communication style: Simple, everyday language.
-DATABASE PROTECTION: NEVER DELETE THE DATABASE - Critical user instruction (2025-07-09)
-ROUTE PROTECTION: NEVER REWRITE ROUTES COMPLETELY OR DELETE THEM - Critical user instruction (2025-07-09)
-FUNCTIONALITY PROTECTION: NEVER AFFECT EXISTING WORKING FUNCTIONALITIES WHEN CREATING NEW ONES - Critical user instruction (2025-07-09)
-SCALABILITY REQUIREMENT: SYSTEM MUST ALWAYS FUNCTION FOR 100,000+ SIMULTANEOUS USERS - Critical user instruction (2025-07-09)
-CURRENT STACK: SQLite + JWT authentication system - Critical user instruction (2025-07-09)
-DYNAMIC FUNNEL SYSTEM: This is a SaaS for dynamic quiz funnels - everything must absorb ALL quiz responses to be dynamic and enable remarketing in all possible ways - Critical user instruction (2025-07-09)
-TESTING REQUIREMENT: Always test button functionality after creating them - Critical user instruction (2025-07-09)
-DEVELOPMENT APPROACH: Think like a senior dev, be assertive and only do what is requested - Critical user instruction (2025-07-09)
+Preferred communication style: Simple, everyday language (Portuguese).
+Current focus: WordPress theme development that exactly replicates B2C2.com design
+Extension requirement: Must work universally on any website with robust fallback systems
+WordPress requirement: 100% Elementor compatible with responsive design
+TESTING REQUIREMENT: Always test functionality after creating components
+DEVELOPMENT APPROACH: Think like a senior dev, be assertive and focused
 
 ## System Architecture
 
