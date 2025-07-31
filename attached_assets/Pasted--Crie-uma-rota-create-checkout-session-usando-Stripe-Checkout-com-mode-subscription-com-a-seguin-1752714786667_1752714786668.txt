@@ -1,0 +1,75 @@
+
+Crie uma rota /create-checkout-session usando Stripe Checkout (com mode: subscription) com a seguinte lógica:
+
+🔧 Stripe lógica combinada:
+O cliente paga R$1,00 imediatamente (produto avulso)
+
+O cliente entra numa assinatura de R$29,00/mês, com trial de 3 dias
+
+Use line_items com dois objetos:
+
+Um para o produto único de R$1,00 (non-recurring)
+
+Um para o plano price_id da assinatura (recurring) com trial_period_days: 3
+
+Ao final dos 3 dias, Stripe cobra os R$29,00 automaticamente
+
+O cliente informa o cartão uma única vez
+
+A assinatura é criada e visível no Stripe Dashboard
+
+Use .env para STRIPE_SECRET_KEY e STRIPE_PUBLIC_KEY
+
+Retorne sessionId para redirecionar o usuário para o Stripe Checkout
+
+Após o pagamento, redirecione para /success.html e /cancel.html
+
+💻 Exemplo de rota para o Replit:
+js
+Copiar
+Editar
+app.post('/create-checkout-session', async (req, res) => {
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    mode: 'subscription',
+    customer_email: req.body.email, // opcional
+    line_items: [
+      {
+        price_data: {
+          currency: 'brl',
+          product_data: {
+            name: 'Taxa de ativação',
+          },
+          unit_amount: 100,
+        },
+        quantity: 1,
+      },
+      {
+        price: 'price_XXXXXXX', // ID do plano R$29/mês criado no Stripe
+        quantity: 1,
+      },
+    ],
+    subscription_data: {
+      trial_period_days: 3,
+    },
+    success_url: 'https://seusite.com/success.html',
+    cancel_url: 'https://seusite.com/cancel.html',
+  });
+
+  res.json({ id: session.id });
+});
+✅ Observações Legais e de UX
+Mostre com clareza: "R$1 agora + R$29/mês após 3 dias"
+
+Stripe não recomenda esconder esse tipo de modelo — seja direto no seu checkout
+
+Você pode usar o webhook checkout.session.completed para ativar acesso imediato após o R$1
+
+✅ Conclusão técnica
+O Stripe permite simular essa lógica com Checkout
+
+Requer backend leve com line_items múltiplos
+
+O cartão é salvo automaticamente para a assinatura
+
+100% legal e compatível com políticas do Stripe

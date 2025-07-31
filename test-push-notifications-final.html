@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔔 Teste Push Notifications - Vendzz PWA</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #10B981, #34D399);
+            margin: 0;
+            padding: 20px;
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+        h1 {
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .status {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        button {
+            background: #059669;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #047857;
+        }
+        button:disabled {
+            background: #6B7280;
+            cursor: not-allowed;
+        }
+        .success {
+            background: rgba(16, 185, 129, 0.3);
+            color: #10F2C5;
+        }
+        .error {
+            background: rgba(239, 68, 68, 0.3);
+            color: #FCA5A5;
+        }
+        .info {
+            background: rgba(59, 130, 246, 0.3);
+            color: #93C5FD;
+        }
+        pre {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: left;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Teste Push Notifications PWA</h1>
+        
+        <div id="support-status" class="status">
+            Verificando suporte...
+        </div>
+        
+        <div id="permission-status" class="status">
+            Verificando permissões...
+        </div>
+        
+        <div id="subscription-status" class="status">
+            Verificando subscription...
+        </div>
+        
+        <button id="request-permission" onclick="requestPermission()" disabled>
+            🔔 Solicitar Permissão
+        </button>
+        
+        <button id="subscribe-btn" onclick="subscribeUser()" disabled>
+            📱 Criar Subscription
+        </button>
+        
+        <button id="test-notification" onclick="sendTestNotification()" disabled>
+            🚀 Enviar Teste
+        </button>
+        
+        <button id="local-notification" onclick="showLocalNotification()">
+            📢 Teste Local
+        </button>
+        
+        <div id="debug-info" style="margin-top: 30px;">
+            <h3>Debug Info:</h3>
+            <pre id="debug-output">Aguardando testes...</pre>
+        </div>
+    </div>
+
+    <script>
+        let swRegistration = null;
+        let pushSubscription = null;
+        let authToken = null;
+
+        // VAPID Public Key - deve ser igual ao do servidor
+        const VAPID_PUBLIC_KEY = 'BLqEYJl9YFBwJJCqWFUvKWh8DJpjFXuRIoH7yj0WP9pKXHrqqRAOqOQyeZoJ8RkQIgj6QKhJNgZqLmOy_VDgMiQ';
+
+        function log(message) {
+            console.log(message);
+            const debug = document.getElementById('debug-output');
+            debug.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            debug.scrollTop = debug.scrollHeight;
+        }
+
+        function updateStatus(id, message, className = 'info') {
+            const element = document.getElementById(id);
+            element.textContent = message;
+            element.className = 'status ' + className;
+        }
+
+        async function checkSupport() {
+            log('🔍 Verificando suporte a notificações...');
+            
+            if (!('Notification' in window)) {
+                updateStatus('support-status', '❌ Notificações não suportadas', 'error');
+                return false;
+            }
+            
+            if (!('serviceWorker' in navigator)) {
+                updateStatus('support-status', '❌ Service Worker não suportado', 'error');
+                return false;
+            }
+            
+            if (!('PushManager' in window)) {
+                updateStatus('support-status', '❌ Push Manager não suportado', 'error');
+                return false;
+            }
+            
+            updateStatus('support-status', '✅ Suporte completo detectado', 'success');
+            log('✅ Todas as APIs necessárias estão disponíveis');
+            return true;
+        }
+
+        async function registerServiceWorker() {
+            try {
+                log('🔧 Registrando Service Worker...');
+                swRegistration = await navigator.serviceWorker.register('/sw.js');
+                log('✅ Service Worker registrado com sucesso');
+                
+                // Verificar subscription existente
+                pushSubscription = await swRegistration.pushManager.getSubscription();
+                if (pushSubscription) {
+                    updateStatus('subscription-status', '✅ Subscription existente encontrada', 'success');
+                    document.getElementById('test-notification').disabled = false;
+                    log('📱 Subscription ativa encontrada');
+                } else {
+                    updateStatus('subscription-status', '⏳ Nenhuma subscription ativa', 'info');
+                    document.getElementById('subscribe-btn').disabled = false;
+                }
+                
+                return true;
+            } catch (error) {
+                log('❌ Erro ao registrar Service Worker: ' + error.message);
+                return false;
+            }
+        }
+
+        async function checkPermission() {
+            const permission = Notification.permission;
+            log('🔐 Permissão atual: ' + permission);
+            
+            switch (permission) {
+                case 'granted':
+                    updateStatus('permission-status', '✅ Permissão concedida', 'success');
+                    document.getElementById('subscribe-btn').disabled = false;
+                    break;
+                case 'denied':
+                    updateStatus('permission-status', '❌ Permissão negada', 'error');
+                    break;
+                default:
+                    updateStatus('permission-status', '⏳ Permissão pendente', 'info');
+                    document.getElementById('request-permission').disabled = false;
+            }
+        }
+
+        async function requestPermission() {
+            log('🔔 Solicitando permissão...');
+            
+            try {
+                const permission = await Notification.requestPermission();
+                log('📋 Resultado da permissão: ' + permission);
+                
+                if (permission === 'granted') {
+                    updateStatus('permission-status', '✅ Permissão concedida!', 'success');
+                    document.getElementById('request-permission').disabled = true;
+                    document.getElementById('subscribe-btn').disabled = false;
+                } else {
+                    updateStatus('permission-status', '❌ Permissão negada', 'error');
+                }
+            } catch (error) {
+                log('❌ Erro ao solicitar permissão: ' + error.message);
+                updateStatus('permission-status', '❌ Erro ao solicitar permissão', 'error');
+            }
+        }
+
+        async function loginAndGetToken() {
+            try {
+                log('🔐 Fazendo login...');
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@vendzz.com',
+                        password: 'admin123'
+                    })
+                });
+
+                const data = await response.json();
+                if (data.accessToken) {
+                    authToken = data.accessToken;
+                    log('✅ Login realizado com sucesso');
+                    return true;
+                } else {
+                    log('❌ Erro no login: ' + JSON.stringify(data));
+                    return false;
+                }
+            } catch (error) {
+                log('❌ Erro ao fazer login: ' + error.message);
+                return false;
+            }
+        }
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding)
+                .replace(/-/g, '+')
+                .replace(/_/g, '/');
+
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        function arrayBufferToBase64(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            bytes.forEach((b) => binary += String.fromCharCode(b));
+            return window.btoa(binary);
+        }
+
+        async function subscribeUser() {
+            if (!authToken && !(await loginAndGetToken())) {
+                log('❌ Não foi possível obter token de autenticação');
+                return;
+            }
+
+            try {
+                log('📱 Criando subscription...');
+                
+                const vapidKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+                
+                pushSubscription = await swRegistration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: vapidKey
+                });
+
+                log('✅ Subscription criada localmente');
+
+                // Enviar para o servidor
+                const subscriptionData = {
+                    subscription: {
+                        endpoint: pushSubscription.endpoint,
+                        keys: {
+                            p256dh: arrayBufferToBase64(pushSubscription.getKey('p256dh')),
+                            auth: arrayBufferToBase64(pushSubscription.getKey('auth'))
+                        }
+                    }
+                };
+
+                log('📤 Enviando subscription para servidor...');
+                
+                const response = await fetch('/api/push-notifications/subscribe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + authToken
+                    },
+                    body: JSON.stringify(subscriptionData)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateStatus('subscription-status', '✅ Subscription ativa e salva no servidor!', 'success');
+                    document.getElementById('subscribe-btn').disabled = true;
+                    document.getElementById('test-notification').disabled = false;
+                    log('✅ Subscription salva no servidor com sucesso');
+                } else {
+                    log('❌ Erro ao salvar subscription: ' + JSON.stringify(result));
+                }
+
+            } catch (error) {
+                log('❌ Erro ao criar subscription: ' + error.message);
+                updateStatus('subscription-status', '❌ Erro ao criar subscription', 'error');
+            }
+        }
+
+        async function sendTestNotification() {
+            if (!authToken && !(await loginAndGetToken())) {
+                log('❌ Não foi possível obter token de autenticação');
+                return;
+            }
+
+            try {
+                log('🚀 Enviando notificação de teste...');
+                
+                const response = await fetch('/api/push-notifications/test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + authToken
+                    },
+                    body: JSON.stringify({
+                        title: '🔔 VENDZZ PWA - TESTE REAL!',
+                        body: 'Sistema de notificações push 100% operacional! Esta notificação deve aparecer na sua tela de bloqueio agora mesmo.',
+                        url: '/app-pwa-vendzz',
+                        icon: '/logo-vendzz-white.png'
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    log('✅ Notificação enviada! Verifique sua tela de bloqueio.');
+                    alert('🚀 Notificação enviada! Verifique sua tela de bloqueio ou a área de notificações.');
+                } else {
+                    log('❌ Erro ao enviar notificação: ' + JSON.stringify(result));
+                }
+
+            } catch (error) {
+                log('❌ Erro ao enviar notificação: ' + error.message);
+            }
+        }
+
+        function showLocalNotification() {
+            if (Notification.permission === 'granted') {
+                log('📢 Exibindo notificação local...');
+                new Notification('🔔 Teste Local - Vendzz PWA', {
+                    body: 'Esta é uma notificação local de teste. Se você vê isto, as notificações estão funcionando!',
+                    icon: '/logo-vendzz-white.png',
+                    tag: 'local-test',
+                    requireInteraction: true
+                });
+            } else {
+                log('❌ Permissão não concedida para notificações locais');
+                alert('Permissão para notificações não foi concedida!');
+            }
+        }
+
+        // Inicialização
+        window.addEventListener('load', async () => {
+            log('🚀 Iniciando teste de notificações push...');
+            
+            const hasSupport = await checkSupport();
+            if (!hasSupport) return;
+            
+            await checkPermission();
+            await registerServiceWorker();
+            
+            log('✅ Inicialização completa. Pronto para testes!');
+        });
+    </script>
+</body>
+</html>
