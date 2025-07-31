@@ -315,7 +315,7 @@ function b2c2_register_taxonomies() {
 }
 add_action('init', 'b2c2_register_taxonomies');
 
-// Add Elementor locations support
+// Add Elementor locations support and custom conditions
 function b2c2_elementor_locations() {
     if (did_action('elementor/loaded')) {
         // Register header location
@@ -323,6 +323,45 @@ function b2c2_elementor_locations() {
     }
 }
 add_action('init', 'b2c2_elementor_locations');
+
+// Make custom post types available in Elementor
+function b2c2_elementor_cpt_support() {
+    // Custom Post Types support
+    $cpt_support = get_option('elementor_cpt_support');
+    
+    if (!$cpt_support) {
+        $cpt_support = array('page', 'post', 'press_release', 'service', 'institutional_solution', 'event', 'insight');
+        update_option('elementor_cpt_support', $cpt_support);
+    } else {
+        $cpt_support = array_merge($cpt_support, array('press_release', 'service', 'institutional_solution', 'event', 'insight'));
+        update_option('elementor_cpt_support', $cpt_support);
+    }
+}
+add_action('after_setup_theme', 'b2c2_elementor_cpt_support');
+
+// Enhance Elementor compatibility for theme
+function b2c2_elementor_theme_support() {
+    add_theme_support('elementor');
+    add_theme_support('elementor-pro');
+    
+    // Support for Elementor color schemes
+    add_theme_support('elementor-color-schemes');
+    
+    // Support for Elementor typography schemes
+    add_theme_support('elementor-typography-schemes');
+    
+    // Custom CSS loading
+    add_theme_support('elementor-custom-css');
+}
+add_action('after_setup_theme', 'b2c2_elementor_theme_support');
+
+// Register dynamic content for Elementor
+function b2c2_register_elementor_dynamic_tags($dynamic_tags) {
+    \Elementor\Plugin::$instance->dynamic_tags->register_group('b2c2-theme', [
+        'title' => 'B2C2 Theme'
+    ]);
+}
+add_action('elementor/dynamic_tags/register_tags', 'b2c2_register_elementor_dynamic_tags');
 
 // Customize excerpt length
 function b2c2_excerpt_length($length) {
@@ -358,6 +397,57 @@ function b2c2_custom_logo_setup() {
     add_theme_support('custom-logo', $defaults);
 }
 add_action('after_setup_theme', 'b2c2_custom_logo_setup');
+
+// Custom Navigation Walker
+class B2C2_Nav_Walker extends Walker_Nav_Menu {
+    function start_lvl(&$output, $depth = 0, $args = null) {
+        $indent = str_repeat("\t", $depth);
+        $output .= "\n$indent<ul class=\"sub-menu\">\n";
+    }
+
+    function end_lvl(&$output, $depth = 0, $args = null) {
+        $indent = str_repeat("\t", $depth);
+        $output .= "$indent</ul>\n";
+    }
+
+    function start_el(&$output, $item, $depth = 0, $args = null, $id = 0) {
+        $indent = ($depth) ? str_repeat("\t", $depth) : '';
+        $class_names = $value = '';
+        $classes = empty($item->classes) ? array() : (array) $item->classes;
+        $classes[] = 'menu-item-' . $item->ID;
+        $class_names = join(' ', apply_filters('nav_menu_css_class', array_filter($classes), $item, $args));
+        $class_names = $class_names ? ' class="' . esc_attr($class_names) . '"' : '';
+        $id = apply_filters('nav_menu_item_id', 'menu-item-' . $item->ID, $item, $args);
+        $id = $id ? ' id="' . esc_attr($id) . '"' : '';
+        $indent = ($depth) ? str_repeat("\t", $depth) : '';
+        $output .= $indent . '<li' . $id . $value . $class_names .'>';
+        $attributes = ! empty($item->attr_title) ? ' title="' . esc_attr($item->attr_title) .'"' : '';
+        $attributes .= ! empty($item->target) ? ' target="' . esc_attr($item->target ) .'"' : '';
+        $attributes .= ! empty($item->xfn) ? ' rel="' . esc_attr($item->xfn ) .'"' : '';
+        $attributes .= ! empty($item->url) ? ' href="' . esc_attr($item->url ) .'"' : '';
+        $item_output = isset($args->before) ? $args->before : '';
+        $item_output .= '<a' . $attributes . ' style="color: #374151; text-decoration: none; font-weight: 500; padding: 0.5rem 0; transition: color 0.3s ease;">';
+        $item_output .= (isset($args->link_before) ? $args->link_before : '') . apply_filters('the_title', $item->title, $item->ID) . (isset($args->link_after) ? $args->link_after : '');
+        $item_output .= '</a>';
+        $item_output .= isset($args->after) ? $args->after : '';
+        $output .= apply_filters('walker_nav_menu_start_el', $item_output, $item, $depth, $args);
+    }
+
+    function end_el(&$output, $item, $depth = 0, $args = null) {
+        $output .= "</li>\n";
+    }
+}
+
+// Fallback menu function
+function b2c2_fallback_menu() {
+    echo '<ul class="primary-menu" style="display: flex; list-style: none; margin: 0; padding: 0; gap: 2rem;">
+            <li><a href="' . home_url('/') . '" style="color: #374151; text-decoration: none; font-weight: 500; transition: color 0.3s ease;">Home</a></li>
+            <li><a href="' . home_url('/solutions') . '" style="color: #374151; text-decoration: none; font-weight: 500; transition: color 0.3s ease;">Solutions</a></li>
+            <li><a href="' . home_url('/insights') . '" style="color: #374151; text-decoration: none; font-weight: 500; transition: color 0.3s ease;">Insights</a></li>
+            <li><a href="' . home_url('/news') . '" style="color: #374151; text-decoration: none; font-weight: 500; transition: color 0.3s ease;">News</a></li>
+            <li><a href="' . home_url('/contact') . '" style="color: #374151; text-decoration: none; font-weight: 500; transition: color 0.3s ease;">Contact</a></li>
+          </ul>';
+}
 
 // Customizer settings
 function b2c2_customize_register($wp_customize) {
@@ -412,6 +502,61 @@ function b2c2_customize_register($wp_customize) {
         'section' => 'b2c2_footer',
         'type' => 'textarea',
     ));
+    
+    // Homepage Statistics section
+    $wp_customize->add_section('b2c2_stats', array(
+        'title' => __('Homepage Statistics', 'b2c2-template'),
+        'priority' => 35,
+    ));
+    
+    // Statistics title
+    $wp_customize->add_setting('stats_section_title', array(
+        'default' => 'Institutional-grade Performance',
+        'sanitize_callback' => 'sanitize_text_field',
+    ));
+    
+    $wp_customize->add_control('stats_section_title', array(
+        'label' => __('Statistics Section Title', 'b2c2-template'),
+        'section' => 'b2c2_stats',
+        'type' => 'text',
+    ));
+    
+    // Statistics subtitle
+    $wp_customize->add_setting('stats_section_subtitle', array(
+        'default' => 'Trusted by institutions globally with industry-leading metrics',
+        'sanitize_callback' => 'sanitize_text_field',
+    ));
+    
+    $wp_customize->add_control('stats_section_subtitle', array(
+        'label' => __('Statistics Section Subtitle', 'b2c2-template'),
+        'section' => 'b2c2_stats',
+        'type' => 'text',
+    ));
+    
+    // Statistics items (4 stats)
+    for ($i = 1; $i <= 4; $i++) {
+        $wp_customize->add_setting("stat_{$i}_number", array(
+            'default' => $i === 1 ? '$500B+' : ($i === 2 ? '200+' : ($i === 3 ? '24/7' : '15ms')),
+            'sanitize_callback' => 'sanitize_text_field',
+        ));
+        
+        $wp_customize->add_control("stat_{$i}_number", array(
+            'label' => __("Statistic {$i} Number", 'b2c2-template'),
+            'section' => 'b2c2_stats',
+            'type' => 'text',
+        ));
+        
+        $wp_customize->add_setting("stat_{$i}_label", array(
+            'default' => $i === 1 ? 'Monthly Trading Volume' : ($i === 2 ? 'Institutional Clients' : ($i === 3 ? 'Market Coverage' : 'Average Latency')),
+            'sanitize_callback' => 'sanitize_text_field',
+        ));
+        
+        $wp_customize->add_control("stat_{$i}_label", array(
+            'label' => __("Statistic {$i} Label", 'b2c2-template'),
+            'section' => 'b2c2_stats',
+            'type' => 'text',
+        ));
+    }
     
     // Social media section
     $wp_customize->add_section('b2c2_social', array(
