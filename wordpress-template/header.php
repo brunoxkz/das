@@ -73,7 +73,6 @@
                         <span style="display: block; width: 20px; height: 2px; background: #333; margin: 4px 0; transition: 0.3s;"></span>
                         <span style="display: block; width: 20px; height: 2px; background: #333; margin: 4px 0; transition: 0.3s;"></span>
                     </button>
-                    </div>
                 </nav><!-- #site-navigation -->
             </div>
         </div>
