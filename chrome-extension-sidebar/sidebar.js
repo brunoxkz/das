@@ -211,8 +211,7 @@ class TodoManager {
         // Usar notificação do navegador se permitida
         if ('Notification' in window && Notification.permission === 'granted') {
             new Notification('Pomodoro Timer', {
-                body: phases[this.pomodoro.currentPhase],
-                icon: 'icons/icon48.svg'
+                body: phases[this.pomodoro.currentPhase]
             });
         }
     }
