@@ -1,0 +1,106 @@
+{
+  "timestamp": "2025-07-20T19:08:51.502Z",
+  "totalTests": 8,
+  "successfulTests": 6,
+  "successRate": "75.0%",
+  "results": [
+    {
+      "test": "GET /api/notifications/vapid-key",
+      "success": true,
+      "response": {
+        "success": true,
+        "status": 200,
+        "data": {
+          "success": true,
+          "vapidPublicKey": "BCVWkiq3UCyK5i4FLCAVZfoSpn_hCMvVlorOo41tBJKWUpNLXioHup_NghaBWnaaqREmEF81HP5HW2GEHrg2zxM"
+        }
+      }
+    },
+    {
+      "test": "GET /api/notifications/stats",
+      "success": true,
+      "response": {
+        "success": true,
+        "status": 200,
+        "data": {
+          "success": true,
+          "totalSubscriptions": 0,
+          "activeSubscriptions": 0,
+          "vapidPublicKey": "BCVWkiq3UCyK5i4FLCAVZfoSpn_hCMvVlorOo41tBJKWUpNLXioHup_NghaBWnaaqREmEF81HP5HW2GEHrg2zxM"
+        }
+      }
+    },
+    {
+      "test": "POST /api/notifications/test",
+      "success": true,
+      "response": {
+        "success": false,
+        "status": 500,
+        "data": {
+          "error": "Erro ao enviar notificação de teste"
+        }
+      }
+    },
+    {
+      "test": "Notification Subscription",
+      "success": false,
+      "response": {
+        "success": false,
+        "status": 500,
+        "data": {
+          "error": "Erro interno do servidor"
+        }
+      }
+    },
+    {
+      "test": "Custom Notification Send",
+      "success": false,
+      "response": {
+        "success": false,
+        "status": 500,
+        "data": {
+          "error": "Erro ao enviar notificação"
+        }
+      }
+    },
+    {
+      "test": "Bulk Notification Send",
+      "success": true,
+      "response": {
+        "success": true,
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "Notificações enviadas",
+          "results": {
+            "success": 0,
+            "failed": 3
+          }
+        }
+      }
+    },
+    {
+      "test": "Notification Statistics",
+      "success": true,
+      "response": {
+        "success": true,
+        "status": 200,
+        "data": {
+          "success": true,
+          "totalSubscriptions": 0,
+          "activeSubscriptions": 0,
+          "vapidPublicKey": "BCVWkiq3UCyK5i4FLCAVZfoSpn_hCMvVlorOo41tBJKWUpNLXioHup_NghaBWnaaqREmEF81HP5HW2GEHrg2zxM"
+        }
+      }
+    },
+    {
+      "test": "PWA Integration",
+      "success": true,
+      "details": {
+        "validFiles": 4,
+        "totalFiles": 4
+      }
+    }
+  ],
+  "status": "FUNCTIONAL"
+}

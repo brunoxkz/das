@@ -1,0 +1,43 @@
+{
+  "timestamp": "2025-07-21T23:02:25.437Z",
+  "summary": {
+    "totalTests": 5,
+    "passedTests": 3,
+    "failedTests": 2,
+    "successRate": "60.0",
+    "averageResponseTime": "14.8"
+  },
+  "details": [
+    {
+      "test": "Quiz Submission Rate Limiting",
+      "passed": false,
+      "details": "0 requests blocked by rate limit, 0 successful",
+      "responseTime": "46ms"
+    },
+    {
+      "test": "Push Notification Rate Limiting",
+      "passed": true,
+      "details": "5 requests blocked, 10 successful",
+      "responseTime": "18ms"
+    },
+    {
+      "test": "Authentication Rate Limiting",
+      "passed": false,
+      "details": "0 rate limited, 8 auth errors",
+      "responseTime": "8ms"
+    },
+    {
+      "test": "Rate Limit Headers",
+      "passed": true,
+      "details": "Headers present: [\"content-security-policy\",\"cross-origin-opener-policy\",\"cross-origin-resource-policy\",\"origin-agent-cluster\",\"referrer-policy\",\"strict-transport-security\",\"x-content-type-options\",\"x-dns-prefetch-control\",\"x-download-options\",\"x-frame-options\",\"x-permitted-cross-domain-policies\",\"x-xss-protection\",\"ratelimit-policy\",\"ratelimit-limit\",\"ratelimit-remaining\",\"ratelimit-reset\",\"access-control-allow-origin\",\"access-control-allow-methods\",\"access-control-allow-headers\",\"access-control-allow-credentials\",\"x-powered-by\",\"content-type\",\"content-length\",\"etag\",\"vary\",\"date\",\"connection\",\"keep-alive\"]",
+      "responseTime": "1ms"
+    },
+    {
+      "test": "Security Headers Integration",
+      "passed": "nosniff",
+      "details": "Security headers: Present",
+      "responseTime": "1ms"
+    }
+  ],
+  "status": "REQUIRES_FIXES"
+}
