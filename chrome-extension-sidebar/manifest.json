@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Sidebar To-Do + Pomodoro",
-  "version": "1.0.0",
-  "description": "To-do list em colunas com sistema Pomodoro e sons ambientais na sidebar",
+  "version": "1.0.1",
+  "description": "To-do list em colunas com Pomodoro e sons ambientais - Chrome/Opera compatível",
   "permissions": [
     "storage",
     "sidePanel",

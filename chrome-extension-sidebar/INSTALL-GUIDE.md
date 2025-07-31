@@ -20,11 +20,20 @@
   - ✅ `background.js`
 
 ### **2. Instalar no Chrome/Opera**
-1. **Abrir extensões:** `chrome://extensions/` (ou `opera://extensions/`)
-2. **Ativar modo desenvolvedor:** Toggle no canto superior direito
-3. **Carregar extensão:** Clique "Carregar sem compactação"
-4. **Selecionar pasta:** Escolher a pasta `chrome-extension-sidebar`
-5. **Confirmar:** A extensão aparece na lista
+
+**Chrome:**
+1. Ir para `chrome://extensions/`
+2. Ativar "Modo do desenvolvedor" (toggle superior direito)
+3. Clicar "Carregar sem compactação"
+4. Selecionar a pasta `chrome-extension-sidebar`
+
+**Opera:**
+1. Ir para `opera://extensions/`
+2. Ativar "Modo do desenvolvedor" (toggle superior direito) 
+3. Clicar "Carregar extensão não empacotada"
+4. Selecionar a pasta `chrome-extension-sidebar`
+
+**✅ A extensão aparece na lista e está pronta para uso!**
 
 ### **3. Ativar Sidebar**
 1. **Clicar no ícone** da extensão na barra de ferramentas
@@ -37,7 +46,8 @@
 ### **4. Como Funciona Agora**
 - **Chrome moderno (114+):** Abre sidebar real do lado direito
 - **Chrome mais antigo:** Abre em nova aba fixa (funciona igual)
-- **Ambos os modos:** Pomodoro e To-Do funcionam perfeitamente
+- **Opera (todas versões):** Funciona perfeitamente em ambos os modos
+- **Todos os navegadores:** Pomodoro e To-Do funcionam 100%
 
 ### **5. Solução de Problemas**
 - **Se não aparece:** Recarregar a página atual
