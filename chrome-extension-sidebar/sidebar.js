@@ -1,707 +1,656 @@
-// Sistema To-Do List + Pomodoro - Sidebar Extension
-class TodoManager {
+// Sidebar To-Do + Pomodoro - Versão Preto e Branco Otimizada
+class SidebarApp {
     constructor() {
-        this.columns = [];
-        this.currentEditingTask = null;
-        this.currentEditingColumn = null;
-        
-        // Sistema Pomodoro Ultra-Otimizado
-        this.pomodoro = {
-            isRunning: false,
-            currentPhase: 'focus', // focus, shortBreak, longBreak
-            timeRemaining: 25 * 60, // 25 minutos em segundos
-            currentCycle: 1,
-            maxCycles: 4,
-            timer: null,
-            audio: null,
-            currentSound: ''
-        };
-        
         this.init();
     }
 
     init() {
-        this.loadData();
-        this.setupEventListeners();
-        this.setupPomodoroListeners();
-        this.renderBoard();
-        this.updatePomodoroDisplay();
-    }
-
-    // Carregar dados do storage
-    async loadData() {
-        try {
-            const result = await chrome.storage.local.get(['todoColumns']);
-            this.columns = result.todoColumns || this.getDefaultColumns();
-        } catch (error) {
-            console.error('Erro ao carregar dados:', error);
-            this.columns = this.getDefaultColumns();
-        }
-    }
-
-    // Colunas padrão
-    getDefaultColumns() {
-        return [
-            {
-                id: 'todo',
-                title: 'A Fazer',
-                tasks: []
-            },
-            {
-                id: 'doing',
-                title: 'Fazendo',
-                tasks: []
-            },
-            {
-                id: 'done',
-                title: 'Concluído',
-                tasks: []
-            }
-        ];
-    }
-
-    // Salvar dados no storage
-    async saveData() {
-        try {
-            await chrome.storage.local.set({ todoColumns: this.columns });
-        } catch (error) {
-            console.error('Erro ao salvar dados:', error);
-        }
-    }
-
-    // Configurar event listeners
-    setupEventListeners() {
-        // Adicionar nova coluna
-        document.getElementById('addColumnBtn').addEventListener('click', () => {
-            this.openColumnModal();
-        });
-
-        // Modais
+        // Sistema Pomodoro
+        this.setupPomodoro();
+        
+        // Sistema Todo
+        this.setupTodoSystem();
+        
+        // Setup dos modais
         this.setupModalListeners();
-    }
-
-    // Sistema Pomodoro Ultra-Otimizado (Consumo de RAM Mínimo)
-    setupPomodoroListeners() {
-        // Botão Start/Pause
-        document.getElementById('startPauseBtn').addEventListener('click', () => {
-            this.togglePomodoro();
-        });
-
-        // Botão Reset
-        document.getElementById('resetBtn').addEventListener('click', () => {
-            this.resetPomodoro();
-        });
-
-        // Botão Som
-        document.getElementById('soundBtn').addEventListener('click', () => {
-            this.toggleSoundSelector();
-        });
-
-        // Seletor de som ambiente
-        document.getElementById('ambientSound').addEventListener('change', (e) => {
-            this.changeAmbientSound(e.target.value);
-        });
-    }
-
-    // Toggle Pomodoro
-    togglePomodoro() {
-        if (this.pomodoro.isRunning) {
-            this.pausePomodoro();
-        } else {
-            this.startPomodoro();
-        }
-    }
-
-    // Iniciar Pomodoro
-    startPomodoro() {
-        this.pomodoro.isRunning = true;
-        document.getElementById('startPauseBtn').innerHTML = '⏸️';
         
-        // Timer ultra-eficiente (atualiza apenas uma vez por segundo)
-        this.pomodoro.timer = setInterval(() => {
-            this.pomodoro.timeRemaining--;
-            
-            if (this.pomodoro.timeRemaining <= 0) {
-                this.pomodoroFinished();
-            } else {
-                this.updatePomodoroDisplay();
-            }
-        }, 1000);
+        // Controles de som ambiente
+        this.setupAmbientControls();
         
-        this.updatePomodoroDisplay();
-    }
-
-    // Pausar Pomodoro
-    pausePomodoro() {
-        this.pomodoro.isRunning = false;
-        document.getElementById('startPauseBtn').innerHTML = '▶️';
+        // Configurar listeners dos botões principais
+        document.getElementById('addColumnBtn').addEventListener('click', () => this.openColumnModal());
         
-        if (this.pomodoro.timer) {
-            clearInterval(this.pomodoro.timer);
-            this.pomodoro.timer = null;
-        }
-    }
-
-    // Reset Pomodoro
-    resetPomodoro() {
-        this.pausePomodoro();
-        this.pomodoro.currentPhase = 'focus';
-        this.pomodoro.timeRemaining = 25 * 60;
-        this.pomodoro.currentCycle = 1;
-        this.updatePomodoroDisplay();
-        this.updateProgressDots();
-    }
-
-    // Pomodoro Finalizado
-    pomodoroFinished() {
-        this.pausePomodoro();
-        
-        // Determinar próxima fase
-        if (this.pomodoro.currentPhase === 'focus') {
-            if (this.pomodoro.currentCycle >= this.pomodoro.maxCycles) {
-                // Pausa longa (20 min)
-                this.pomodoro.currentPhase = 'longBreak';
-                this.pomodoro.timeRemaining = 20 * 60;
-                this.pomodoro.currentCycle = 1;
-                this.showEnergyMessage();
-            } else {
-                // Pausa curta (5 min)
-                this.pomodoro.currentPhase = 'shortBreak';
-                this.pomodoro.timeRemaining = 5 * 60;
-            }
-        } else {
-            // Voltar ao foco
-            this.pomodoro.currentPhase = 'focus';
-            this.pomodoro.timeRemaining = 25 * 60;
-            if (this.pomodoro.currentCycle < this.pomodoro.maxCycles) {
-                this.pomodoro.currentCycle++;
-            }
+        // Criar uma lista inicial se não existir
+        if (this.getColumns().length === 0) {
+            this.createColumn('📋 Tarefas');
         }
         
-        this.updatePomodoroDisplay();
-        this.updateProgressDots();
-        
-        // Notificação simples (sem consumir RAM)
-        this.showNotification();
+        // Renderizar colunas existentes
+        this.renderColumns();
     }
 
-    // Mostrar mensagem de energia (pausa longa)
-    showEnergyMessage() {
-        const message = document.createElement('div');
-        message.className = 'energy-message';
-        message.innerHTML = '⚡ ELEVE SUA ENERGIA! ⚡<br><small>Pausa longa - 20 minutos</small>';
-        document.body.appendChild(message);
+    setupPomodoro() {
+        this.isRunning = false;
+        this.isPaused = false;
+        this.currentSession = 1;
+        this.totalSessions = 4;
+        this.timeRemaining = 25 * 60; // 25 minutos em segundos
+        this.isBreak = false;
+        this.currentSound = null;
+        this.audioContext = null;
         
-        // Remover após 4 segundos
-        setTimeout(() => {
-            if (document.body.contains(message)) {
-                document.body.removeChild(message);
-            }
-        }, 4000);
+        // Elementos DOM
+        this.timerDisplay = document.getElementById('timerDisplay');
+        this.timerPhase = document.getElementById('timerPhase');
+        this.startPauseBtn = document.getElementById('startPauseBtn');
+        this.resetBtn = document.getElementById('resetBtn');
+        this.soundBtn = document.getElementById('soundBtn');
+        this.ambientControls = document.getElementById('ambientControls');
+        
+        // Event listeners
+        this.startPauseBtn.addEventListener('click', () => this.toggleTimer());
+        this.resetBtn.addEventListener('click', () => this.resetTimer());
+        this.soundBtn.addEventListener('click', () => this.toggleAmbientControls());
+        
+        this.updateDisplay();
     }
 
-    // Notificação simples
-    showNotification() {
-        const phases = {
-            focus: 'Tempo de foco!',
-            shortBreak: 'Pausa curta - 5 min',
-            longBreak: 'Pausa longa - 20 min'
-        };
-        
-        // Usar notificação do navegador se permitida
-        if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('Pomodoro Timer', {
-                body: phases[this.pomodoro.currentPhase]
+    setupAmbientControls() {
+        const ambientBtns = document.querySelectorAll('.ambient-btn');
+        ambientBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const soundType = btn.dataset.sound;
+                this.toggleAmbientSound(soundType, btn);
             });
-        }
-    }
-
-    // Atualizar display do Pomodoro
-    updatePomodoroDisplay() {
-        const minutes = Math.floor(this.pomodoro.timeRemaining / 60);
-        const seconds = this.pomodoro.timeRemaining % 60;
-        const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        
-        document.getElementById('timerDisplay').textContent = timeString;
-        
-        const phases = {
-            focus: 'Foco',
-            shortBreak: 'Pausa Curta',
-            longBreak: 'Pausa Longa'
-        };
-        
-        document.getElementById('timerPhase').textContent = phases[this.pomodoro.currentPhase];
-        this.updateProgressDots();
-    }
-
-    // Atualizar dots de progresso
-    updateProgressDots() {
-        const dots = document.querySelectorAll('.dot');
-        dots.forEach((dot, index) => {
-            dot.className = 'dot';
-            if (index < this.pomodoro.currentCycle - 1) {
-                dot.classList.add('completed');
-            } else if (index === this.pomodoro.currentCycle - 1 && this.pomodoro.currentPhase === 'focus') {
-                dot.classList.add('current');
-            }
         });
     }
 
-    // Toggle seletor de som
-    toggleSoundSelector() {
-        const selector = document.getElementById('soundSelector');
-        const isVisible = selector.style.display !== 'none';
-        selector.style.display = isVisible ? 'none' : 'block';
-        
-        const btn = document.getElementById('soundBtn');
-        btn.classList.toggle('active', !isVisible);
+    toggleAmbientControls() {
+        const isVisible = this.ambientControls.style.display !== 'none';
+        this.ambientControls.style.display = isVisible ? 'none' : 'flex';
     }
 
-    // Sons ambientais ultra-otimizados (geração procedural - zero RAM)
-    changeAmbientSound(soundType) {
-        // Parar som atual
-        if (this.pomodoro.audio && this.pomodoro.audio.stop) {
-            this.pomodoro.audio.stop();
-            this.pomodoro.audio = null;
+    toggleAmbientSound(soundType, btnElement) {
+        // Remove active de todos os botões
+        document.querySelectorAll('.ambient-btn').forEach(btn => btn.classList.remove('active'));
+        
+        // Para o som atual se houver
+        if (this.currentSound) {
+            this.stopAmbientSound();
         }
         
-        if (!soundType) {
-            this.pomodoro.currentSound = '';
+        // Se é o mesmo som, apenas para
+        if (this.currentSoundType === soundType) {
+            this.currentSoundType = null;
             return;
         }
         
-        this.pomodoro.currentSound = soundType;
+        // Ativa novo som
+        btnElement.classList.add('active');
+        this.currentSoundType = soundType;
         this.playAmbientSound(soundType);
     }
 
-    // Reproduzir sons ambientais (geração por Web Audio API - ultra eficiente)
-    playAmbientSound(type) {
-        // Usar Web Audio API para gerar sons sem arquivos (economiza RAM)
+    async playAmbientSound(type) {
         try {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            
-            const sounds = {
-                rain: () => this.generateRainSound(audioContext),
-                ocean: () => this.generateOceanSound(audioContext),
-                forest: () => this.generateForestSound(audioContext),
-                cafe: () => this.generateCafeSound(audioContext),
-                white: () => this.generateWhiteNoise(audioContext)
-            };
-            
-            if (sounds[type]) {
-                sounds[type]();
+            if (!this.audioContext) {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
+            
+            // Para o som anterior
+            this.stopAmbientSound();
+            
+            // Cria novo som baseado no tipo
+            this.currentSound = this.createProceduralSound(type);
+            
         } catch (error) {
-            console.log('Audio not supported');
+            console.log('Erro ao reproduzir som ambiente:', error);
         }
     }
 
-    // Geração procedural de som de chuva (ultra-leve)
-    generateRainSound(ctx) {
-        const bufferSize = ctx.sampleRate * 2;
-        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const data = buffer.getChannelData(0);
+    createProceduralSound(type) {
+        const ctx = this.audioContext;
+        let oscillator, gainNode, filter;
         
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = (Math.random() * 2 - 1) * 0.1;
+        switch(type) {
+            case 'rain':
+                // Som de chuva usando ruído branco filtrado
+                gainNode = ctx.createGain();
+                gainNode.gain.value = 0.3;
+                
+                const bufferSize = ctx.sampleRate * 2;
+                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                
+                const source = ctx.createBufferSource();
+                source.buffer = buffer;
+                source.loop = true;
+                
+                filter = ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 1000;
+                
+                source.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                source.start();
+                
+                return { source, gainNode, filter };
+                
+            case 'ocean':
+                // Som de oceano
+                oscillator = ctx.createOscillator();
+                gainNode = ctx.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(0.3, ctx.currentTime);
+                gainNode.gain.value = 0.2;
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                oscillator.start();
+                
+                return { oscillator, gainNode };
+                
+            case 'forest':
+                // Som de floresta (pássaros + vento)
+                const osc1 = ctx.createOscillator();
+                const osc2 = ctx.createOscillator();
+                gainNode = ctx.createGain();
+                
+                osc1.type = 'triangle';
+                osc1.frequency.value = 200;
+                osc2.type = 'sine';
+                osc2.frequency.value = 100;
+                
+                gainNode.gain.value = 0.15;
+                
+                osc1.connect(gainNode);
+                osc2.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                
+                osc1.start();
+                osc2.start();
+                
+                return { oscillator: osc1, oscillator2: osc2, gainNode };
+                
+            case 'cafe':
+                // Som de café (murmúrio + ruído suave)
+                gainNode = ctx.createGain();
+                gainNode.gain.value = 0.25;
+                
+                const bufferSize2 = ctx.sampleRate;
+                const buffer2 = ctx.createBuffer(1, bufferSize2, ctx.sampleRate);
+                const data2 = buffer2.getChannelData(0);
+                
+                for (let i = 0; i < bufferSize2; i++) {
+                    data2[i] = (Math.random() * 2 - 1) * 0.5;
+                }
+                
+                const source2 = ctx.createBufferSource();
+                source2.buffer = buffer2;
+                source2.loop = true;
+                
+                source2.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                source2.start();
+                
+                return { source: source2, gainNode };
+                
+            case 'white':
+                // Ruído branco
+                gainNode = ctx.createGain();
+                gainNode.gain.value = 0.1;
+                
+                const bufferSize3 = ctx.sampleRate * 2;
+                const buffer3 = ctx.createBuffer(1, bufferSize3, ctx.sampleRate);
+                const data3 = buffer3.getChannelData(0);
+                
+                for (let i = 0; i < bufferSize3; i++) {
+                    data3[i] = Math.random() * 2 - 1;
+                }
+                
+                const source3 = ctx.createBufferSource();
+                source3.buffer = buffer3;
+                source3.loop = true;
+                
+                source3.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                source3.start();
+                
+                return { source: source3, gainNode };
         }
-        
-        const source = ctx.createBufferSource();
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.value = 1000;
-        
-        source.buffer = buffer;
-        source.loop = true;
-        source.connect(filter);
-        filter.connect(ctx.destination);
-        source.start();
-        
-        this.pomodoro.audio = { stop: () => source.stop() };
     }
 
-    // Geração procedural de oceano
-    generateOceanSound(ctx) {
-        const bufferSize = ctx.sampleRate * 4;
-        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        
-        for (let i = 0; i < bufferSize; i++) {
-            const wave1 = Math.sin(i * 0.001) * 0.3;
-            const wave2 = Math.sin(i * 0.0015) * 0.2;
-            const noise = (Math.random() * 2 - 1) * 0.05;
-            data[i] = wave1 + wave2 + noise;
+    stopAmbientSound() {
+        if (this.currentSound) {
+            try {
+                if (this.currentSound.source) this.currentSound.source.stop();
+                if (this.currentSound.oscillator) this.currentSound.oscillator.stop();
+                if (this.currentSound.oscillator2) this.currentSound.oscillator2.stop();
+            } catch (e) {}
+            this.currentSound = null;
         }
-        
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
-        source.loop = true;
-        source.connect(ctx.destination);
-        source.start();
-        
-        this.pomodoro.audio = { stop: () => source.stop() };
     }
 
-    // Ruído branco ultra-eficiente
-    generateWhiteNoise(ctx) {
-        const bufferSize = ctx.sampleRate;
-        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = (Math.random() * 2 - 1) * 0.1;
+    toggleTimer() {
+        if (!this.isRunning) {
+            this.startTimer();
+        } else {
+            this.pauseTimer();
         }
-        
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
-        source.loop = true;
-        source.connect(ctx.destination);
-        source.start();
-        
-        this.pomodoro.audio = { stop: () => source.stop() };
     }
 
-    // Sons de floresta e café (placeholder - mesma técnica)
-    generateForestSound(ctx) { this.generateRainSound(ctx); }
-    generateCafeSound(ctx) { this.generateWhiteNoise(ctx); }
+    startTimer() {
+        this.isRunning = true;
+        this.isPaused = false;
+        this.startPauseBtn.textContent = '⏸ Pausar';
+        this.startPauseBtn.classList.remove('primary');
+        
+        this.timer = setInterval(() => {
+            this.timeRemaining--;
+            this.updateDisplay();
+            
+            if (this.timeRemaining <= 0) {
+                this.completeSession();
+            }
+        }, 1000);
+    }
 
-    // Configurar listeners dos modais
+    pauseTimer() {
+        this.isRunning = false;
+        this.isPaused = true;
+        this.startPauseBtn.textContent = '▶ Continuar';
+        this.startPauseBtn.classList.add('primary');
+        clearInterval(this.timer);
+    }
+
+    resetTimer() {
+        this.isRunning = false;
+        this.isPaused = false;
+        this.currentSession = 1;
+        this.isBreak = false;
+        this.timeRemaining = 25 * 60;
+        this.startPauseBtn.textContent = '▶ Iniciar';
+        this.startPauseBtn.classList.add('primary');
+        clearInterval(this.timer);
+        this.updateDisplay();
+    }
+
+    completeSession() {
+        clearInterval(this.timer);
+        this.isRunning = false;
+        
+        // Notificação do sistema
+        if (Notification.permission === 'granted') {
+            if (this.isBreak) {
+                new Notification('Pausa terminada!', {
+                    body: 'Hora de voltar ao foco! 💪',
+                    icon: '/icon48.png'
+                });
+            } else {
+                new Notification('Sessão completa!', {
+                    body: 'Hora da pausa! 🎉',
+                    icon: '/icon48.png'
+                });
+            }
+        }
+        
+        if (this.isBreak) {
+            // Volta para sessão de trabalho
+            this.isBreak = false;
+            this.currentSession++;
+            this.timeRemaining = 25 * 60;
+        } else {
+            // Vai para pausa
+            this.isBreak = true;
+            
+            if (this.currentSession >= this.totalSessions) {
+                // Pausa longa após 4 sessões
+                this.timeRemaining = 20 * 60; // 20 minutos
+                this.currentSession = 1;
+            } else {
+                // Pausa curta
+                this.timeRemaining = 5 * 60; // 5 minutos
+            }
+        }
+        
+        this.startPauseBtn.textContent = '▶ Iniciar';
+        this.startPauseBtn.classList.add('primary');
+        this.updateDisplay();
+    }
+
+    updateDisplay() {
+        const minutes = Math.floor(this.timeRemaining / 60);
+        const seconds = this.timeRemaining % 60;
+        this.timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (this.isBreak) {
+            if (this.timeRemaining === 20 * 60) {
+                this.timerPhase.textContent = 'Pausa Longa - Eleve sua energia! ⚡';
+            } else {
+                this.timerPhase.textContent = 'Pausa Curta - Respire fundo 🌸';
+            }
+        } else {
+            this.timerPhase.textContent = `Foco - Sessão ${this.currentSession} de ${this.totalSessions}`;
+        }
+    }
+
+    setupTodoSystem() {
+        this.currentColumnId = null;
+        this.currentTaskId = null;
+        this.isEditingColumn = false;
+        this.isEditingTask = false;
+        
+        // Solicitar permissão para notificações
+        if (Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    }
+
     setupModalListeners() {
-        // Modal de tarefa
+        // Modal de tarefas
         const taskModal = document.getElementById('taskModal');
-        const taskClose = taskModal.querySelector('.close');
-        const taskInput = document.getElementById('taskInput');
+        const taskCloseBtn = taskModal.querySelector('.close');
         const saveTaskBtn = document.getElementById('saveTaskBtn');
         const cancelTaskBtn = document.getElementById('cancelTaskBtn');
-
-        taskClose.addEventListener('click', () => this.closeTaskModal());
+        const taskInput = document.getElementById('taskInput');
+        
+        taskCloseBtn.addEventListener('click', () => this.closeTaskModal());
         cancelTaskBtn.addEventListener('click', () => this.closeTaskModal());
         saveTaskBtn.addEventListener('click', () => this.saveTask());
-
-        // Enter para salvar tarefa
+        
         taskInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.saveTask();
-            }
+            if (e.key === 'Enter') this.saveTask();
+            if (e.key === 'Escape') this.closeTaskModal();
         });
-
-        // Modal de coluna
+        
+        // Modal de colunas
         const columnModal = document.getElementById('columnModal');
-        const columnClose = columnModal.querySelector('.close');
-        const columnInput = document.getElementById('columnInput');
+        const columnCloseBtn = columnModal.querySelector('.close');
         const saveColumnBtn = document.getElementById('saveColumnBtn');
         const cancelColumnBtn = document.getElementById('cancelColumnBtn');
-
-        columnClose.addEventListener('click', () => this.closeColumnModal());
+        const columnInput = document.getElementById('columnInput');
+        
+        columnCloseBtn.addEventListener('click', () => this.closeColumnModal());
         cancelColumnBtn.addEventListener('click', () => this.closeColumnModal());
         saveColumnBtn.addEventListener('click', () => this.saveColumn());
-
-        // Enter para salvar coluna
-        columnInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.saveColumn();
-            }
-        });
-
-        // Fechar modal clicando fora
-        window.addEventListener('click', (e) => {
-            if (e.target === taskModal) {
-                this.closeTaskModal();
-            }
-            if (e.target === columnModal) {
-                this.closeColumnModal();
-            }
-        });
-    }
-
-    // Renderizar o board
-    renderBoard() {
-        const board = document.getElementById('todoBoard');
-        board.innerHTML = '';
-
-        if (this.columns.length === 0) {
-            board.innerHTML = '<div class="empty-state">Nenhuma coluna encontrada. Clique em "Nova Coluna" para começar.</div>';
-            return;
-        }
-
-        this.columns.forEach(column => {
-            const columnElement = this.createColumnElement(column);
-            board.appendChild(columnElement);
-        });
-    }
-
-    // Criar elemento de coluna
-    createColumnElement(column) {
-        const columnDiv = document.createElement('div');
-        columnDiv.className = 'column';
-        columnDiv.dataset.columnId = column.id;
-
-        const tasksHtml = column.tasks.map(task => 
-            `<div class="task-item" data-task-id="${task.id}">
-                <div class="task-text">${this.escapeHtml(task.text)}</div>
-                <div class="task-actions">
-                    <button class="task-btn edit-task-btn" title="Editar">✏️</button>
-                    <button class="task-btn delete-task-btn" title="Excluir">🗑️</button>
-                </div>
-            </div>`
-        ).join('');
-
-        columnDiv.innerHTML = `
-            <div class="column-header">
-                <div class="column-title" contenteditable="false">${this.escapeHtml(column.title)}</div>
-                <div class="column-actions">
-                    <button class="column-btn edit-column-btn" title="Editar coluna">✏️</button>
-                    <button class="column-btn delete-column-btn" title="Excluir coluna">🗑️</button>
-                </div>
-            </div>
-            <div class="task-list">
-                ${tasksHtml}
-                <button class="add-task-btn">+ Adicionar tarefa</button>
-            </div>
-        `;
-
-        this.setupColumnListeners(columnDiv);
-        return columnDiv;
-    }
-
-    // Configurar listeners da coluna
-    setupColumnListeners(columnDiv) {
-        const columnId = columnDiv.dataset.columnId;
         
-        // Adicionar tarefa
-        const addTaskBtn = columnDiv.querySelector('.add-task-btn');
-        addTaskBtn.addEventListener('click', () => {
-            this.openTaskModal(columnId);
+        columnInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.saveColumn();
+            if (e.key === 'Escape') this.closeColumnModal();
         });
-
-        // Editar coluna
-        const editColumnBtn = columnDiv.querySelector('.edit-column-btn');
-        editColumnBtn.addEventListener('click', () => {
-            this.openColumnModal(columnId);
+        
+        // Fechar modal ao clicar fora
+        window.addEventListener('click', (e) => {
+            if (e.target === taskModal) this.closeTaskModal();
+            if (e.target === columnModal) this.closeColumnModal();
         });
+    }
 
-        // Excluir coluna
-        const deleteColumnBtn = columnDiv.querySelector('.delete-column-btn');
-        deleteColumnBtn.addEventListener('click', () => {
-            this.deleteColumn(columnId);
-        });
+    // Gerenciamento de dados
+    getColumns() {
+        return JSON.parse(localStorage.getItem('todoColumns') || '[]');
+    }
 
-        // Listeners das tarefas
-        const taskItems = columnDiv.querySelectorAll('.task-item');
-        taskItems.forEach(taskItem => {
-            const taskId = taskItem.dataset.taskId;
+    saveColumns(columns) {
+        localStorage.setItem('todoColumns', JSON.stringify(columns));
+    }
+
+    createColumn(name) {
+        const columns = this.getColumns();
+        const newColumn = {
+            id: Date.now().toString(),
+            name: name,
+            tasks: []
+        };
+        columns.push(newColumn);
+        this.saveColumns(columns);
+        return newColumn;
+    }
+
+    // Renderização
+    renderColumns() {
+        const container = document.getElementById('columnsContainer');
+        const columns = this.getColumns();
+        
+        if (columns.length === 0) {
+            container.innerHTML = '<div class="empty-state">Nenhuma lista criada ainda. Clique em "Nova Lista" para começar.</div>';
+            return;
+        }
+        
+        container.innerHTML = columns.map(column => `
+            <div class="column" data-column-id="${column.id}">
+                <div class="column-header">
+                    <div class="column-title">${column.name}</div>
+                    <div class="column-actions">
+                        <button class="column-btn" onclick="app.addTask('${column.id}')">+ Tarefa</button>
+                        <button class="column-btn" onclick="app.editColumn('${column.id}')">✏️</button>
+                        <button class="column-btn danger" onclick="app.deleteColumn('${column.id}')">🗑️</button>
+                    </div>
+                </div>
+                <div class="tasks-list" id="tasks-${column.id}">
+                    ${this.renderTasks(column.tasks, column.id)}
+                </div>
+            </div>
+        `).join('');
+        
+        this.setupDragAndDrop();
+    }
+
+    renderTasks(tasks, columnId) {
+        if (tasks.length === 0) {
+            return '<div class="empty-state">Nenhuma tarefa ainda</div>';
+        }
+        
+        return tasks.map(task => `
+            <div class="task-item" draggable="true" data-task-id="${task.id}" data-column-id="${columnId}">
+                <div class="task-content">
+                    <div class="task-text">${task.text}</div>
+                    <div class="task-actions">
+                        <button class="task-btn" onclick="app.editTask('${columnId}', '${task.id}')">✏️</button>
+                        <button class="task-btn danger" onclick="app.deleteTask('${columnId}', '${task.id}')">🗑️</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    setupDragAndDrop() {
+        const taskItems = document.querySelectorAll('.task-item');
+        const taskLists = document.querySelectorAll('.tasks-list');
+        
+        taskItems.forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                item.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', '');
+            });
             
-            // Editar tarefa
-            const editBtn = taskItem.querySelector('.edit-task-btn');
-            editBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.openTaskModal(columnId, taskId);
+            item.addEventListener('dragend', () => {
+                item.classList.remove('dragging');
             });
-
-            // Excluir tarefa
-            const deleteBtn = taskItem.querySelector('.delete-task-btn');
-            deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.deleteTask(columnId, taskId);
+        });
+        
+        taskLists.forEach(list => {
+            list.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                list.classList.add('drag-over');
+            });
+            
+            list.addEventListener('dragleave', () => {
+                list.classList.remove('drag-over');
+            });
+            
+            list.addEventListener('drop', (e) => {
+                e.preventDefault();
+                list.classList.remove('drag-over');
+                
+                const draggedItem = document.querySelector('.dragging');
+                if (!draggedItem) return;
+                
+                const sourceColumnId = draggedItem.dataset.columnId;
+                const targetColumnId = list.id.replace('tasks-', '');
+                const taskId = draggedItem.dataset.taskId;
+                
+                if (sourceColumnId !== targetColumnId) {
+                    this.moveTask(taskId, sourceColumnId, targetColumnId);
+                }
             });
         });
     }
 
-    // Abrir modal de tarefa
-    openTaskModal(columnId, taskId = null) {
-        const modal = document.getElementById('taskModal');
-        const input = document.getElementById('taskInput');
-        const title = document.getElementById('modalTitle');
-
-        this.currentEditingTask = { columnId, taskId };
-
-        if (taskId) {
-            const task = this.getTask(columnId, taskId);
-            title.textContent = 'Editar Tarefa';
-            input.value = task ? task.text : '';
-        } else {
-            title.textContent = 'Adicionar Tarefa';
-            input.value = '';
-        }
-
-        modal.style.display = 'block';
-        input.focus();
+    // Ações de tarefas
+    addTask(columnId) {
+        this.currentColumnId = columnId;
+        this.isEditingTask = false;
+        this.openTaskModal();
     }
 
-    // Fechar modal de tarefa
+    editTask(columnId, taskId) {
+        this.currentColumnId = columnId;
+        this.currentTaskId = taskId;
+        this.isEditingTask = true;
+        
+        const columns = this.getColumns();
+        const column = columns.find(c => c.id === columnId);
+        const task = column.tasks.find(t => t.id === taskId);
+        
+        document.getElementById('taskInput').value = task.text;
+        document.getElementById('modalTitle').textContent = 'Editar Tarefa';
+        this.openTaskModal();
+    }
+
+    deleteTask(columnId, taskId) {
+        if (!confirm('Excluir esta tarefa?')) return;
+        
+        const columns = this.getColumns();
+        const column = columns.find(c => c.id === columnId);
+        column.tasks = column.tasks.filter(t => t.id !== taskId);
+        
+        this.saveColumns(columns);
+        this.renderColumns();
+    }
+
+    moveTask(taskId, sourceColumnId, targetColumnId) {
+        const columns = this.getColumns();
+        const sourceColumn = columns.find(c => c.id === sourceColumnId);
+        const targetColumn = columns.find(c => c.id === targetColumnId);
+        
+        const taskIndex = sourceColumn.tasks.findIndex(t => t.id === taskId);
+        const task = sourceColumn.tasks.splice(taskIndex, 1)[0];
+        
+        targetColumn.tasks.push(task);
+        
+        this.saveColumns(columns);
+        this.renderColumns();
+    }
+
+    // Ações de colunas
+    editColumn(columnId) {
+        this.currentColumnId = columnId;
+        this.isEditingColumn = true;
+        
+        const columns = this.getColumns();
+        const column = columns.find(c => c.id === columnId);
+        
+        document.getElementById('columnInput').value = column.name;
+        document.getElementById('columnModalTitle').textContent = 'Editar Lista';
+        this.openColumnModal();
+    }
+
+    deleteColumn(columnId) {
+        if (!confirm('Excluir esta lista e todas as suas tarefas?')) return;
+        
+        const columns = this.getColumns();
+        const updatedColumns = columns.filter(c => c.id !== columnId);
+        
+        this.saveColumns(updatedColumns);
+        this.renderColumns();
+    }
+
+    // Modais
+    openTaskModal() {
+        document.getElementById('taskModal').style.display = 'block';
+        document.getElementById('taskInput').focus();
+    }
+
     closeTaskModal() {
-        const modal = document.getElementById('taskModal');
-        modal.style.display = 'none';
-        this.currentEditingTask = null;
+        document.getElementById('taskModal').style.display = 'none';
+        document.getElementById('taskInput').value = '';
+        this.currentTaskId = null;
     }
 
-    // Salvar tarefa
-    async saveTask() {
-        const input = document.getElementById('taskInput');
-        const text = input.value.trim();
-
-        if (!text) {
-            input.focus();
-            return;
-        }
-
-        const { columnId, taskId } = this.currentEditingTask;
-
-        if (taskId) {
-            // Editar tarefa existente
-            this.updateTask(columnId, taskId, text);
+    saveTask() {
+        const text = document.getElementById('taskInput').value.trim();
+        if (!text) return;
+        
+        const columns = this.getColumns();
+        const column = columns.find(c => c.id === this.currentColumnId);
+        
+        if (this.isEditingTask) {
+            const task = column.tasks.find(t => t.id === this.currentTaskId);
+            task.text = text;
         } else {
-            // Adicionar nova tarefa
-            this.addTask(columnId, text);
-        }
-
-        await this.saveData();
-        this.renderBoard();
-        this.closeTaskModal();
-    }
-
-    // Abrir modal de coluna
-    openColumnModal(columnId = null) {
-        const modal = document.getElementById('columnModal');
-        const input = document.getElementById('columnInput');
-        const title = document.getElementById('columnModalTitle');
-
-        this.currentEditingColumn = columnId;
-
-        if (columnId) {
-            const column = this.getColumn(columnId);
-            title.textContent = 'Editar Coluna';
-            input.value = column ? column.title : '';
-        } else {
-            title.textContent = 'Adicionar Coluna';
-            input.value = '';
-        }
-
-        modal.style.display = 'block';
-        input.focus();
-    }
-
-    // Fechar modal de coluna
-    closeColumnModal() {
-        const modal = document.getElementById('columnModal');
-        modal.style.display = 'none';
-        this.currentEditingColumn = null;
-    }
-
-    // Salvar coluna
-    async saveColumn() {
-        const input = document.getElementById('columnInput');
-        const title = input.value.trim();
-
-        if (!title) {
-            input.focus();
-            return;
-        }
-
-        if (this.currentEditingColumn) {
-            // Editar coluna existente
-            this.updateColumn(this.currentEditingColumn, title);
-        } else {
-            // Adicionar nova coluna
-            const newColumn = {
-                id: 'col_' + Date.now(),
-                title: title,
-                tasks: []
-            };
-            this.columns.push(newColumn);
-        }
-
-        await this.saveData();
-        this.renderBoard();
-        this.closeColumnModal();
-    }
-
-    // Adicionar tarefa
-    addTask(columnId, text) {
-        const column = this.getColumn(columnId);
-        if (column) {
             const newTask = {
-                id: 'task_' + Date.now(),
+                id: Date.now().toString(),
                 text: text,
-                createdAt: new Date().toISOString()
+                completed: false
             };
             column.tasks.push(newTask);
         }
-    }
-
-    // Atualizar tarefa
-    updateTask(columnId, taskId, text) {
-        const column = this.getColumn(columnId);
-        if (column) {
-            const task = column.tasks.find(t => t.id === taskId);
-            if (task) {
-                task.text = text;
-                task.updatedAt = new Date().toISOString();
-            }
-        }
-    }
-
-    // Excluir tarefa
-    async deleteTask(columnId, taskId) {
-        if (!confirm('Tem certeza que deseja excluir esta tarefa?')) {
-            return;
-        }
-
-        const column = this.getColumn(columnId);
-        if (column) {
-            column.tasks = column.tasks.filter(t => t.id !== taskId);
-            await this.saveData();
-            this.renderBoard();
-        }
-    }
-
-    // Atualizar coluna
-    updateColumn(columnId, title) {
-        const column = this.getColumn(columnId);
-        if (column) {
-            column.title = title;
-        }
-    }
-
-    // Excluir coluna
-    async deleteColumn(columnId) {
-        const column = this.getColumn(columnId);
-        const taskCount = column ? column.tasks.length : 0;
         
-        let confirmMessage = 'Tem certeza que deseja excluir esta coluna?';
-        if (taskCount > 0) {
-            confirmMessage += `\n\nEla contém ${taskCount} tarefa(s) que serão perdidas.`;
+        this.saveColumns(columns);
+        this.renderColumns();
+        this.closeTaskModal();
+    }
+
+    openColumnModal() {
+        document.getElementById('columnModal').style.display = 'block';
+        document.getElementById('columnInput').focus();
+    }
+
+    closeColumnModal() {
+        document.getElementById('columnModal').style.display = 'none';
+        document.getElementById('columnInput').value = '';
+        this.currentColumnId = null;
+        this.isEditingColumn = false;
+    }
+
+    saveColumn() {
+        const name = document.getElementById('columnInput').value.trim();
+        if (!name) return;
+        
+        if (this.isEditingColumn) {
+            const columns = this.getColumns();
+            const column = columns.find(c => c.id === this.currentColumnId);
+            column.name = name;
+            this.saveColumns(columns);
+        } else {
+            this.createColumn(name);
         }
-
-        if (!confirm(confirmMessage)) {
-            return;
-        }
-
-        this.columns = this.columns.filter(c => c.id !== columnId);
-        await this.saveData();
-        this.renderBoard();
-    }
-
-    // Obter coluna por ID
-    getColumn(columnId) {
-        return this.columns.find(c => c.id === columnId);
-    }
-
-    // Obter tarefa por ID
-    getTask(columnId, taskId) {
-        const column = this.getColumn(columnId);
-        return column ? column.tasks.find(t => t.id === taskId) : null;
-    }
-
-    // Escapar HTML
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+        
+        this.renderColumns();
+        this.closeColumnModal();
     }
 }
 
-// Inicializar quando o DOM estiver carregado
-document.addEventListener('DOMContentLoaded', () => {
-    new TodoManager();
-});
+// Função global para fechar a sidebar
+function closeSidebar() {
+    if (confirm('Deseja fechar a sidebar? Você pode reabri-la clicando no ícone da extensão.')) {
+        window.close();
+    }
+}
+
+// Inicializar aplicação
+const app = new SidebarApp();
+
+// Otimização de memória - limpeza periódica
+setInterval(() => {
+    if (window.gc && typeof window.gc === 'function') {
+        window.gc();
+    }
+}, 300000); // A cada 5 minutos

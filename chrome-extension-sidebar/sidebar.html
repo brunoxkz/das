@@ -3,74 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>To-Do Sidebar</title>
+    <title>Sidebar To-Do + Pomodoro</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <header class="header">
-            <h1>📝 To-Do Manager</h1>
-            <button id="addColumnBtn" class="add-column-btn">+ Nova Coluna</button>
-        </header>
+        <!-- Botão de fechar sidebar -->
+        <button class="close-sidebar" onclick="closeSidebar()" title="Fechar Sidebar">×</button>
+        
+        <!-- Header -->
+        <div class="header">
+            <h1>📋 To-Do + Pomodoro</h1>
+        </div>
         
         <!-- Sistema Pomodoro -->
         <div class="pomodoro-section">
+            <div class="motivation-text">ELEVE SUA ENERGIA</div>
+            
             <div class="pomodoro-timer">
                 <div class="timer-display" id="timerDisplay">25:00</div>
-                <div class="timer-phase" id="timerPhase">Foco</div>
+                <div class="timer-phase" id="timerPhase">Foco - Sessão 1 de 4</div>
+                
                 <div class="timer-controls">
-                    <button id="startPauseBtn" class="timer-btn start">▶️</button>
-                    <button id="resetBtn" class="timer-btn reset">⏹️</button>
-                    <button id="soundBtn" class="timer-btn sound">🔊</button>
+                    <button id="startPauseBtn" class="timer-btn primary">▶ Iniciar</button>
+                    <button id="resetBtn" class="timer-btn">⏹ Reset</button>
+                    <button id="soundBtn" class="timer-btn">🔊 Sons</button>
                 </div>
             </div>
-            <div class="pomodoro-progress">
-                <div class="progress-dots" id="progressDots">
-                    <span class="dot"></span>
-                    <span class="dot"></span>
-                    <span class="dot"></span>
-                    <span class="dot"></span>
-                </div>
-                <div class="sound-selector" id="soundSelector" style="display: none;">
-                    <select id="ambientSound">
-                        <option value="">Silêncio</option>
-                        <option value="rain">Chuva</option>
-                        <option value="ocean">Oceano</option>
-                        <option value="forest">Floresta</option>
-                        <option value="cafe">Café</option>
-                        <option value="white">Ruído Branco</option>
-                    </select>
-                </div>
+            
+            <div class="ambient-controls" id="ambientControls" style="display: none;">
+                <button class="ambient-btn" data-sound="rain">🌧️ Chuva</button>
+                <button class="ambient-btn" data-sound="ocean">🌊 Oceano</button>
+                <button class="ambient-btn" data-sound="forest">🌲 Floresta</button>
+                <button class="ambient-btn" data-sound="cafe">☕ Café</button>
+                <button class="ambient-btn" data-sound="white">📡 Ruído</button>
             </div>
         </div>
         
-        <div class="board" id="todoBoard">
-            <!-- Colunas serão inseridas dinamicamente aqui -->
-        </div>
-        
-        <!-- Modal para adicionar/editar tarefa -->
-        <div id="taskModal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h3 id="modalTitle">Adicionar Tarefa</h3>
-                <input type="text" id="taskInput" placeholder="Digite a tarefa..." maxlength="200">
-                <div class="modal-buttons">
-                    <button id="saveTaskBtn" class="save-btn">Salvar</button>
-                    <button id="cancelTaskBtn" class="cancel-btn">Cancelar</button>
+        <!-- Conteúdo principal -->
+        <div class="main-content">
+            <!-- Seção Todo -->
+            <div class="todo-section">
+                <div class="todo-header">
+                    <h2>📝 Listas de Tarefas</h2>
+                    <button id="addColumnBtn" class="add-column-btn">+ Nova Lista</button>
+                </div>
+                
+                <!-- Container de colunas (layout vertical) -->
+                <div class="columns-container" id="columnsContainer">
+                    <!-- Colunas serão inseridas dinamicamente aqui -->
                 </div>
             </div>
         </div>
-        
-        <!-- Modal para adicionar/editar coluna -->
-        <div id="columnModal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h3 id="columnModalTitle">Adicionar Coluna</h3>
-                <input type="text" id="columnInput" placeholder="Nome da coluna..." maxlength="50">
-                <div class="modal-buttons">
-                    <button id="saveColumnBtn" class="save-btn">Salvar</button>
-                    <button id="cancelColumnBtn" class="cancel-btn">Cancelar</button>
-                </div>
+    </div>
+    
+    <!-- Modal para adicionar/editar tarefa -->
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle">Adicionar Tarefa</h2>
+            <input type="text" id="taskInput" placeholder="Digite o nome da tarefa..." autocomplete="off">
+            <div class="modal-actions">
+                <button id="saveTaskBtn" class="modal-btn primary">Salvar</button>
+                <button id="cancelTaskBtn" class="modal-btn secondary">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para adicionar/editar coluna -->
+    <div id="columnModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="columnModalTitle">Nova Lista</h2>
+            <input type="text" id="columnInput" placeholder="Digite o nome da lista..." autocomplete="off">
+            <div class="modal-actions">
+                <button id="saveColumnBtn" class="modal-btn primary">Salvar</button>
+                <button id="cancelColumnBtn" class="modal-btn secondary">Cancelar</button>
             </div>
         </div>
     </div>
