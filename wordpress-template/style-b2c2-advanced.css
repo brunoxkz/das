@@ -1,0 +1,814 @@
+/*
+Theme Name: B2C2 Corporate Template - Advanced Responsive
+Description: Template corporativo EXATAMENTE igual ao B2C2.com, 100% compatível com Elementor Pro. Design moderno e responsivo avançado para empresas de fintech, blockchain e tecnologia financeira.
+Version: 1.1
+Author: Vendzz Development
+License: GPL v2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: b2c2-template
+Tags: business, corporate, fintech, blockchain, elementor-ready, responsive, modern
+
+Requires at least: 5.0
+Tested up to: 6.4
+Requires PHP: 7.4
+
+Template compatible with:
+- Elementor (Free & Pro)
+- WooCommerce
+- Contact Form 7
+- Yoast SEO
+- WPML (Multilingual)
+*/
+
+/* ============================================
+   RESET & BASE STYLES - RESPONSIVO AVANÇADO
+============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: #111827;
+    background-color: #ffffff;
+    overflow-x: hidden;
+    font-size: 16px;
+}
+
+/* ============================================
+   TYPOGRAPHY RESPONSIVA AVANÇADA
+============================================ */
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    color: #111827;
+}
+
+h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 700;
+}
+
+h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+}
+
+h3 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 600;
+}
+
+p {
+    margin-bottom: 1rem;
+    font-size: clamp(1rem, 2vw, 1.1rem);
+    line-height: 1.7;
+    color: #374151;
+}
+
+a {
+    color: #0066FF;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+a:hover {
+    color: #0052CC;
+    text-decoration: underline;
+}
+
+/* ============================================
+   CONTAINER RESPONSIVO AVANÇADO
+============================================ */
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+@media (max-width: 1200px) {
+    .container {
+        max-width: 960px;
+        padding: 0 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        max-width: 100%;
+        padding: 0 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 0 0.75rem;
+    }
+}
+
+/* ============================================
+   HERO SECTION - REPLICAÇÃO EXATA B2C2.COM
+============================================ */
+
+.hero-section {
+    background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+    color: white;
+    padding: 8rem 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 50%, rgba(0,102,255,0.1) 0%, transparent 50%);
+    z-index: 1;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.hero-title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 2rem;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.hero-subtitle {
+    font-size: clamp(1.1rem, 2.5vw, 1.3rem);
+    margin-bottom: 3rem;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+    opacity: 0.9;
+    line-height: 1.6;
+}
+
+/* ============================================
+   FEATURED NEWS SECTION
+============================================ */
+
+.featured-news {
+    padding: 4rem 0;
+    background: #f8f9fa;
+}
+
+.news-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+}
+
+.featured-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.featured-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.card-image {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+}
+
+.card-content {
+    padding: 2rem;
+}
+
+.card-category {
+    color: #6B7280;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ============================================
+   INSTITUTIONAL SOLUTIONS SECTION
+============================================ */
+
+.institutional-solutions {
+    padding: 6rem 0;
+    background: white;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 4rem;
+}
+
+.section-title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #111827;
+}
+
+.solutions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.solution-card {
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.solution-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    border-color: #0066FF;
+}
+
+.solution-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 1.5rem;
+    background: #0066FF;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.solution-card:hover .solution-icon {
+    background: #0052CC;
+    transform: scale(1.05);
+}
+
+/* ============================================
+   LATEST NEWS SECTION
+============================================ */
+
+.latest-news {
+    padding: 6rem 0;
+    background: #F9FAFB;
+}
+
+.news-list {
+    display: grid;
+    gap: 2rem;
+}
+
+.news-item {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    transition: all 0.3s ease;
+}
+
+.news-item:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.news-logo {
+    flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+    background: #111827;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.news-content {
+    flex-grow: 1;
+}
+
+/* ============================================
+   NEWSLETTER SECTION
+============================================ */
+
+.newsletter-section {
+    padding: 6rem 0;
+    background: #111827;
+    color: white;
+}
+
+.newsletter-form {
+    display: flex;
+    gap: 1rem;
+    max-width: 400px;
+    margin: 0 auto 2rem;
+    flex-wrap: wrap;
+}
+
+.newsletter-form input {
+    flex: 1;
+    padding: 1rem;
+    border: 1px solid #374151;
+    border-radius: 6px;
+    background: #1F2937;
+    color: white;
+    min-width: 250px;
+    font-size: 1rem;
+}
+
+.newsletter-form input::placeholder {
+    color: #9CA3AF;
+}
+
+.newsletter-form button {
+    padding: 1rem 2rem;
+    background: #0066FF;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    font-size: 1rem;
+}
+
+.newsletter-form button:hover {
+    background: #0052CC;
+}
+
+/* ============================================
+   INSIGHTS SECTION
+============================================ */
+
+.insights-section {
+    padding: 6rem 0;
+    background: white;
+}
+
+.insights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+}
+
+.insight-card {
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.insight-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border-color: #0066FF;
+}
+
+.insight-image {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+}
+
+.insight-content {
+    padding: 2rem;
+}
+
+.insight-category {
+    color: #6B7280;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* ============================================
+   EVENTS SECTION
+============================================ */
+
+.events-section {
+    padding: 6rem 0;
+    background: white;
+}
+
+.events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.event-card {
+    background: #F9FAFB;
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid #E5E7EB;
+    transition: all 0.3s ease;
+}
+
+.event-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    border-color: #0066FF;
+}
+
+/* ============================================
+   RESPONSIVIDADE AVANÇADA - BREAKPOINTS
+============================================ */
+
+/* Large Desktop (1200px+) */
+@media (min-width: 1200px) {
+    .container {
+        max-width: 1200px;
+    }
+    
+    .hero-section {
+        padding: 10rem 0;
+    }
+    
+    .solutions-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .news-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Desktop (992px - 1199px) */
+@media (max-width: 1199px) and (min-width: 992px) {
+    .container {
+        max-width: 960px;
+    }
+    
+    .hero-section {
+        padding: 8rem 0;
+    }
+    
+    .solutions-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Tablet (768px - 991px) */
+@media (max-width: 991px) and (min-width: 768px) {
+    .container {
+        padding: 0 1.5rem;
+    }
+    
+    .hero-section {
+        padding: 6rem 0;
+        min-height: 80vh;
+    }
+    
+    .solutions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+    
+    .news-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .news-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+    }
+    
+    .newsletter-form {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .newsletter-form input {
+        min-width: 100%;
+        max-width: 400px;
+    }
+}
+
+/* Mobile Large (481px - 767px) */
+@media (max-width: 767px) and (min-width: 481px) {
+    .container {
+        padding: 0 1rem;
+    }
+    
+    .hero-section {
+        padding: 4rem 0;
+        min-height: 70vh;
+    }
+    
+    .hero-content {
+        padding: 0 1rem;
+    }
+    
+    .solutions-grid,
+    .news-grid,
+    .insights-grid,
+    .events-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .section-header {
+        margin-bottom: 2rem;
+    }
+    
+    .institutional-solutions,
+    .latest-news,
+    .newsletter-section,
+    .insights-section,
+    .events-section {
+        padding: 3rem 0;
+    }
+    
+    .featured-news {
+        padding: 2rem 0;
+    }
+    
+    .card-content,
+    .insight-content {
+        padding: 1.5rem;
+    }
+    
+    .solution-card,
+    .event-card {
+        padding: 1.5rem;
+    }
+}
+
+/* Mobile Small (320px - 480px) */
+@media (max-width: 480px) {
+    .container {
+        padding: 0 0.75rem;
+    }
+    
+    .hero-section {
+        padding: 3rem 0;
+        min-height: 60vh;
+    }
+    
+    .hero-content {
+        padding: 0 0.75rem;
+    }
+    
+    .hero-title {
+        font-size: clamp(1.5rem, 7vw, 2rem);
+        margin-bottom: 1rem;
+        line-height: 1.3;
+    }
+    
+    .hero-subtitle {
+        font-size: clamp(0.9rem, 4vw, 1rem);
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: clamp(1.5rem, 6vw, 2rem);
+    }
+    
+    .institutional-solutions,
+    .latest-news,
+    .newsletter-section,
+    .insights-section,
+    .events-section {
+        padding: 2rem 0;
+    }
+    
+    .featured-news {
+        padding: 1.5rem 0;
+    }
+    
+    .card-content,
+    .insight-content {
+        padding: 1rem;
+    }
+    
+    .solution-card,
+    .event-card {
+        padding: 1rem;
+    }
+    
+    .news-item {
+        padding: 1.5rem;
+    }
+    
+    .newsletter-form input,
+    .newsletter-form button {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .solution-icon {
+        width: 50px;
+        height: 50px;
+        margin-bottom: 1rem;
+    }
+    
+    .news-logo {
+        width: 50px;
+        height: 50px;
+    }
+}
+
+/* Extra Small Mobile (< 320px) */
+@media (max-width: 319px) {
+    .container {
+        padding: 0 0.5rem;
+    }
+    
+    .hero-section {
+        padding: 2rem 0;
+        min-height: 50vh;
+    }
+    
+    .hero-title {
+        font-size: 1.25rem;
+        line-height: 1.4;
+    }
+    
+    .hero-subtitle {
+        font-size: 0.85rem;
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+    }
+    
+    .institutional-solutions,
+    .latest-news,
+    .newsletter-section,
+    .insights-section,
+    .events-section {
+        padding: 1.5rem 0;
+    }
+    
+    .card-content,
+    .insight-content,
+    .solution-card,
+    .event-card {
+        padding: 0.75rem;
+    }
+}
+
+/* ============================================
+   ANIMATIONS & INTERACTIONS
+============================================ */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Smooth scroll behavior */
+html {
+    scroll-behavior: smooth;
+}
+
+/* ============================================
+   ELEMENTOR COMPATIBILITY
+============================================ */
+
+.elementor-section-wrap {
+    overflow: hidden;
+}
+
+.elementor-widget-container {
+    transition: all 0.3s ease;
+}
+
+/* ============================================
+   ACCESSIBILITY IMPROVEMENTS
+============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    html {
+        scroll-behavior: auto;
+    }
+}
+
+/* Focus styles for accessibility */
+a:focus,
+button:focus,
+input:focus {
+    outline: 2px solid #0066FF;
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .hero-section {
+        background: #000000;
+    }
+    
+    .solution-card,
+    .event-card {
+        border-width: 2px;
+    }
+}
+
+/* ============================================
+   PRINT STYLES
+============================================ */
+
+@media print {
+    .hero-section {
+        background: white !important;
+        color: black !important;
+        padding: 2rem 0 !important;
+        min-height: auto !important;
+    }
+    
+    .newsletter-section {
+        background: white !important;
+        color: black !important;
+    }
+    
+    .solution-icon,
+    .news-logo {
+        background: #f0f0f0 !important;
+        color: black !important;
+    }
+    
+    .featured-card,
+    .news-item,
+    .solution-card,
+    .insight-card,
+    .event-card {
+        box-shadow: none !important;
+        border: 1px solid #ccc !important;
+        break-inside: avoid;
+    }
+}
+
+/* ============================================
+   PERFORMANCE OPTIMIZATIONS
+============================================ */
+
+/* Will-change for animated elements */
+.featured-card,
+.solution-card,
+.news-item,
+.insight-card,
+.event-card {
+    will-change: transform;
+}
+
+/* GPU acceleration for smooth animations */
+.hero-section::before {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000;
+}
+
+/* Optimize image rendering */
+img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+}

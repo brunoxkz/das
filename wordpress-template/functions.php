@@ -63,11 +63,21 @@ function b2c2_enqueue_assets() {
     // Font Awesome
     wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css', array(), '6.0.0');
     
-    // Main JavaScript
-    wp_enqueue_script('b2c2-main', get_template_directory_uri() . '/assets/js/main.js', array('jquery'), '1.0.0', true);
+    // Main JavaScript (apenas se existir)
+    if (file_exists(get_template_directory() . '/assets/js/main.js')) {
+        wp_enqueue_script('b2c2-main', get_template_directory_uri() . '/assets/js/main.js', array('jquery'), '1.0.0', true);
+    }
     
-    // Smooth scroll
-    wp_enqueue_script('b2c2-smooth-scroll', get_template_directory_uri() . '/assets/js/smooth-scroll.js', array('jquery'), '1.0.0', true);
+    // CSS adicional para responsividade avançada
+    wp_add_inline_style('b2c2-style', '
+        .hero-section { min-height: 100vh; display: flex; align-items: center; }
+        .news-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+        .institutional-solutions { padding: 4rem 0; }
+        @media (max-width: 768px) {
+            .hero-section { min-height: 80vh; padding: 2rem 0; }
+            .news-grid { grid-template-columns: 1fr; gap: 1rem; }
+        }
+    ');
     
     // Comment reply script
     if (is_singular() && comments_open() && get_option('thread_comments')) {
@@ -189,25 +199,69 @@ function b2c2_register_post_types() {
         'show_in_rest' => true,
     ));
     
-    // Team Members
-    register_post_type('team_member', array(
+    // Institutional Solutions (baseado no B2C2 real)
+    register_post_type('institutional_solution', array(
         'labels' => array(
-            'name' => 'Team Members',
-            'singular_name' => 'Team Member',
+            'name' => 'Institutional Solutions',
+            'singular_name' => 'Institutional Solution',
             'add_new' => 'Add New',
-            'add_new_item' => 'Add New Team Member',
-            'edit_item' => 'Edit Team Member',
-            'new_item' => 'New Team Member',
-            'view_item' => 'View Team Member',
-            'search_items' => 'Search Team Members',
-            'not_found' => 'No team members found',
-            'not_found_in_trash' => 'No team members found in trash'
+            'add_new_item' => 'Add New Solution',
+            'edit_item' => 'Edit Solution',
+            'new_item' => 'New Solution',
+            'view_item' => 'View Solution',
+            'search_items' => 'Search Solutions',
+            'not_found' => 'No solutions found',
+            'not_found_in_trash' => 'No solutions found in trash'
         ),
         'public' => true,
         'has_archive' => true,
-        'rewrite' => array('slug' => 'team'),
-        'supports' => array('title', 'editor', 'thumbnail', 'custom-fields'),
-        'menu_icon' => 'dashicons-groups',
+        'rewrite' => array('slug' => 'solutions'),
+        'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields', 'page-attributes'),
+        'menu_icon' => 'dashicons-portfolio',
+        'show_in_rest' => true,
+    ));
+    
+    // Events (presente no B2C2)
+    register_post_type('event', array(
+        'labels' => array(
+            'name' => 'Events',
+            'singular_name' => 'Event',
+            'add_new' => 'Add New',
+            'add_new_item' => 'Add New Event',
+            'edit_item' => 'Edit Event',
+            'new_item' => 'New Event',
+            'view_item' => 'View Event',
+            'search_items' => 'Search Events',
+            'not_found' => 'No events found',
+            'not_found_in_trash' => 'No events found in trash'
+        ),
+        'public' => true,
+        'has_archive' => true,
+        'rewrite' => array('slug' => 'events'),
+        'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
+        'menu_icon' => 'dashicons-calendar-alt',
+        'show_in_rest' => true,
+    ));
+    
+    // Insights (para "Institutional Insights")
+    register_post_type('insight', array(
+        'labels' => array(
+            'name' => 'Insights',
+            'singular_name' => 'Insight',
+            'add_new' => 'Add New',
+            'add_new_item' => 'Add New Insight',
+            'edit_item' => 'Edit Insight',
+            'new_item' => 'New Insight',
+            'view_item' => 'View Insight',
+            'search_items' => 'Search Insights',
+            'not_found' => 'No insights found',
+            'not_found_in_trash' => 'No insights found in trash'
+        ),
+        'public' => true,
+        'has_archive' => true,
+        'rewrite' => array('slug' => 'insights'),
+        'supports' => array('title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
+        'menu_icon' => 'dashicons-lightbulb',
         'show_in_rest' => true,
     ));
 }
