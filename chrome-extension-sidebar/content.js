@@ -2,9 +2,17 @@
 (function() {
     'use strict';
 
+    // Verificar se já foi inicializado para evitar duplicação
+    if (window.sidebarProductivityLoaded) {
+        return;
+    }
+    window.sidebarProductivityLoaded = true;
+
     let sidebarContainer = null;
     let isVisible = false;
     let sidebarApp = null;
+    let initializationAttempts = 0;
+    const MAX_INIT_ATTEMPTS = 3;
 
     // Criar sidebar dark moderna
     function createSidebar() {
@@ -94,6 +102,16 @@
         }
         
         isVisible = true;
+        
+        // Salvar estado no storage
+        try {
+            chrome.runtime.sendMessage({
+                action: "saveSidebarState",
+                visible: true
+            });
+        } catch (error) {
+            console.log('Sidebar: Erro ao salvar estado:', error);
+        }
     }
 
     // Ajustar layout da página
@@ -126,12 +144,97 @@
             }
             adjustPageLayout(false);
             isVisible = false;
+            
+            // Salvar estado
+            try {
+                chrome.runtime.sendMessage({
+                    action: "saveSidebarState",
+                    visible: false
+                });
+            } catch (error) {
+                console.log('Sidebar: Erro ao salvar estado:', error);
+            }
         } else {
             createSidebar();
         }
     }
 
-    // Classe principal da aplicação
+    // Sistema de inicialização robusta
+    function initializeExtension() {
+        initializationAttempts++;
+        
+        if (initializationAttempts > MAX_INIT_ATTEMPTS) {
+            console.log('Sidebar: Máximo de tentativas de inicialização atingido');
+            return;
+        }
+
+        // Verificar se DOM está pronto
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(initializeExtension, 100);
+            });
+            return;
+        }
+
+        // Verificar se document.body existe
+        if (!document.body) {
+            setTimeout(initializeExtension, 100);
+            return;
+        }
+
+        // Carregar estado salvo da sidebar
+        try {
+            chrome.storage.local.get(['sidebarVisible'], (result) => {
+                if (result.sidebarVisible && !isVisible) {
+                    createSidebar();
+                }
+            });
+        } catch (error) {
+            console.log('Sidebar: Erro ao carregar estado:', error);
+        }
+
+        // Configurar listener para mensagens do background script
+        try {
+            chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+                if (request.action === "toggleSidebar") {
+                    toggleSidebar();
+                    sendResponse({success: true, visible: isVisible});
+                    return true;
+                }
+            });
+        } catch (error) {
+            console.log('Sidebar: Erro ao configurar listener:', error);
+        }
+
+        console.log('Sidebar: Extensão inicializada com sucesso');
+    }
+
+    // Verificar se a página é válida para a extensão
+    function isValidPage() {
+        const url = window.location.href;
+        const invalidPatterns = [
+            'chrome://', 'chrome-extension://', 'moz-extension://', 
+            'about:', 'edge://', 'opera://', 'file://'
+        ];
+        
+        return !invalidPatterns.some(pattern => url.startsWith(pattern));
+    }
+
+    // Inicializar quando o script carregar, mas só em páginas válidas
+    if (isValidPage()) {
+        initializeExtension();
+    }
+
+    // Listener adicional para mudanças de página (SPAs)
+    if (typeof window !== 'undefined' && window.addEventListener) {
+        window.addEventListener('load', () => {
+            if (isValidPage() && !window.sidebarProductivityLoaded) {
+                initializeExtension();
+            }
+        });
+    }
+
+    // Clase principal da aplicação
     class SidebarApp {
         constructor() {
             this.columns = this.getColumns();

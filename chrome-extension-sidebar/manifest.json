@@ -1,26 +1,28 @@
 {
   "manifest_version": 3,
   "name": "Sidebar To-Do + Pomodoro",
-  "version": "2.0.0",
+  "version": "2.2.0",
   "description": "Sistema de produtividade com sidebar fixa que divide a tela",
   
   "permissions": [
     "storage",
     "notifications",
-    "activeTab"
+    "activeTab",
+    "scripting",
+    "tabs"
   ],
   
   "host_permissions": [
-    "http://*/*",
-    "https://*/*"
+    "<all_urls>"
   ],
   
   "content_scripts": [
     {
-      "matches": ["http://*/*", "https://*/*"],
+      "matches": ["<all_urls>"],
       "js": ["content.js"],
       "css": ["sidebar-content.css"],
-      "run_at": "document_end"
+      "run_at": "document_idle",
+      "all_frames": false
     }
   ],
   
