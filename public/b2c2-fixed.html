@@ -103,11 +103,9 @@
             color: white !important;
         }
 
-        /* Hero Section - CRYPTO MODERNO */
+        /* Hero Section - B2C2 ORIGINAL */
         .hero {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 25%, #a855f7 50%, #ec4899 75%, #f59e0b 100%);
-            background-size: 400% 400%;
-            animation: gradientShift 8s ease infinite;
+            background: linear-gradient(135deg, #d946ef 0%, #7c3aed 50%, #3b82f6 100%);
             color: white;
             padding: 8rem 2rem 6rem;
             position: relative;
@@ -115,51 +113,6 @@
             min-height: 100vh;
             display: flex;
             align-items: center;
-        }
-
-        /* Partículas Crypto Flutuantes */
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 70% 20%, rgba(139, 92, 246, 0.4) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 30% 70%, rgba(236, 72, 153, 0.2) 0%, transparent 50%);
-            animation: particleFloat 10s ease-in-out infinite;
-            z-index: 1;
-        }
-
-        .hero::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 60% 40%, rgba(245, 158, 11, 0.2) 0%, transparent 40%),
-                radial-gradient(circle at 90% 60%, rgba(99, 102, 241, 0.25) 0%, transparent 45%),
-                radial-gradient(circle at 10% 80%, rgba(139, 92, 246, 0.3) 0%, transparent 35%);
-            animation: particleFloat 12s ease-in-out infinite reverse;
-            z-index: 1;
-        }
-
-        @keyframes particleFloat {
-            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.8; }
-            25% { transform: translateY(-20px) rotate(90deg); opacity: 0.6; }
-            50% { transform: translateY(-10px) rotate(180deg); opacity: 1; }
-            75% { transform: translateY(-30px) rotate(270deg); opacity: 0.7; }
-        }
-
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
         }
 
         .hero-content {
@@ -181,97 +134,26 @@
 
         .hero h1 {
             font-size: 3.5rem;
-            font-weight: 800;
-            line-height: 1.1;
+            font-weight: 300;
+            line-height: 1.2;
             margin-bottom: 2rem;
-            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            animation: textGlow 3s ease-in-out infinite alternate;
-        }
-
-        @keyframes textGlow {
-            0% { text-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 0 30px rgba(99, 102, 241, 0.3); }
-            100% { text-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 0 50px rgba(139, 92, 246, 0.5); }
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
         }
 
         .highlight {
-            background: linear-gradient(135deg, #fbbf24, #f59e0b, #fbbf24);
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: none;
-            animation: highlightPulse 4s ease-in-out infinite;
+            color: white;
+            font-weight: 600;
         }
 
-        @keyframes highlightPulse {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
 
-        /* Elementos Crypto Flutuantes */
-        .crypto-elements {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .crypto-symbol {
-            position: absolute;
-            font-size: 2rem;
-            color: rgba(255, 255, 255, 0.1);
-            font-weight: bold;
-            animation: cryptoFloat 8s ease-in-out infinite;
-        }
-
-        .crypto-dot {
-            position: absolute;
-            width: 6px;
-            height: 6px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            border-radius: 50%;
-            animation: dotFloat 6s ease-in-out infinite;
-        }
-
-        @keyframes cryptoFloat {
-            0%, 100% { 
-                transform: translateY(0px) rotate(0deg); 
-                opacity: 0.1; 
-            }
-            25% { 
-                transform: translateY(-20px) rotate(90deg); 
-                opacity: 0.3; 
-            }
-            50% { 
-                transform: translateY(-10px) rotate(180deg); 
-                opacity: 0.2; 
-            }
-            75% { 
-                transform: translateY(-30px) rotate(270deg); 
-                opacity: 0.4; 
-            }
-        }
-
-        @keyframes dotFloat {
-            0%, 100% { 
-                transform: translateY(0px) scale(1); 
-                opacity: 0.6; 
-            }
-            50% { 
-                transform: translateY(-15px) scale(1.2); 
-                opacity: 1; 
-            }
-        }
 
         .hero p {
-            font-size: 1.25rem;
-            line-height: 1.7;
+            font-size: 1rem;
+            line-height: 1.6;
             opacity: 0.9;
-            max-width: 500px;
+            max-width: 480px;
             margin-bottom: 2.5rem;
+            font-weight: 300;
         }
 
         /* News Carousel - CORRIGIDO COM SEPARAÇÃO */
@@ -292,39 +174,31 @@
         }
 
         .hero-card {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 16px;
-            min-width: 280px;
-            max-width: 280px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            min-width: 180px;
+            max-width: 180px;
             flex-shrink: 0;
             overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-            animation: cardFloat 6s ease-in-out infinite;
+            transition: transform 0.3s ease;
+            margin-right: 1rem;
         }
 
         .hero-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-        }
-
-        @keyframes cardFloat {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-5px); }
+            transform: translateY(-3px);
         }
 
         .hero-card-image {
             width: 100%;
-            height: 120px;
+            height: 100px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 800;
+            font-weight: 600;
             color: white;
+            font-size: 0.9rem;
         }
 
         .genius-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
@@ -333,65 +207,65 @@
         .openpayd-bg { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }
 
         .hero-card-content {
-            padding: 1.5rem;
+            padding: 1rem;
         }
 
         .hero-card-badge {
             display: inline-block;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.15);
             color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            margin-bottom: 0.8rem;
         }
 
         .hero-card h4 {
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            line-height: 1.4;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.8rem;
+            line-height: 1.3;
         }
 
         .date {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.75rem;
         }
 
-        /* Navigation arrows - CRYPTO MODERNO */
+        /* Navigation arrows - B2C2 ORIGINAL */
         .carousel-nav {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(139, 92, 246, 0.4));
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
-            width: 45px;
-            height: 45px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 20px;
-            font-weight: bold;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(20px);
+            font-size: 14px;
+            font-weight: normal;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
             z-index: 10;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .carousel-nav:hover {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.6), rgba(139, 92, 246, 0.6));
-            transform: translateY(-50%) scale(1.15);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .carousel-prev {
-            left: -20px;
+            left: -16px;
         }
 
         .carousel-next {
-            right: -20px;
+            right: -16px;
         }
 
         /* Institutional Solutions */
@@ -693,17 +567,6 @@
 
     <!-- Hero Section -->
     <section class="hero">
-        <!-- Elementos Flutuantes Crypto -->
-        <div class="crypto-elements">
-            <div class="crypto-symbol" style="top: 15%; left: 5%; animation-delay: 0s;">₿</div>
-            <div class="crypto-symbol" style="top: 25%; right: 8%; animation-delay: 2s;">Ξ</div>
-            <div class="crypto-symbol" style="bottom: 30%; left: 10%; animation-delay: 1s;">◊</div>
-            <div class="crypto-symbol" style="bottom: 15%; right: 15%; animation-delay: 3s;">⟠</div>
-            <div class="crypto-dot" style="top: 40%; left: 15%; animation-delay: 0.5s;"></div>
-            <div class="crypto-dot" style="top: 60%; right: 20%; animation-delay: 1.5s;"></div>
-            <div class="crypto-dot" style="bottom: 40%; left: 25%; animation-delay: 2.5s;"></div>
-        </div>
-        
         <div class="hero-content">
             <div class="hero-text">
                 <h1>
