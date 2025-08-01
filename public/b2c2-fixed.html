@@ -128,9 +128,10 @@
         }
 
         .hero-text {
-            text-align: left;
+            text-align: center;
             width: 100%;
-            max-width: 600px;
+            max-width: 800px;
+            margin: 0 auto;
         }
 
         .hero h1 {
@@ -157,13 +158,14 @@
             font-weight: 300;
         }
 
-        /* News Carousel - LAYOUT VERTICAL */
+        /* News Carousel - LAYOUT HORIZONTAL AMPLO */
         .hero-carousel-container {
             position: relative;
             width: 100%;
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 0;
+            height: 200px;
         }
 
         .hero-carousel {
@@ -179,12 +181,13 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 8px;
-            min-width: 180px;
-            max-width: 180px;
+            min-width: 280px;
+            max-width: 280px;
             flex-shrink: 0;
             overflow: hidden;
             transition: transform 0.3s ease;
             margin-right: 1rem;
+            height: 180px;
         }
 
         .hero-card:hover {
@@ -193,7 +196,7 @@
 
         .hero-card-image {
             width: 100%;
-            height: 100px;
+            height: 80px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1311,31 +1314,31 @@
     <!-- Institutional Solutions -->
     <section class="solutions" id="solutions">
         <div class="solutions-content">
-            <h2>Institutional solutions</h2>
-            <p>Our large and growing client base around the world trusts us to deliver seamless execution 24/7.</p>
+            <h2 data-admin-editable="solutions-title">Institutional solutions</h2>
+            <p data-admin-editable="solutions-subtitle">Our large and growing client base around the world trusts us to deliver seamless execution 24/7.</p>
             <div class="solutions-grid">
                 <div class="solution-card">
                     <div class="solution-icon"></div>
-                    <h3>Trading overview</h3>
-                    <p>Advanced trading solutions for institutional clients with comprehensive market access.</p>
+                    <h3 data-admin-editable="solution-1-title">Trading overview</h3>
+                    <p data-admin-editable="solution-1-desc">Advanced trading solutions for institutional clients with comprehensive market access.</p>
                     <span class="solution-arrow">→</span>
                 </div>
                 <div class="solution-card">
                     <div class="solution-icon"></div>
-                    <h3>OTC Products</h3>
-                    <p>Over-the-counter trading products designed for large volume transactions.</p>
+                    <h3 data-admin-editable="solution-2-title">OTC Products</h3>
+                    <p data-admin-editable="solution-2-desc">Over-the-counter trading products designed for large volume transactions.</p>
                     <span class="solution-arrow">→</span>
                 </div>
                 <div class="solution-card">
                     <div class="solution-icon"></div>
-                    <h3>Liquidity Partner</h3>
-                    <p>Global liquidity solutions to optimize your trading operations.</p>
+                    <h3 data-admin-editable="solution-3-title">Liquidity Partner</h3>
+                    <p data-admin-editable="solution-3-desc">Global liquidity solutions to optimize your trading operations.</p>
                     <span class="solution-arrow">→</span>
                 </div>
                 <div class="solution-card">
                     <div class="solution-icon"></div>
-                    <h3>Client onboarding</h3>
-                    <p>Streamlined onboarding process for institutional clients.</p>
+                    <h3 data-admin-editable="solution-4-title">Client onboarding</h3>
+                    <p data-admin-editable="solution-4-desc">Streamlined onboarding process for institutional clients.</p>
                     <span class="solution-arrow">→</span>
                 </div>
             </div>
@@ -1348,12 +1351,8 @@
             <div class="news-header">
                 <div class="news-tabs">
                     <div class="news-tab active">
-                        <h2>Latest news</h2>
-                        <a href="#" class="view-all">View all ></a>
-                    </div>
-                    <div class="news-tab">
-                        <h2>Events</h2>
-                        <a href="#" class="view-all">View all ></a>
+                        <h2 data-admin-editable="news-title">Latest news</h2>
+                        <a href="#" class="view-all" data-admin-editable="view-all-link">View all ></a>
                     </div>
                 </div>
             </div>
@@ -1361,39 +1360,33 @@
             <div class="news-carousel-wrapper">
                 <div class="news-carousel active" id="news-carousel">
                     <div class="news-item">
-                        <div class="news-logo">B2C2</div>
+                        <div class="news-logo" data-admin-editable="news-logo-1">B2C2</div>
                         <div class="news-content-item">
-                            <div class="news-badge">Press release</div>
-                            <h3>B2C2 Partners with OpenPayd to Expand its Global Instant Settlement Network</h3>
-                            <div class="news-date">October 28, 2024</div>
-                            <a href="#" class="read-more">Read more ></a>
+                            <div class="news-badge" data-admin-editable="news-badge-1">Press release</div>
+                            <h3 data-admin-editable="news-title-1">B2C2 Partners with OpenPayd to Expand its Global Instant Settlement Network</h3>
+                            <div class="news-date" data-admin-editable="news-date-1">October 28, 2024</div>
+                            <a href="#" class="read-more" data-admin-editable="read-more-1">Read more ></a>
                         </div>
                     </div>
                     
                     <div class="news-item">
-                        <div class="news-logo">B2C2</div>
+                        <div class="news-logo" data-admin-editable="news-logo-2">B2C2</div>
                         <div class="news-content-item">
-                            <div class="news-badge">Press release</div>
-                            <h3>B2C2 Appoints Cactus Raazi as US CEO</h3>
-                            <div class="news-date">September 2, 2024</div>
-                            <a href="#" class="read-more">Read more ></a>
+                            <div class="news-badge" data-admin-editable="news-badge-2">Press release</div>
+                            <h3 data-admin-editable="news-title-2">B2C2 Appoints Cactus Raazi as US CEO</h3>
+                            <div class="news-date" data-admin-editable="news-date-2">September 2, 2024</div>
+                            <a href="#" class="read-more" data-admin-editable="read-more-2">Read more ></a>
                         </div>
                     </div>
                     
                     <div class="news-item">
-                        <div class="news-logo">B2C2</div>
+                        <div class="news-logo" data-admin-editable="news-logo-3">B2C2</div>
                         <div class="news-content-item">
-                            <div class="news-badge">Press release</div>
-                            <h3>Arbelos and B2C2 Complete First Bilateral OTC Option Transaction on BVIV Index</h3>
-                            <div class="news-date">June 4, 2024</div>
-                            <a href="#" class="read-more">Read more ></a>
+                            <div class="news-badge" data-admin-editable="news-badge-3">Press release</div>
+                            <h3 data-admin-editable="news-title-3">Arbelos and B2C2 Complete First Bilateral OTC Option Transaction on BVIV Index</h3>
+                            <div class="news-date" data-admin-editable="news-date-3">June 4, 2024</div>
+                            <a href="#" class="read-more" data-admin-editable="read-more-3">Read more ></a>
                         </div>
-                    </div>
-                </div>
-                
-                <div class="events-section">
-                    <div class="events-placeholder">
-                        <p>No items found.</p>
                     </div>
                 </div>
             </div>
@@ -1463,37 +1456,6 @@
                     </div>
                     <div class="captcha-logo">reCAPTCHA</div>
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Contact Section -->
-    <section class="contact-section" id="contact">
-        <div class="contact-content">
-            <div class="contact-text">
-                <h2>Contact</h2>
-                <p>Get in touch with our team for partnership opportunities, institutional trading services, or any other inquiries.</p>
-                <div class="contact-info">
-                    <div class="contact-item">
-                        <strong>Sales & Trading</strong>
-                        <p>sales@b2c2.com</p>
-                    </div>
-                    <div class="contact-item">
-                        <strong>General Inquiries</strong>
-                        <p>info@b2c2.com</p>
-                    </div>
-                    <div class="contact-item">
-                        <strong>Media & Press</strong>
-                        <p>press@b2c2.com</p>
-                    </div>
-                </div>
-            </div>
-            <div class="contact-form">
-                <input type="text" placeholder="Full name" class="contact-input">
-                <input type="email" placeholder="Email address" class="contact-input">
-                <input type="text" placeholder="Company" class="contact-input">
-                <textarea placeholder="Message" class="contact-textarea"></textarea>
-                <button type="submit" class="contact-btn">Send Message →</button>
             </div>
         </div>
     </section>
@@ -1595,38 +1557,7 @@
             carousel.style.transform = `translateX(-${currentSlide * slideWidth}px)`;
         });
 
-        // News tabs functionality
-        function switchNewsTab(tabName) {
-            const tabs = document.querySelectorAll('.news-tab');
-            const newsCarousel = document.querySelector('.news-carousel');
-            const eventsSection = document.querySelector('.events-section');
-            
-            tabs.forEach(tab => tab.classList.remove('active'));
-            
-            if (tabName === 'news') {
-                document.querySelector('.news-tab:first-child').classList.add('active');
-                newsCarousel.style.display = 'flex';
-                eventsSection.style.display = 'none';
-            } else if (tabName === 'events') {
-                document.querySelector('.news-tab:last-child').classList.add('active');
-                newsCarousel.style.display = 'none';
-                eventsSection.style.display = 'block';
-            }
-        }
-
-        // Add click events to tabs
-        document.addEventListener('DOMContentLoaded', function() {
-            const newsTab = document.querySelector('.news-tab:first-child');
-            const eventsTab = document.querySelector('.news-tab:last-child');
-            
-            if (newsTab) {
-                newsTab.addEventListener('click', () => switchNewsTab('news'));
-            }
-            
-            if (eventsTab) {
-                eventsTab.addEventListener('click', () => switchNewsTab('events'));
-            }
-        });
+        // Simplified news functionality without events
     </script>
 </body>
 </html>
