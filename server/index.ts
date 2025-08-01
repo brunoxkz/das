@@ -314,6 +314,28 @@ app.use((req, res, next) => {
 
 // Health check endpoints now integrated in routes-sqlite.ts
 
+// B2C2 SITE ROUTE - INTERCEPTAÇÃO CRÍTICA ANTES DO VITE
+app.get('/b2c2', (req, res) => {
+  try {
+    const b2c2Path = path.join(process.cwd(), 'public/b2c2.html');
+    console.log('🟣 SERVINDO B2C2 DIRETO:', b2c2Path);
+    
+    if (fs.existsSync(b2c2Path)) {
+      const htmlContent = fs.readFileSync(b2c2Path, 'utf-8');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.status(200).send(htmlContent);
+      console.log('✅ B2C2 SITE SERVIDO DIRETAMENTE - BYPASS VITE');
+    } else {
+      console.log('❌ B2C2 HTML NÃO ENCONTRADO:', b2c2Path);
+      res.status(404).send('B2C2 site not found');
+    }
+  } catch (error) {
+    console.error('❌ ERRO CRÍTICO B2C2:', error);
+    res.status(500).send('Internal server error');
+  }
+});
+
 // FAVICON HD FORÇADO - INTERCEPTAÇÃO CRÍTICA ANTES DE TUDO
 app.get('/favicon.ico', (req, res) => {
   try {
