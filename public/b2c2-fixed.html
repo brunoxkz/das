@@ -1754,13 +1754,15 @@
                     
                     // Aplicar dados do Hero
                     if (adminData.hero) {
-                        const heroTitle = document.querySelector('.hero h1');
-                        const heroSubtitle = document.querySelector('.hero .hero-description');
+                        const heroTitle = document.querySelector('.hero-content h1');
+                        const heroSubtitle = document.querySelector('.hero-description');
                         if (heroTitle && adminData.hero.title) {
                             heroTitle.textContent = adminData.hero.title;
+                            console.log('✅ Hero título atualizado:', adminData.hero.title);
                         }
                         if (heroSubtitle && adminData.hero.subtitle) {
                             heroSubtitle.textContent = adminData.hero.subtitle;
+                            console.log('✅ Hero subtítulo atualizado:', adminData.hero.subtitle);
                         }
                     }
                     

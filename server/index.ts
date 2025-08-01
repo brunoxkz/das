@@ -473,6 +473,51 @@ app.get('/b2c2-admin', (req, res) => {
   }
 });
 
+// ===== B2C2 PÁGINAS FUTURAS - BYPASS AUTOMÁTICO =====
+const b2c2Routes = [
+  '/b2c2-solutions', '/b2c2-insights', '/b2c2-news', '/b2c2-contact',
+  '/b2c2-about', '/b2c2-careers', '/b2c2-legal', '/b2c2-api',
+  '/b2c2-support', '/b2c2-pricing', '/b2c2-developers', '/b2c2-partners',
+  '/b2c2-download', '/b2c2-demo', '/b2c2-whitepaper', '/b2c2-docs'
+];
+
+b2c2Routes.forEach(route => {
+  app.get(route, (req, res) => {
+    try {
+      const fileName = route.replace('/', '') + '.html';
+      const filePath = path.join(process.cwd(), 'public', fileName);
+      console.log(`🔥 SERVINDO ${route.toUpperCase()} - BYPASS VITE:`, filePath);
+      
+      if (fs.existsSync(filePath)) {
+        const htmlContent = fs.readFileSync(filePath, 'utf8');
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.status(200).send(htmlContent);
+        console.log(`✅ ${route.toUpperCase()} SERVIDO - TAMANHO:`, htmlContent.length);
+      } else {
+        // Se arquivo não existe, usar template padrão B2C2
+        const templatePath = path.join(process.cwd(), 'public/b2c2-fixed.html');
+        if (fs.existsSync(templatePath)) {
+          const templateContent = fs.readFileSync(templatePath, 'utf8');
+          const pageName = route.replace('/b2c2-', '').charAt(0).toUpperCase() + route.replace('/b2c2-', '').slice(1);
+          const customContent = templateContent.replace(
+            '<title>B2C2 | Digital Asset Pioneer</title>',
+            `<title>B2C2 | ${pageName}</title>`
+          );
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          res.status(200).send(customContent);
+          console.log(`✅ ${route.toUpperCase()} SERVIDO COM TEMPLATE PADRÃO`);
+        } else {
+          res.status(404).send(`${route} not found`);
+        }
+      }
+    } catch (error) {
+      console.error(`❌ ERRO ${route.toUpperCase()}:`, error);
+      res.status(500).send('Internal server error');
+    }
+  });
+});
+
 // Rotas específicas para Service Workers com MIME type correto
 app.get('/vendzz-notification-sw.js', (req, res) => {
   try {
