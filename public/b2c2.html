@@ -181,43 +181,122 @@
             text-align: left;
         }
 
-        .hero-carousel {
+        .hero-carousel-container {
             position: relative;
+            width: 100%;
+        }
+
+        .hero-carousel {
             display: flex;
             gap: 1rem;
-            overflow-x: auto;
+            overflow: hidden;
             padding: 1rem 0;
+            scroll-behavior: smooth;
         }
 
         .hero-card {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
-            padding: 1.5rem;
-            min-width: 300px;
+            border-radius: 12px;
+            padding: 0;
+            min-width: 280px;
+            max-width: 280px;
             flex-shrink: 0;
-            text-align: center;
+            text-align: left;
+            overflow: hidden;
+            transition: transform 0.3s ease;
         }
 
-        .hero-card img {
+        .hero-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .hero-card-image {
             width: 100%;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 1rem;
+            height: 140px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero-card-content {
+            padding: 1rem;
+        }
+
+        .hero-card-badge {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+            display: inline-block;
         }
 
         .hero-card h4 {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
-            opacity: 0.9;
+            line-height: 1.3;
+            color: white;
         }
 
         .hero-card .date {
-            font-size: 0.8rem;
-            opacity: 0.7;
+            font-size: 0.75rem;
+            opacity: 0.8;
+            color: white;
+        }
+
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .carousel-nav:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .carousel-prev {
+            left: -20px;
+        }
+
+        .carousel-next {
+            right: -20px;
+        }
+
+        .genius-bg {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+
+        .hashkey-bg {
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+        }
+
+        .pv01-bg {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
         }
 
         .hero h1 {
@@ -890,28 +969,64 @@
                     B2C2's success is built on a foundation of proprietary crypto-native technology combined with an innovative range of products, making the firm the partner of choice for diverse institutions globally.
                 </p>
             </div>
-            <div class="hero-carousel">
-                <div class="hero-card">
-                    <div style="background: linear-gradient(45deg, #6366f1, #8b5cf6); height: 120px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-                        <span style="font-size: 2rem; font-weight: 800;">GENIUS</span>
+            <div class="hero-carousel-container">
+                <button class="carousel-nav carousel-prev" onclick="slideCarousel(-1)">‹</button>
+                <div class="hero-carousel" id="hero-carousel">
+                    <div class="hero-card">
+                        <div class="hero-card-image genius-bg">
+                            <span style="font-size: 1.8rem; font-weight: 800; color: white;">GENIUS</span>
+                        </div>
+                        <div class="hero-card-content">
+                            <div class="hero-card-badge">Insights</div>
+                            <h4>B2C2 joins forces with Future Frontiers to support social mobility by hosting student career development program</h4>
+                            <div class="date">October 1, 2024</div>
+                        </div>
                     </div>
-                    <h4>A very stable GENIUS: The US stablecoin bill and the next key to scaling adoption</h4>
-                    <div class="date">July 25, 2025</div>
-                </div>
-                <div class="hero-card">
-                    <div style="background: linear-gradient(45deg, #1f2937, #374151); height: 120px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; color: white;">
-                        <span style="font-size: 1.5rem; font-weight: 800;">HASHKEY</span>
+                    <div class="hero-card">
+                        <div class="hero-card-image" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
+                            <span style="font-size: 1.5rem; font-weight: 800; color: white;">GENIUS</span>
+                        </div>
+                        <div class="hero-card-content">
+                            <div class="hero-card-badge">Press release</div>
+                            <h4>A very stable GENIUS: The US stablecoin bill and the next key to scaling adoption</h4>
+                            <div class="date">July 23, 2025</div>
+                        </div>
                     </div>
-                    <h4>HashKey Exchange, Hong Kong's Largest Licensed Virtual Asset Exchange, Partners with B2C2</h4>
-                    <div class="date">March 10, 2025</div>
-                </div>
-                <div class="hero-card">
-                    <div style="background: linear-gradient(45deg, #059669, #10b981); height: 120px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-                        <span style="font-size: 1.5rem; font-weight: 800;">PV01</span>
+                    <div class="hero-card">
+                        <div class="hero-card-image hashkey-bg">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div style="background: white; border-radius: 4px; padding: 0.25rem 0.5rem;">
+                                    <span style="color: #1f2937; font-weight: 800; font-size: 0.8rem;">HASHKEY</span>
+                                </div>
+                                <span style="color: white; font-size: 1rem; font-weight: 600;">EXCHANGE</span>
+                            </div>
+                        </div>
+                        <div class="hero-card-content">
+                            <div class="hero-card-badge">Press release</div>
+                            <h4>HashKey Exchange, Hong Kong's Largest Licensed Virtual Asset Exchange, Partners with Global Leading Crypto Market Maker B2C2</h4>
+                            <div class="date">March 10, 2025</div>
+                        </div>
                     </div>
-                    <h4>B2C2 and PV01 Pioneer Corporate Bond on Blockchain</h4>
-                    <div class="date">November 25, 2024</div>
+                    <div class="hero-card">
+                        <div class="hero-card-image pv01-bg">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="color: white; font-size: 1.5rem; font-weight: 800;">PV01</span>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px;">
+                                    <div style="width: 8px; height: 8px; background: white; border-radius: 1px;"></div>
+                                    <div style="width: 8px; height: 8px; background: white; border-radius: 1px;"></div>
+                                    <div style="width: 8px; height: 8px; background: white; border-radius: 1px;"></div>
+                                    <div style="width: 8px; height: 8px; background: white; border-radius: 1px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hero-card-content">
+                            <div class="hero-card-badge">Press release</div>
+                            <h4>B2C2 and PV01 Pioneer Corporate Bond on Blockchain</h4>
+                            <div class="date">November 25, 2024</div>
+                        </div>
+                    </div>
                 </div>
+                <button class="carousel-nav carousel-next" onclick="slideCarousel(1)">›</button>
             </div>
         </div>
 
@@ -1094,6 +1209,26 @@
             e.preventDefault();
             alert('Thank you for subscribing to B2C2 updates!');
         });
+
+        // Carousel functionality
+        let currentSlide = 0;
+        const carousel = document.getElementById('hero-carousel');
+        const cards = document.querySelectorAll('.hero-card');
+        const totalCards = cards.length;
+
+        function slideCarousel(direction) {
+            currentSlide += direction;
+            
+            if (currentSlide >= totalCards - 2) {
+                currentSlide = totalCards - 2;
+            }
+            if (currentSlide < 0) {
+                currentSlide = 0;
+            }
+            
+            const slideWidth = cards[0].offsetWidth + 16; // card width + gap
+            carousel.style.transform = `translateX(-${currentSlide * slideWidth}px)`;
+        }
 
         // Smooth scrolling
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
