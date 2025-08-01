@@ -5,6 +5,11 @@ import { insertNews, insertEvents, insertSolutions, insertInsights, insertNewsle
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // B2C2 site route - serve without JWT authentication
+  app.get('/b2c2', (req, res) => {
+    res.sendFile('b2c2.html', { root: 'public' });
+  });
+
   // CORS middleware
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
