@@ -478,6 +478,99 @@
             font-weight: 600;
         }
 
+        /* Institutional Solutions Section */
+        .institutional-solutions {
+            background: linear-gradient(135deg, #d946ef 0%, #7c3aed 50%, #3b82f6 100%);
+            color: white;
+            padding: 6rem 2rem;
+        }
+
+        .institutional-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6rem;
+            align-items: center;
+        }
+
+        .institutional-text h2 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        .institutional-text p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+            max-width: 400px;
+        }
+
+        .institutional-btn {
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .institutional-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .institutional-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 1.2rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .menu-icon {
+            font-size: 1.2rem;
+            margin-right: 1rem;
+            width: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .menu-item span {
+            flex: 1;
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        .menu-arrow {
+            font-size: 1.2rem;
+            opacity: 0.6;
+            transition: all 0.2s ease;
+        }
+
+        .menu-item:hover .menu-arrow {
+            opacity: 1;
+            transform: translateX(5px);
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .nav-container {
@@ -507,6 +600,20 @@
             }
 
             .hero-carousel-container {
+                max-width: 100%;
+            }
+
+            .institutional-content {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+                text-align: center;
+            }
+
+            .institutional-text h2 {
+                font-size: 2rem;
+            }
+
+            .institutional-text p {
                 max-width: 100%;
             }
 
@@ -706,6 +813,39 @@
                         <div class="news-date">June 4, 2024</div>
                         <a href="#" class="read-more">Read more ></a>
                     </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Institutional Solutions Section -->
+    <section class="institutional-solutions">
+        <div class="institutional-content">
+            <div class="institutional-text">
+                <h2>Institutional solutions</h2>
+                <p>Our large and growing client base around the world trusts us to deliver seamless execution 24/7.</p>
+                <button class="institutional-btn">Explore institutional solutions ></button>
+            </div>
+            <div class="institutional-menu">
+                <div class="menu-item">
+                    <div class="menu-icon">📊</div>
+                    <span>Trading overview</span>
+                    <div class="menu-arrow">></div>
+                </div>
+                <div class="menu-item">
+                    <div class="menu-icon">📋</div>
+                    <span>OTC Products</span>
+                    <div class="menu-arrow">></div>
+                </div>
+                <div class="menu-item">
+                    <div class="menu-icon">💧</div>
+                    <span>Liquidity Partner</span>
+                    <div class="menu-arrow">></div>
+                </div>
+                <div class="menu-item">
+                    <div class="menu-icon">👤</div>
+                    <span>Client onboarding</span>
+                    <div class="menu-arrow">></div>
                 </div>
             </div>
         </div>
