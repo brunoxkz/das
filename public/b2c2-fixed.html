@@ -571,6 +571,256 @@
             transform: translateX(5px);
         }
 
+        /* Latest News Section */
+        .latest-news {
+            background: linear-gradient(135deg, #d946ef 0%, #7c3aed 50%, #3b82f6 100%);
+            color: white;
+            padding: 6rem 2rem;
+        }
+
+        .news-header {
+            max-width: 1200px;
+            margin: 0 auto 4rem;
+        }
+
+        .news-tabs {
+            display: flex;
+            gap: 6rem;
+        }
+
+        .news-tab {
+            display: flex;
+            align-items: baseline;
+            gap: 2rem;
+        }
+
+        .news-tab h2 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin: 0;
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+        }
+
+        .news-tab.active h2 {
+            opacity: 1;
+        }
+
+        .view-all {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 1rem;
+            transition: opacity 0.3s ease;
+        }
+
+        .view-all:hover {
+            opacity: 1;
+        }
+
+        .news-carousel-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .news-carousel {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .news-carousel.active {
+            display: flex;
+        }
+
+        .events-section {
+            display: none;
+        }
+
+        .news-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 2rem;
+            padding: 2rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .news-item:last-child {
+            border-bottom: none;
+        }
+
+        .news-logo {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            min-width: 80px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 60px;
+        }
+
+        .news-content-item {
+            flex: 1;
+        }
+
+        .news-badge {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .news-content-item h3 {
+            font-size: 1.3rem;
+            font-weight: 500;
+            line-height: 1.4;
+            margin-bottom: 1rem;
+        }
+
+        .news-date {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .read-more {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.3s ease;
+        }
+
+        .read-more:hover {
+            opacity: 0.8;
+        }
+
+        .events-placeholder {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .events-placeholder p {
+            opacity: 0.7;
+            margin: 0;
+        }
+
+        /* Subscribe Section */
+        .subscribe-section {
+            background: linear-gradient(135deg, #d946ef 0%, #7c3aed 50%, #3b82f6 100%);
+            color: white;
+            padding: 6rem 2rem;
+        }
+
+        .subscribe-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6rem;
+            align-items: center;
+        }
+
+        .subscribe-text h2 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        .subscribe-text p {
+            font-size: 1rem;
+            line-height: 1.6;
+            opacity: 0.9;
+            margin-bottom: 1.5rem;
+        }
+
+        .disclaimer {
+            font-size: 0.85rem !important;
+            opacity: 0.7 !important;
+        }
+
+        .disclaimer a {
+            color: white;
+            text-decoration: underline;
+        }
+
+        .subscribe-form-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .subscribe-form {
+            display: flex;
+            gap: 0;
+        }
+
+        .email-input {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 6px 0 0 6px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+
+        .email-input::placeholder {
+            color: #666;
+        }
+
+        .subscribe-btn {
+            background: #1a1a1a;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 0 6px 6px 0;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .subscribe-btn:hover {
+            background: #333;
+        }
+
+        .captcha-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1rem;
+            border-radius: 6px;
+            color: #333;
+        }
+
+        .captcha-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .captcha-checkbox input[type="checkbox"] {
+            margin: 0;
+        }
+
+        .captcha-logo {
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: 500;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .nav-container {
@@ -615,6 +865,52 @@
 
             .institutional-text p {
                 max-width: 100%;
+            }
+
+            .news-tabs {
+                flex-direction: column;
+                gap: 2rem;
+            }
+
+            .news-tab h2 {
+                font-size: 2rem;
+            }
+
+            .news-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+
+            .news-logo {
+                align-self: center;
+            }
+
+            .subscribe-content {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+                text-align: center;
+            }
+
+            .subscribe-text h2 {
+                font-size: 2rem;
+            }
+
+            .subscribe-form {
+                flex-direction: column;
+            }
+
+            .email-input {
+                border-radius: 6px;
+            }
+
+            .subscribe-btn {
+                border-radius: 6px;
+            }
+
+            .captcha-wrapper {
+                justify-content: center;
+                gap: 1rem;
             }
 
             .carousel-nav {
@@ -763,56 +1059,83 @@
         </div>
     </section>
 
-    <!-- Latest News -->
-    <section class="news-section" id="news">
+    <!-- Latest News Section -->
+    <section class="latest-news" id="news">
         <div class="news-content">
             <div class="news-header">
-                <h2>Latest news</h2>
+                <div class="news-tabs">
+                    <div class="news-tab active">
+                        <h2>Latest news</h2>
+                        <a href="#" class="view-all">View all ></a>
+                    </div>
+                    <div class="news-tab">
+                        <h2>Events</h2>
+                        <a href="#" class="view-all">View all ></a>
+                    </div>
+                </div>
             </div>
-            <div class="news-grid">
-                <div class="news-card">
-                    <div class="news-card-header">
-                        <strong>B2C2</strong>
+            
+            <div class="news-carousel-wrapper">
+                <div class="news-carousel active" id="news-carousel">
+                    <div class="news-item">
+                        <div class="news-logo">B2C2</div>
+                        <div class="news-content-item">
+                            <div class="news-badge">Press release</div>
+                            <h3>B2C2 Partners with OpenPayd to Expand its Global Instant Settlement Network</h3>
+                            <div class="news-date">October 28, 2024</div>
+                            <a href="#" class="read-more">Read more ></a>
+                        </div>
                     </div>
-                    <div class="news-card-content">
-                        <div class="news-badge">Press release</div>
-                        <h3>B2C2 and PV01 Pioneer Corporate Bond on Blockchain</h3>
-                        <div class="news-date">November 25, 2024</div>
-                        <a href="#" class="read-more">Read more ></a>
+                    
+                    <div class="news-item">
+                        <div class="news-logo">B2C2</div>
+                        <div class="news-content-item">
+                            <div class="news-badge">Press release</div>
+                            <h3>B2C2 Appoints Cactus Raazi as US CEO</h3>
+                            <div class="news-date">September 2, 2024</div>
+                            <a href="#" class="read-more">Read more ></a>
+                        </div>
+                    </div>
+                    
+                    <div class="news-item">
+                        <div class="news-logo">B2C2</div>
+                        <div class="news-content-item">
+                            <div class="news-badge">Press release</div>
+                            <h3>Arbelos and B2C2 Complete First Bilateral OTC Option Transaction on BVIV Index</h3>
+                            <div class="news-date">June 4, 2024</div>
+                            <a href="#" class="read-more">Read more ></a>
+                        </div>
                     </div>
                 </div>
-                <div class="news-card">
-                    <div class="news-card-header">
-                        <strong>B2C2</strong>
-                    </div>
-                    <div class="news-card-content">
-                        <div class="news-badge">Press release</div>
-                        <h3>B2C2 Partners with OpenPayd to Expand its Global Instant Settlement Network</h3>
-                        <div class="news-date">October 28, 2024</div>
-                        <a href="#" class="read-more">Read more ></a>
+                
+                <div class="events-section">
+                    <div class="events-placeholder">
+                        <p>No items found.</p>
                     </div>
                 </div>
-                <div class="news-card">
-                    <div class="news-card-header">
-                        <strong>B2C2</strong>
-                    </div>
-                    <div class="news-card-content">
-                        <div class="news-badge">Press release</div>
-                        <h3>B2C2 Appoints Cactus Raazi as US CEO</h3>
-                        <div class="news-date">September 2, 2024</div>
-                        <a href="#" class="read-more">Read more ></a>
-                    </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Subscribe Section -->
+    <section class="subscribe-section">
+        <div class="subscribe-content">
+            <div class="subscribe-text">
+                <h2>Subscribe</h2>
+                <p>Sign up to our news alerts to receive our regular newsletter and institutional insights into the crypto market direct to your inbox.</p>
+                <p class="disclaimer">Please note that by signing up for Institutional Insights or subscribing to our content, you represent that you are a retail investor or consumer. Please refer to our <a href="#">disclosure</a> for further information.</p>
+            </div>
+            <div class="subscribe-form-wrapper">
+                <div class="subscribe-form">
+                    <input type="email" placeholder="Enter email here" class="email-input">
+                    <button type="submit" class="subscribe-btn">Subscribe →</button>
                 </div>
-                <div class="news-card">
-                    <div class="news-card-header">
-                        <strong>B2C2</strong>
+                <div class="captcha-wrapper">
+                    <div class="captcha-checkbox">
+                        <input type="checkbox" id="captcha">
+                        <label for="captcha">I'm not a robot</label>
                     </div>
-                    <div class="news-card-content">
-                        <div class="news-badge">Press release</div>
-                        <h3>Arbelos and B2C2 Complete First Bilateral OTC Option Transaction on BVIV Index</h3>
-                        <div class="news-date">June 4, 2024</div>
-                        <a href="#" class="read-more">Read more ></a>
-                    </div>
+                    <div class="captcha-logo">reCAPTCHA</div>
                 </div>
             </div>
         </div>
@@ -913,6 +1236,39 @@
         window.addEventListener('resize', () => {
             const slideWidth = cards[0].offsetWidth + 16;
             carousel.style.transform = `translateX(-${currentSlide * slideWidth}px)`;
+        });
+
+        // News tabs functionality
+        function switchNewsTab(tabName) {
+            const tabs = document.querySelectorAll('.news-tab');
+            const newsCarousel = document.querySelector('.news-carousel');
+            const eventsSection = document.querySelector('.events-section');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            if (tabName === 'news') {
+                document.querySelector('.news-tab:first-child').classList.add('active');
+                newsCarousel.style.display = 'flex';
+                eventsSection.style.display = 'none';
+            } else if (tabName === 'events') {
+                document.querySelector('.news-tab:last-child').classList.add('active');
+                newsCarousel.style.display = 'none';
+                eventsSection.style.display = 'block';
+            }
+        }
+
+        // Add click events to tabs
+        document.addEventListener('DOMContentLoaded', function() {
+            const newsTab = document.querySelector('.news-tab:first-child');
+            const eventsTab = document.querySelector('.news-tab:last-child');
+            
+            if (newsTab) {
+                newsTab.addEventListener('click', () => switchNewsTab('news'));
+            }
+            
+            if (eventsTab) {
+                eventsTab.addEventListener('click', () => switchNewsTab('events'));
+            }
         });
     </script>
 </body>
