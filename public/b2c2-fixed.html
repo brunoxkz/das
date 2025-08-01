@@ -118,10 +118,9 @@
         .hero-content {
             max-width: 1200px;
             margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8rem;
-            align-items: center;
+            display: flex;
+            flex-direction: column;
+            gap: 4rem;
             padding-top: 2rem;
             position: relative;
             z-index: 2;
@@ -129,7 +128,8 @@
 
         .hero-text {
             text-align: left;
-            padding-right: 2rem;
+            width: 100%;
+            max-width: 600px;
         }
 
         .hero h1 {
@@ -156,13 +156,13 @@
             font-weight: 300;
         }
 
-        /* News Carousel - CORRIGIDO COM SEPARAÇÃO */
+        /* News Carousel - LAYOUT VERTICAL */
         .hero-carousel-container {
             position: relative;
             width: 100%;
-            max-width: 500px;
-            margin-top: 0;
-            padding-left: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0;
         }
 
         .hero-carousel {
@@ -494,14 +494,12 @@
             }
 
             .hero-content {
-                grid-template-columns: 1fr;
-                gap: 4rem;
+                gap: 3rem;
                 text-align: center;
             }
 
             .hero-text {
-                padding-right: 0;
-                margin-bottom: 2rem;
+                max-width: 100%;
             }
 
             .hero h1 {
@@ -510,8 +508,6 @@
 
             .hero-carousel-container {
                 max-width: 100%;
-                padding-left: 0;
-                margin-top: 2rem;
             }
 
             .carousel-nav {
