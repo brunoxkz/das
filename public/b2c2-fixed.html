@@ -603,7 +603,8 @@
             font-size: 2.5rem;
             font-weight: 300;
             margin: 0;
-            opacity: 0.6;
+            opacity: 1;
+            color: white;
             transition: opacity 0.3s ease;
         }
 
@@ -1133,6 +1134,7 @@
 
             .news-tab h2 {
                 font-size: 2rem;
+                color: white;
             }
 
             .news-item {
@@ -1743,7 +1745,18 @@
         });
 
         // Inicializar quando a página carregar
-        document.addEventListener('DOMContentLoaded', createEditControls);
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Loaded - Criando controles de edição');
+            createEditControls();
+        });
+        
+        // Fallback caso o DOMContentLoaded já tenha disparado
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', createEditControls);
+        } else {
+            console.log('DOM já carregado - Criando controles imediatamente');
+            createEditControls();
+        }
 
         // Simplified news functionality without events
     </script>

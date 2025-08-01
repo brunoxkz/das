@@ -23,6 +23,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // B2C2 ADMIN COMPLETO - Sistema categorizado de edição
+  app.get('/b2c2-admin', (req, res) => {
+    console.log('🔥 SERVINDO B2C2-ADMIN COMPLETO');
+    const path = require('path');
+    const fs = require('fs');
+    const filePath = path.join(__dirname, '../public/b2c2-admin-complete.html');
+    
+    fs.readFile(filePath, 'utf8', (err, data) => {
+      if (err) {
+        console.error('Erro ao ler arquivo:', err);
+        res.status(404).send('Arquivo não encontrado');
+        return;
+      }
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(data);
+    });
+  });
+
   // B2C2 site route - serve without JWT authentication
   app.get('/b2c2', (req, res) => {
     res.sendFile('b2c2.html', { root: 'public' });

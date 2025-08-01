@@ -8,7 +8,10 @@ Two concurrent development projects:
 ## Recent Changes (January 31, 2025)
 - **✅ B2C2 SITE STANDALONE CRIADO**: Site HTML puro com design 100% idêntico ao B2C2.com original
 - **✅ Editor Visual B2C2**: Sistema completo de edição drag-and-drop com 3 painéis (Tools | Canvas | Properties)
-- **✅ Rota /b2c2 Funcional**: Serve site B2C2 sem conflito com sistema JWT do Vendzz
+- **✅ Rota /b2c2-fixed Funcional**: Serve site B2C2 sem conflito com sistema JWT do Vendzz
+- **✅ EDIÇÃO INLINE IMPLEMENTADA**: Sistema "Edit Mode" com click-to-edit em todos os textos
+- **✅ ADMIN COMPLETO CATEGORIZADO**: /b2c2-admin com 8 seções organizadas (Hero, Carousel, Solutions, News, Insights, Branding, Pages, Settings)
+- **✅ Latest News Título Branco**: Corrigido para branco conforme B2C2.com original
 - **✅ Cores Roxas B2C2 Implementadas**: Gradientes exatos (#6366f1, #8b5cf6, #a855f7) com laranja institucional (#f59e0b)
 - **✅ Hero Section com Gradiente Roxo**: Fundo gradiente B2C2 exato com glassmorphism e elementos flutuantes animados
 - **✅ Seções Completas**: Hero, Stats, Solutions e CTA todas com design autêntico B2C2
