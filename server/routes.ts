@@ -10,6 +10,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('b2c2.html', { root: 'public' });
   });
 
+  // B2C2 FIXED - 100% Responsive e Idêntico ao B2C2.com
+  app.get('/b2c2-fixed', (req, res) => {
+    res.sendFile('b2c2-fixed.html', { root: 'public' });
+  });
+
   // CORS middleware
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');

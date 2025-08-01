@@ -816,13 +816,15 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             
-            if (username === 'admin' && password === 'b2c2admin') {
+            if ((username === 'admin@admin.com' && password === '88991010') || 
+                (username === 'admin' && password === 'b2c2admin')) {
                 isLoggedIn = true;
                 document.getElementById('login-section').style.display = 'none';
                 document.getElementById('main-editor').style.display = 'block';
+                loadB2C2Site();
                 showNotification('Login successful! Welcome to B2C2 Editor', 'success');
             } else {
-                showNotification('Invalid credentials. Use admin/b2c2admin', 'error');
+                showNotification('Invalid credentials. Use admin@admin.com/88991010 or admin/b2c2admin', 'error');
             }
         }
 
