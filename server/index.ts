@@ -451,6 +451,28 @@ app.get('/b2c2-fixed', (req, res) => {
   }
 });
 
+// ===== B2C2 ADMIN - SISTEMA CATEGORIZADO =====
+app.get('/b2c2-admin', (req, res) => {
+  console.log('🔥 SERVINDO B2C2-ADMIN COMPLETO - BYPASS TOTAL DO VITE');
+  try {
+    const filePath = path.join(process.cwd(), 'public', 'b2c2-admin-complete.html');
+    
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.send(content);
+      console.log('✅ B2C2-ADMIN SERVIDO COM SUCESSO - TAMANHO:', content.length);
+    } else {
+      console.error('❌ B2C2-ADMIN NÃO ENCONTRADO:', filePath);
+      res.status(404).send('Arquivo B2C2 Admin não encontrado');
+    }
+  } catch (err) {
+    console.error('❌ ERRO CRÍTICO B2C2-ADMIN:', err);
+    res.status(500).send('Erro interno do servidor');
+  }
+});
+
 // Rotas específicas para Service Workers com MIME type correto
 app.get('/vendzz-notification-sw.js', (req, res) => {
   try {
