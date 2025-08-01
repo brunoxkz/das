@@ -602,23 +602,45 @@ B2C2 is a digital asset pioneer building the ecosystem of the future</textarea>
                 // Add active to clicked item
                 item.classList.add('active');
                 const section = item.getAttribute('data-section');
-                document.getElementById(section + '-section').classList.add('active');
-                
-                // Load section data
-                loadSectionData(section);
+                const sectionElement = document.getElementById(section + '-section');
+                if (sectionElement) {
+                    sectionElement.classList.add('active');
+                    console.log('Navegando para seção:', section);
+                    
+                    // Load section data
+                    loadSectionData(section);
+                } else {
+                    console.error('Seção não encontrada:', section + '-section');
+                }
             });
         });
 
         // Load section data
         function loadSectionData(section) {
+            console.log('Loading data for section:', section);
+            
             switch(section) {
+                case 'hero':
+                    if (siteData.hero) {
+                        document.getElementById('hero-title').value = siteData.hero.title || '';
+                        document.getElementById('hero-subtitle').value = siteData.hero.subtitle || '';
+                    }
+                    break;
                 case 'carousel':
                     loadCarouselItems();
                     break;
                 case 'solutions':
+                    if (siteData.solutions) {
+                        document.getElementById('solutions-title').value = siteData.solutions.title || '';
+                        document.getElementById('solutions-subtitle').value = siteData.solutions.subtitle || '';
+                    }
                     loadSolutionsCards();
                     break;
                 case 'news':
+                    if (siteData.news) {
+                        document.getElementById('news-title').value = siteData.news.title || '';
+                        document.getElementById('news-view-all').value = siteData.news.viewAll || '';
+                    }
                     loadNewsItems();
                     break;
             }
@@ -769,6 +791,13 @@ B2C2 is a digital asset pioneer building the ecosystem of the future</textarea>
         function saveHeroSection() {
             siteData.hero.title = document.getElementById('hero-title').value;
             siteData.hero.subtitle = document.getElementById('hero-subtitle').value;
+            
+            // Salvar no localStorage
+            localStorage.setItem('b2c2-admin-data', JSON.stringify(siteData));
+            
+            // Aplicar mudanças no site principal
+            updateMainSite();
+            
             showSuccessMessage('Hero Section salva com sucesso!');
         }
 
@@ -776,18 +805,33 @@ B2C2 is a digital asset pioneer building the ecosystem of the future</textarea>
             siteData.carousel.width = document.getElementById('carousel-width').value;
             siteData.carousel.height = document.getElementById('carousel-height').value;
             siteData.carousel.visible = document.getElementById('carousel-visible').value;
+            
+            // Salvar no localStorage
+            localStorage.setItem('b2c2-admin-data', JSON.stringify(siteData));
+            updateMainSite();
+            
             showSuccessMessage('Carousel salvo com sucesso!');
         }
 
         function saveSolutions() {
             siteData.solutions.title = document.getElementById('solutions-title').value;
             siteData.solutions.subtitle = document.getElementById('solutions-subtitle').value;
+            
+            // Salvar no localStorage
+            localStorage.setItem('b2c2-admin-data', JSON.stringify(siteData));
+            updateMainSite();
+            
             showSuccessMessage('Solutions salvo com sucesso!');
         }
 
         function saveNews() {
             siteData.news.title = document.getElementById('news-title').value;
             siteData.news.viewAll = document.getElementById('news-view-all').value;
+            
+            // Salvar no localStorage
+            localStorage.setItem('b2c2-admin-data', JSON.stringify(siteData));
+            updateMainSite();
+            
             showSuccessMessage('News salvo com sucesso!');
         }
 
@@ -843,11 +887,56 @@ B2C2 is a digital asset pioneer building the ecosystem of the future</textarea>
             alert('Editor de página de insights será implementado');
         }
 
+        // Função para atualizar o site principal
+        function updateMainSite() {
+            // Enviar dados para o localStorage que será lido pelo site principal
+            const event = new CustomEvent('b2c2AdminUpdate', {
+                detail: siteData
+            });
+            window.dispatchEvent(event);
+            
+            console.log('Dados atualizados no site principal:', siteData);
+        }
+
+        // Carregar dados salvos
+        function loadSavedData() {
+            const savedData = localStorage.getItem('b2c2-admin-data');
+            if (savedData) {
+                try {
+                    const parsed = JSON.parse(savedData);
+                    siteData = { ...siteData, ...parsed };
+                    console.log('Dados carregados do localStorage:', siteData);
+                } catch (e) {
+                    console.error('Erro ao carregar dados salvos:', e);
+                }
+            }
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('B2C2 Admin inicializando...');
+            loadSavedData();
             loadCarouselItems();
             loadSolutionsCards();
             loadNewsItems();
+            
+            // Carregar dados nos campos
+            if (siteData.hero) {
+                document.getElementById('hero-title').value = siteData.hero.title || '';
+                document.getElementById('hero-subtitle').value = siteData.hero.subtitle || '';
+            }
+            
+            if (siteData.solutions) {
+                document.getElementById('solutions-title').value = siteData.solutions.title || '';
+                document.getElementById('solutions-subtitle').value = siteData.solutions.subtitle || '';
+            }
+            
+            if (siteData.news) {
+                document.getElementById('news-title').value = siteData.news.title || '';
+                document.getElementById('news-view-all').value = siteData.news.viewAll || '';
+            }
+            
+            console.log('B2C2 Admin inicializado com sucesso!');
         });
     </script>
 </body>
