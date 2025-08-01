@@ -1129,6 +1129,208 @@
             }
         }
 
+        // Enhanced Admin Functions
+        function updateLogo(text) {
+            const logoElements = document.querySelectorAll('.logo');
+            logoElements.forEach(el => el.textContent = text);
+            showNotification('Logo updated successfully', 'success');
+        }
+
+        function updateLogoColor(index, color) {
+            const logoCircles = document.querySelectorAll('.logo-circle');
+            if (logoCircles[index]) {
+                logoCircles[index].style.background = color;
+            }
+            showNotification(`Logo color ${index + 1} updated`, 'success');
+        }
+
+        function editMenuItems() {
+            const menuItems = document.querySelectorAll('.nav-menu a');
+            let menuText = '';
+            menuItems.forEach((item, index) => {
+                menuText += `Item ${index + 1}: ${item.textContent}\n`;
+            });
+            
+            const newMenu = prompt('Edit menu items (one per line):', menuText);
+            if (newMenu) {
+                const items = newMenu.split('\n').filter(item => item.trim());
+                menuItems.forEach((item, index) => {
+                    if (items[index]) {
+                        const text = items[index].replace(/^Item \d+: /, '');
+                        item.textContent = text;
+                    }
+                });
+                showNotification('Menu updated successfully', 'success');
+            }
+        }
+
+        function addNewPage() {
+            const pageName = prompt('Enter new page name:');
+            if (pageName) {
+                const nav = document.querySelector('.nav-menu');
+                const newLink = document.createElement('li');
+                newLink.innerHTML = `<a href="#${pageName.toLowerCase()}" class="editable" data-type="text" onclick="editText(this, event)">${pageName.toUpperCase()}</a>`;
+                nav.appendChild(newLink);
+                showNotification(`Page "${pageName}" created successfully`, 'success');
+            }
+        }
+
+        function enableDragDrop() {
+            const elements = document.querySelectorAll('.editable');
+            elements.forEach(el => {
+                el.draggable = true;
+                el.addEventListener('dragstart', handleDragStart);
+                el.addEventListener('dragover', handleDragOver);
+                el.addEventListener('drop', handleDrop);
+            });
+            showNotification('Drag & Drop enabled', 'success');
+        }
+
+        function handleDragStart(e) {
+            e.dataTransfer.setData('text/html', e.target.outerHTML);
+            e.target.style.opacity = '0.5';
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const data = e.dataTransfer.getData('text/html');
+            e.target.innerHTML = data;
+            showNotification('Element moved successfully', 'success');
+        }
+
+        function editTrustedSection() {
+            const trustedValue = prompt('Edit trusted value (e.g., $100B+):');
+            if (trustedValue) {
+                const statCards = document.querySelectorAll('.stat-card h3');
+                if (statCards[0]) {
+                    statCards[0].textContent = trustedValue;
+                    showNotification('Trusted section updated', 'success');
+                }
+            }
+        }
+
+        function editTradingOverview() {
+            const overview = prompt('Edit Trading Overview description:');
+            if (overview) {
+                const tradingCard = document.querySelector('.solution-card');
+                if (tradingCard) {
+                    const p = tradingCard.querySelector('p');
+                    if (p) p.textContent = overview;
+                    showNotification('Trading Overview updated', 'success');
+                }
+            }
+        }
+
+        function editOTCLiquidity() {
+            const otc = prompt('Edit OTC Liquidity description:');
+            if (otc) {
+                const otcCard = document.querySelectorAll('.solution-card')[1];
+                if (otcCard) {
+                    const p = otcCard.querySelector('p');
+                    if (p) p.textContent = otc;
+                    showNotification('OTC Liquidity updated', 'success');
+                }
+            }
+        }
+
+        function editInstitutionalSolutions() {
+            const solutions = prompt('Edit Institutional Solutions text:');
+            if (solutions) {
+                const solutionsHeader = document.querySelector('.solutions-header h2');
+                if (solutionsHeader) {
+                    solutionsHeader.textContent = solutions;
+                    showNotification('Institutional Solutions updated', 'success');
+                }
+            }
+        }
+
+        function editFooter() {
+            const footerSections = document.querySelectorAll('.footer-section h4');
+            let footerText = '';
+            footerSections.forEach((section, index) => {
+                footerText += `Section ${index + 1}: ${section.textContent}\n`;
+            });
+            
+            const newFooter = prompt('Edit footer sections (one per line):', footerText);
+            if (newFooter) {
+                const sections = newFooter.split('\n').filter(section => section.trim());
+                footerSections.forEach((section, index) => {
+                    if (sections[index]) {
+                        const text = sections[index].replace(/^Section \d+: /, '');
+                        section.textContent = text;
+                    }
+                });
+                showNotification('Footer updated successfully', 'success');
+            }
+        }
+
+        function editSubscribe() {
+            const subscribeText = document.querySelector('.newsletter-content p');
+            const currentText = subscribeText ? subscribeText.textContent : '';
+            const newText = prompt('Edit subscribe section text:', currentText);
+            if (newText && subscribeText) {
+                subscribeText.textContent = newText;
+                showNotification('Subscribe section updated', 'success');
+            }
+        }
+
+        function uploadNewsImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const currentCard = document.querySelector('.news-card.selected') || document.querySelector('.news-card');
+                    if (currentCard) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.style.width = '100%';
+                        img.style.height = '120px';
+                        img.style.objectFit = 'cover';
+                        img.style.borderRadius = '8px';
+                        currentCard.insertBefore(img, currentCard.firstChild);
+                        showNotification('News image uploaded successfully', 'success');
+                    }
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function editNewsArticle() {
+            const title = prompt('Enter news article title:');
+            const content = prompt('Enter news article content:');
+            const category = prompt('Enter category (Press release, Insights, etc.):');
+            const date = prompt('Enter date (e.g., October 28, 2024):');
+            
+            if (title && content && category && date) {
+                const newsCarousel = document.querySelector('.news-carousel');
+                const newArticle = document.createElement('article');
+                newArticle.className = 'news-card editable';
+                newArticle.innerHTML = `
+                    <div class="news-meta">
+                        <div class="news-logo">B2</div>
+                        <span class="news-type">${category}</span>
+                    </div>
+                    <h3>${title}</h3>
+                    <div class="news-date">${date}</div>
+                    <a href="#" class="read-more">Read more →</a>
+                `;
+                newsCarousel.appendChild(newArticle);
+                showNotification('News article created successfully', 'success');
+            }
+        }
+
+        function manageNewsCategories() {
+            const categories = ['Press release', 'Insights', 'Company news', 'Industry updates'];
+            const currentCategories = categories.join('\n');
+            const newCategories = prompt('Edit news categories (one per line):', currentCategories);
+            if (newCategories) {
+                showNotification('News categories updated', 'success');
+            }
+        }
+
         // Add elements
         function addNewsCard() {
             const carousel = document.getElementById('news-carousel');

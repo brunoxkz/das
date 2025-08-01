@@ -184,6 +184,7 @@
         .hero-carousel-container {
             position: relative;
             width: 100%;
+            max-width: 600px;
         }
 
         .hero-carousel {
@@ -192,6 +193,7 @@
             overflow: hidden;
             padding: 1rem 0;
             scroll-behavior: smooth;
+            transition: transform 0.3s ease;
         }
 
         .hero-card {
@@ -280,11 +282,11 @@
         }
 
         .carousel-prev {
-            left: -20px;
+            left: -50px;
         }
 
         .carousel-next {
-            right: -20px;
+            right: -50px;
         }
 
         .genius-bg {
@@ -297,6 +299,10 @@
 
         .pv01-bg {
             background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        }
+
+        .future-bg {
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
         }
 
         .hero h1 {
@@ -1025,6 +1031,16 @@
                             <div class="date">November 25, 2024</div>
                         </div>
                     </div>
+                    <div class="hero-card">
+                        <div class="hero-card-image future-bg">
+                            <span style="color: white; font-size: 1.2rem; font-weight: 800;">FUTURE</span>
+                        </div>
+                        <div class="hero-card-content">
+                            <div class="hero-card-badge">Insights</div>
+                            <h4>B2C2 Named as One of London's Best Workplaces for Women by Great Place to Work</h4>
+                            <div class="date">September 15, 2024</div>
+                        </div>
+                    </div>
                 </div>
                 <button class="carousel-nav carousel-next" onclick="slideCarousel(1)">›</button>
             </div>
@@ -1095,6 +1111,16 @@
                     </div>
                     <h3>Arbelos and B2C2 Complete First Bilateral OTC Option Transaction on BVIV Index</h3>
                     <div class="news-date">June 4, 2024</div>
+                    <a href="#" class="read-more">Read more →</a>
+                </article>
+                
+                <article class="news-card">
+                    <div class="news-meta">
+                        <div class="news-logo">B2</div>
+                        <span class="news-type">Insights</span>
+                    </div>
+                    <h3>B2C2 Named as One of London's Best Workplaces for Women by Great Place to Work</h3>
+                    <div class="news-date">May 20, 2024</div>
                     <a href="#" class="read-more">Read more →</a>
                 </article>
             </div>
@@ -1219,8 +1245,9 @@
         function slideCarousel(direction) {
             currentSlide += direction;
             
-            if (currentSlide >= totalCards - 2) {
-                currentSlide = totalCards - 2;
+            // Show 2 cards at a time, so limit to totalCards - 2
+            if (currentSlide >= totalCards - 1) {
+                currentSlide = totalCards - 1;
             }
             if (currentSlide < 0) {
                 currentSlide = 0;
