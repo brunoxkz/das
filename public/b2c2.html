@@ -39,52 +39,101 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            height: 80px;
+            height: 60px;
         }
 
         .logo {
-            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.5rem;
             font-weight: 800;
             color: #6366f1;
             text-decoration: none;
             letter-spacing: -0.02em;
         }
 
+        .logo-icon {
+            display: flex;
+            gap: 2px;
+        }
+
+        .logo-circle {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            font-size: 0.8rem;
+        }
+
+        .logo-circle:nth-child(1) { background: #6366f1; }
+        .logo-circle:nth-child(2) { background: #8b5cf6; }
+        .logo-circle:nth-child(3) { background: #a855f7; }
+        .logo-circle:nth-child(4) { background: #c084fc; }
+
         .nav-menu {
             display: flex;
             list-style: none;
-            gap: 2rem;
+            gap: 2.5rem;
             align-items: center;
         }
 
-        .nav-menu a {
+        .nav-menu > li > a {
             color: #1a1a1a;
             text-decoration: none;
             font-weight: 500;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             transition: color 0.3s ease;
+            position: relative;
         }
 
-        .nav-menu a:hover {
+        .nav-menu > li > a:hover {
             color: #6366f1;
         }
 
-        .nav-cta {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        .nav-menu .has-dropdown::after {
+            content: '▼';
+            font-size: 0.7rem;
+            margin-left: 0.5rem;
+            opacity: 0.7;
+        }
+
+        .nav-contact {
+            background: #4338ca;
             color: white !important;
             padding: 0.75rem 1.5rem;
-            border-radius: 8px;
+            border-radius: 6px;
+            font-weight: 700;
             text-transform: uppercase;
-            font-weight: 600;
             letter-spacing: 0.5px;
             transition: all 0.3s ease;
         }
 
-        .nav-cta:hover {
+        .nav-subscribe {
+            background: #be185d;
+            color: white !important;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-contact:hover {
+            background: #3730a3;
             transform: translateY(-1px);
-            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+        }
+
+        .nav-subscribe:hover {
+            background: #a21458;
+            transform: translateY(-1px);
         }
 
         /* Mobile Menu */
@@ -105,9 +154,9 @@
 
         /* Hero Section */
         .hero {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
-            padding: 12rem 2rem 6rem;
-            text-align: center;
+            background: linear-gradient(135deg, #e91e63 0%, #9c27b0 50%, #673ab7 100%);
+            padding: 8rem 2rem 6rem;
+            text-align: left;
             color: white;
             position: relative;
             overflow: hidden;
@@ -122,6 +171,53 @@
             margin: 0 auto;
             position: relative;
             z-index: 2;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-text {
+            text-align: left;
+        }
+
+        .hero-carousel {
+            position: relative;
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            padding: 1rem 0;
+        }
+
+        .hero-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            min-width: 300px;
+            flex-shrink: 0;
+            text-align: center;
+        }
+
+        .hero-card img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .hero-card h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+        }
+
+        .hero-card .date {
+            font-size: 0.8rem;
+            opacity: 0.7;
         }
 
         .hero h1 {
@@ -666,6 +762,22 @@
         }
 
         /* Responsive */
+        @media (max-width: 968px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                text-align: center;
+            }
+
+            .hero-text {
+                text-align: center;
+            }
+
+            .hero-carousel {
+                justify-content: center;
+            }
+        }
+
         @media (max-width: 768px) {
             .nav-menu {
                 display: none;
@@ -714,6 +826,15 @@
             .newsletter-btn {
                 width: 100%;
             }
+
+            .hero-carousel {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .hero-card {
+                min-width: 280px;
+            }
         }
 
         /* Smooth scrolling */
@@ -732,10 +853,22 @@
     <!-- Header -->
     <header class="header">
         <nav class="nav-container">
-            <a href="#" class="logo">B2C2</a>
+            <a href="#" class="logo">
+                <div class="logo-icon">
+                    <div class="logo-circle">B</div>
+                    <div class="logo-circle">2</div>
+                    <div class="logo-circle">C</div>
+                    <div class="logo-circle">2</div>
+                </div>
+            </a>
             <ul class="nav-menu">
-                <li><a href="#contact">CONTACT</a></li>
-                <li><a href="#subscribe" class="nav-cta">SUBSCRIBE</a></li>
+                <li><a href="#solutions" class="has-dropdown">Solutions</a></li>
+                <li><a href="#about" class="has-dropdown">About</a></li>
+                <li><a href="#news" class="has-dropdown">News & Events</a></li>
+                <li><a href="#insights" class="has-dropdown">Institutional Insights</a></li>
+                <li><a href="#join" class="has-dropdown">Join B2C2</a></li>
+                <li><a href="#contact" class="nav-contact">CONTACT</a></li>
+                <li><a href="#subscribe" class="nav-subscribe">SUBSCRIBE</a></li>
             </ul>
             <div class="mobile-menu-toggle">
                 <span></span>
@@ -748,29 +881,36 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
-            <h1>
-                More than just a liquidity provider,<br>
-                <span class="highlight">B2C2 is a digital asset pioneer</span> building the ecosystem of the future
-            </h1>
-            <p>
-                B2C2's success is built on a foundation of proprietary crypto-native technology combined with an innovative range of products, making the firm the partner of choice for diverse institutions globally.
-            </p>
-            <div class="hero-buttons">
-                <a href="#solutions" class="btn-primary">Explore institutional solutions →</a>
-                <a href="#about" class="btn-secondary">Learn about B2C2</a>
+            <div class="hero-text">
+                <h1>
+                    More than just a liquidity provider,<br>
+                    <span class="highlight">B2C2 is a digital asset pioneer</span> building the ecosystem of the future
+                </h1>
+                <p>
+                    B2C2's success is built on a foundation of proprietary crypto-native technology combined with an innovative range of products, making the firm the partner of choice for diverse institutions globally.
+                </p>
             </div>
-            <div class="hero-stats">
-                <div class="stat-card">
-                    <h3>$100B+</h3>
-                    <p>Trading Volume</p>
+            <div class="hero-carousel">
+                <div class="hero-card">
+                    <div style="background: linear-gradient(45deg, #6366f1, #8b5cf6); height: 120px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                        <span style="font-size: 2rem; font-weight: 800;">GENIUS</span>
+                    </div>
+                    <h4>A very stable GENIUS: The US stablecoin bill and the next key to scaling adoption</h4>
+                    <div class="date">July 25, 2025</div>
                 </div>
-                <div class="stat-card">
-                    <h3>24/7</h3>
-                    <p>Market Coverage</p>
+                <div class="hero-card">
+                    <div style="background: linear-gradient(45deg, #1f2937, #374151); height: 120px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; color: white;">
+                        <span style="font-size: 1.5rem; font-weight: 800;">HASHKEY</span>
+                    </div>
+                    <h4>HashKey Exchange, Hong Kong's Largest Licensed Virtual Asset Exchange, Partners with B2C2</h4>
+                    <div class="date">March 10, 2025</div>
                 </div>
-                <div class="stat-card">
-                    <h3>100+</h3>
-                    <p>Global Clients</p>
+                <div class="hero-card">
+                    <div style="background: linear-gradient(45deg, #059669, #10b981); height: 120px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                        <span style="font-size: 1.5rem; font-weight: 800;">PV01</span>
+                    </div>
+                    <h4>B2C2 and PV01 Pioneer Corporate Bond on Blockchain</h4>
+                    <div class="date">November 25, 2024</div>
                 </div>
             </div>
         </div>
