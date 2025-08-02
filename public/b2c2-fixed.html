@@ -1253,8 +1253,7 @@
         <div class="hero-content">
             <div class="hero-text">
                 <h1 data-editable="hero-title" contenteditable="false">
-                    More than just a liquidity provider,<br>
-                    <span class="highlight">B2C2 is a digital asset pioneer</span> building the ecosystem of the future
+                    More than just a liquidity provider, <span class="highlight">B2C2 is a digital asset pioneer</span> building the ecosystem of the future
                 </h1>
                 <p data-editable="hero-subtitle" contenteditable="false">
                     B2C2's success is built on a foundation of proprietary crypto-native technology combined with an innovative range of products, making the firm the partner of choice for diverse institutions globally.
@@ -1312,32 +1311,55 @@
     <!-- Institutional Solutions -->
     <section class="solutions" id="solutions">
         <div class="solutions-content">
-            <h2 data-editable="solutions-title" contenteditable="false">Institutional solutions</h2>
-            <p data-editable="solutions-subtitle" contenteditable="false">Our large and growing client base around the world trusts us to deliver seamless execution 24/7.</p>
-            <div class="solutions-grid">
-                <div class="solution-card">
-                    <div class="solution-icon"></div>
-                    <h3 data-editable="solution-1-title" contenteditable="false">Trading overview</h3>
-                    <p data-editable="solution-1-desc" contenteditable="false">Advanced trading solutions for institutional clients with comprehensive market access.</p>
-                    <span class="solution-arrow">→</span>
+            <div class="solutions-header">
+                <div class="solutions-left">
+                    <h2 data-editable="solutions-title" contenteditable="false">Institutional solutions</h2>
+                    <p data-editable="solutions-subtitle" contenteditable="false">Our large and growing client base around the world trusts us to deliver seamless execution 24/7.</p>
+                    <button class="solutions-explore-btn" data-editable="solutions-btn" contenteditable="false">Explore institutional solutions →</button>
                 </div>
-                <div class="solution-card">
-                    <div class="solution-icon"></div>
-                    <h3 data-editable="solution-2-title" contenteditable="false">OTC Products</h3>
-                    <p data-editable="solution-2-desc" contenteditable="false">Over-the-counter trading products designed for large volume transactions.</p>
-                    <span class="solution-arrow">→</span>
-                </div>
-                <div class="solution-card">
-                    <div class="solution-icon"></div>
-                    <h3 data-editable="solution-3-title" contenteditable="false">Liquidity Partner</h3>
-                    <p data-editable="solution-3-desc" contenteditable="false">Global liquidity solutions to optimize your trading operations.</p>
-                    <span class="solution-arrow">→</span>
-                </div>
-                <div class="solution-card">
-                    <div class="solution-icon"></div>
-                    <h3 data-editable="solution-4-title" contenteditable="false">Client onboarding</h3>
-                    <p data-editable="solution-4-desc" contenteditable="false">Streamlined onboarding process for institutional clients.</p>
-                    <span class="solution-arrow">→</span>
+                <div class="solutions-right">
+                    <div class="solutions-faq">
+                        <div class="faq-item" onclick="toggleFaq(this)">
+                            <div class="faq-header">
+                                <div class="faq-icon">📊</div>
+                                <span class="faq-title" data-editable="solution-1-title" contenteditable="false">Trading overview</span>
+                                <div class="faq-arrow">›</div>
+                            </div>
+                            <div class="faq-content">
+                                <p data-editable="solution-1-desc" contenteditable="false">Advanced trading solutions for institutional clients with comprehensive market access.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item" onclick="toggleFaq(this)">
+                            <div class="faq-header">
+                                <div class="faq-icon">📋</div>
+                                <span class="faq-title" data-editable="solution-2-title" contenteditable="false">OTC Products</span>
+                                <div class="faq-arrow">›</div>
+                            </div>
+                            <div class="faq-content">
+                                <p data-editable="solution-2-desc" contenteditable="false">Over-the-counter trading products designed for large volume transactions.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item" onclick="toggleFaq(this)">
+                            <div class="faq-header">
+                                <div class="faq-icon">💧</div>
+                                <span class="faq-title" data-editable="solution-3-title" contenteditable="false">Liquidity Partner</span>
+                                <div class="faq-arrow">›</div>
+                            </div>
+                            <div class="faq-content">
+                                <p data-editable="solution-3-desc" contenteditable="false">Global liquidity solutions to optimize your trading operations.</p>
+                            </div>
+                        </div>
+                        <div class="faq-item" onclick="toggleFaq(this)">
+                            <div class="faq-header">
+                                <div class="faq-icon">👤</div>
+                                <span class="faq-title" data-editable="solution-4-title" contenteditable="false">Client onboarding</span>
+                                <div class="faq-arrow">›</div>
+                            </div>
+                            <div class="faq-content">
+                                <p data-editable="solution-4-desc" contenteditable="false">Streamlined onboarding process for institutional clients.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1708,6 +1730,22 @@
             
             // Aqui você faria a requisição real para o backend
             // fetch('/api/save-content', { method: 'POST', body: JSON.stringify(saveData) })
+        }
+
+        // Toggle FAQ function
+        function toggleFaq(element) {
+            const faqItem = element;
+            const isActive = faqItem.classList.contains('active');
+            
+            // Remove active class from all FAQ items
+            document.querySelectorAll('.faq-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Add active class to clicked item if it wasn't active
+            if (!isActive) {
+                faqItem.classList.add('active');
+            }
         }
 
         // Auto-salvar a cada 30 segundos
