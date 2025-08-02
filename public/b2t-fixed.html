@@ -1555,18 +1555,32 @@
                 right: 8px;
             }
 
-            /* Mobile Menu Hamburger - FORÇAR VISIBILIDADE */
+            /* Mobile Menu Hamburger - TRÊS BARRAS ROXAS */
             .mobile-menu-toggle {
                 display: block !important;
-                background: linear-gradient(135deg, #6366f1, #8b5cf6);
-                color: white;
+                background: transparent;
                 border: none;
-                padding: 0.75rem;
-                border-radius: 8px;
+                padding: 0.6rem;
                 cursor: pointer;
-                font-size: 1.2rem;
-                box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
                 z-index: 1001;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                gap: 4px;
+                width: 40px;
+                height: 40px;
+            }
+
+            .hamburger-bar {
+                width: 25px;
+                height: 3px;
+                background: #4c1d95;
+                border-radius: 2px;
+                transition: all 0.3s ease;
+            }
+
+            .mobile-menu-toggle:hover .hamburger-bar {
+                background: #6366f1;
             }
 
             /* ESCONDER MENU DESKTOP NO MOBILE */
@@ -1706,7 +1720,11 @@
                 <li><a href="#" class="nav-link" onclick="openContactModal(); return false;">Contact</a></li>
                 <li><a href="#subscribe" class="nav-subscribe nav-link">Subscribe</a></li>
             </ul>
-            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" style="display: none;">☰</button>
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" style="display: none;">
+                <div class="hamburger-bar"></div>
+                <div class="hamburger-bar"></div>
+                <div class="hamburger-bar"></div>
+            </button>
         </nav>
     </header>
 
@@ -1718,13 +1736,13 @@
             <button class="mobile-menu-close" onclick="closeMobileMenu()">×</button>
         </div>
         <ul class="mobile-nav-menu">
-            <li><a href="#hero" onclick="closeMobileMenu()">Home</a></li>
-            <li><a href="#solutions" onclick="closeMobileMenu()">Solutions</a></li>
-            <li><a href="#about" onclick="closeMobileMenu()">About</a></li>
-            <li><a href="#news" onclick="closeMobileMenu()">News</a></li>
-            <li><a href="#insights" onclick="closeMobileMenu()">Insights</a></li>
+            <li><a href="#hero" onclick="scrollToSection('hero')">Home</a></li>
+            <li><a href="#solutions" onclick="scrollToSection('solutions')">Solutions</a></li>
+            <li><a href="#about" onclick="scrollToSection('about')">About</a></li>
+            <li><a href="#news" onclick="scrollToSection('news')">News</a></li>
+            <li><a href="#insights" onclick="scrollToSection('insights')">Insights</a></li>
             <li><a href="#" onclick="openContactModal(); closeMobileMenu();">Contact</a></li>
-            <li><a href="#subscribe" onclick="closeMobileMenu()">Subscribe</a></li>
+            <li><a href="#subscribe" onclick="scrollToSection('subscribe')">Subscribe</a></li>
         </ul>
     </div>
 
@@ -2656,23 +2674,30 @@
         // =================== MOBILE MENU FUNCTIONS ===================
         
         function toggleMobileMenu() {
+            console.log('🔄 Toggle menu mobile');
             const menu = document.getElementById('mobileMenu');
             const overlay = document.getElementById('mobileOverlay');
             
             if (menu && overlay) {
                 const isActive = menu.classList.contains('active');
+                console.log('Menu ativo:', isActive);
                 
                 if (isActive) {
                     closeMobileMenu();
+                    console.log('✅ Menu fechado');
                 } else {
                     menu.classList.add('active');
                     overlay.classList.add('active');
                     document.body.style.overflow = 'hidden';
+                    console.log('✅ Menu aberto');
                 }
+            } else {
+                console.error('❌ Elementos do menu não encontrados', {menu, overlay});
             }
         }
         
         function closeMobileMenu() {
+            console.log('🔄 Fechando menu mobile');
             const menu = document.getElementById('mobileMenu');
             const overlay = document.getElementById('mobileOverlay');
             
@@ -2680,6 +2705,7 @@
                 menu.classList.remove('active');
                 overlay.classList.remove('active');
                 document.body.style.overflow = '';
+                console.log('✅ Menu mobile fechado');
             }
         }
         
@@ -2721,6 +2747,34 @@
             slideCarousel(1);
         }, 5000);
         
+        // =================== SCROLL TO SECTION ===================
+        
+        function scrollToSection(sectionId) {
+            console.log('🔄 Rolando para seção:', sectionId);
+            
+            // Fechar o menu mobile primeiro
+            closeMobileMenu();
+            
+            // Aguardar um pouco para o menu fechar
+            setTimeout(() => {
+                const targetElement = document.getElementById(sectionId) || document.querySelector(`#${sectionId}`);
+                
+                if (targetElement) {
+                    const headerHeight = document.querySelector('.header')?.offsetHeight || 80;
+                    const targetPosition = targetElement.offsetTop - headerHeight - 20;
+                    
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                    
+                    console.log('✅ Rolou para:', sectionId);
+                } else {
+                    console.error('❌ Seção não encontrada:', sectionId);
+                }
+            }, 300);
+        }
+        
         // =================== RESPONSIVE MOBILE MENU ===================
         
         function updateMobileMenuVisibility() {
@@ -2728,7 +2782,7 @@
             const navMenu = document.querySelector('.nav-menu');
             
             if (window.innerWidth <= 768) {
-                if (mobileToggle) mobileToggle.style.display = 'block';
+                if (mobileToggle) mobileToggle.style.display = 'flex';
                 if (navMenu) navMenu.style.display = 'none';
             } else {
                 if (mobileToggle) mobileToggle.style.display = 'none';
