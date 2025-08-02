@@ -1557,32 +1557,64 @@
                 right: 8px;
             }
 
-            /* Mobile Menu Hamburger - TRÊS BARRAS ROXAS */
+            /* Mobile Menu Hamburger - DESIGN MODERNO */
             .mobile-menu-toggle {
                 display: block !important;
-                background: transparent;
-                border: none;
-                padding: 0.6rem;
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(99, 102, 241, 0.3);
+                border-radius: 8px;
+                padding: 8px;
                 cursor: pointer;
                 z-index: 1001;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
                 gap: 4px;
-                width: 40px;
-                height: 40px;
-            }
-
-            .hamburger-bar {
-                width: 25px;
-                height: 3px;
-                background: #4c1d95;
-                border-radius: 2px;
+                width: 44px;
+                height: 44px;
+                backdrop-filter: blur(10px);
+                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
                 transition: all 0.3s ease;
             }
 
+            .hamburger-bar {
+                width: 22px;
+                height: 2px;
+                background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+                border-radius: 2px;
+                transition: all 0.3s ease;
+                position: relative;
+            }
+
+            .hamburger-bar:nth-child(1) {
+                width: 22px;
+            }
+
+            .hamburger-bar:nth-child(2) {
+                width: 18px;
+                opacity: 0.8;
+            }
+
+            .hamburger-bar:nth-child(3) {
+                width: 20px;
+            }
+
+            .mobile-menu-toggle:hover {
+                background: rgba(255, 255, 255, 0.15);
+                border-color: rgba(99, 102, 241, 0.5);
+                transform: translateY(-1px);
+                box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
+            }
+
             .mobile-menu-toggle:hover .hamburger-bar {
-                background: #6366f1;
+                background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+                width: 22px;
+                opacity: 1;
+            }
+
+            .mobile-menu-toggle:active {
+                transform: translateY(0);
+                box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
             }
 
             /* ESCONDER MENU DESKTOP NO MOBILE */
@@ -1625,6 +1657,22 @@
                 .carousel-next {
                     right: 10px;
                 }
+                
+                /* MENU MOBILE MODERNO APRIMORADO */
+                .mobile-menu-toggle {
+                    width: 40px;
+                    height: 40px;
+                    padding: 6px;
+                    gap: 3px;
+                }
+                
+                .hamburger-bar {
+                    height: 2px;
+                }
+                
+                .hamburger-bar:nth-child(1) { width: 20px; }
+                .hamburger-bar:nth-child(2) { width: 16px; }
+                .hamburger-bar:nth-child(3) { width: 18px; }
             }
 
             .mobile-menu {
