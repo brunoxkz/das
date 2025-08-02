@@ -177,11 +177,10 @@
 
         .hero-carousel {
             display: flex;
-            gap: 0;
+            gap: 1rem;
             overflow: hidden;
-            transition: transform 0.5s ease;
+            transition: transform 0.3s ease;
             transform: translateX(0);
-            width: 400%; /* 4 cards x 100% = 400% */
         }
 
         .hero-card {
@@ -189,13 +188,12 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 8px;
-            min-width: 100%;
-            max-width: 100%;
-            width: 100%;
+            min-width: 280px;
+            max-width: 280px;
             flex-shrink: 0;
             overflow: hidden;
             transition: transform 0.3s ease;
-            margin-right: 0;
+            margin-right: 1rem;
             height: 180px;
         }
 
@@ -1632,16 +1630,16 @@
                     display: none !important;
                 }
                 
-                /* CARROSSEL MOBILE FIX */
+                /* CARROSSEL MOBILE - MANTÉM DESIGN ORIGINAL MAS MELHORA FUNCIONALIDADE */
                 .hero-carousel-container {
                     height: 200px;
                     padding: 0 1rem;
                 }
                 
                 .hero-card {
-                    min-width: 100%;
-                    max-width: 100%;
-                    margin-right: 0;
+                    min-width: calc(100% - 2rem);
+                    max-width: calc(100% - 2rem);
+                    margin-right: 1rem;
                 }
                 
                 .carousel-nav {
@@ -2802,12 +2800,16 @@
             currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
             console.log('🎠 Novo slide:', currentSlide);
             
-            // Calculate transform value - cada card ocupa 100% da largura
-            const translateX = -(currentSlide * 100);
-            carousel.style.transform = `translateX(${translateX}%)`;
+            // CÁLCULO SIMPLES E EFETIVO - funciona em qualquer resolução
+            const cardWidth = window.innerWidth <= 768 ? 
+                (carousel.parentElement.offsetWidth - 32) : // Mobile: largura container - padding
+                296; // Desktop: 280px card + 16px gap
+            
+            const translateX = -(currentSlide * cardWidth);
+            carousel.style.transform = `translateX(${translateX}px)`;
             carousel.style.transition = 'transform 0.5s ease-in-out';
             
-            console.log('🎠 TranslateX aplicado:', translateX + '%');
+            console.log('🎠 Card width:', cardWidth, 'TranslateX:', translateX);
             
             // Add visual feedback to buttons
             const prevBtn = document.querySelector('.carousel-prev');
