@@ -1817,6 +1817,154 @@
         }
 
         // Simplified news functionality without events
+        
+        // ===== SISTEMA DE SINCRONIZAÇÃO ADMIN → HOMEPAGE =====
+        
+        // Listen for admin panel changes
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'b2c2SiteData') {
+                console.log('🔄 Detectada mudança no admin panel, sincronizando...');
+                loadContentFromAdmin();
+            }
+        });
+        
+        // Load content from admin localStorage
+        function loadContentFromAdmin() {
+            const siteData = JSON.parse(localStorage.getItem('b2c2SiteData')) || {};
+            
+            if (siteData.hero) {
+                applySectionChanges('hero', siteData.hero);
+            }
+            
+            if (siteData.solutions) {
+                applySectionChanges('solutions', siteData.solutions);
+            }
+            
+            if (siteData.news) {
+                applySectionChanges('news', siteData.news);
+            }
+        }
+        
+        // Apply section changes to homepage
+        function applySectionChanges(section, data) {
+            console.log(`🎯 Aplicando mudanças para ${section}:`, data);
+            
+            if (section === 'hero' && data) {
+                // Update hero section
+                const heroTitle = document.querySelector('.hero-content h1');
+                const heroSubtitle = document.querySelector('.hero-description');
+                const heroButton = document.querySelector('.hero-content .btn');
+                
+                if (heroTitle && data.title) {
+                    heroTitle.innerHTML = data.title;
+                }
+                
+                if (heroSubtitle && data.subtitle) {
+                    heroSubtitle.textContent = data.subtitle;
+                }
+                
+                if (heroButton && data.btnText) {
+                    heroButton.textContent = data.btnText;
+                    if (data.btnLink) {
+                        heroButton.setAttribute('href', data.btnLink);
+                    }
+                }
+                
+                // Update background if provided
+                if (data.background) {
+                    const heroSection = document.querySelector('.hero');
+                    if (heroSection) {
+                        heroSection.style.background = data.background;
+                    }
+                }
+            }
+            
+            if (section === 'solutions' && data) {
+                // Update solutions section
+                const solutionsTitle = document.querySelector('#solutions h2');
+                const solutionsSubtitle = document.querySelector('#solutions .subtitle');
+                
+                if (solutionsTitle && data.title) {
+                    solutionsTitle.textContent = data.title;
+                }
+                
+                if (solutionsSubtitle && data.subtitle) {
+                    solutionsSubtitle.textContent = data.subtitle;
+                }
+                
+                // Update solution cards if available
+                if (data.cards) {
+                    const solutionCards = document.querySelectorAll('.solution-card');
+                    data.cards.forEach((cardData, index) => {
+                        if (solutionCards[index]) {
+                            const card = solutionCards[index];
+                            const cardTitle = card.querySelector('h3');
+                            const cardDesc = card.querySelector('p');
+                            const cardIcon = card.querySelector('.icon');
+                            
+                            if (cardTitle && cardData.title) {
+                                cardTitle.textContent = cardData.title;
+                            }
+                            
+                            if (cardDesc && cardData.description) {
+                                cardDesc.textContent = cardData.description;
+                            }
+                            
+                            if (cardIcon && cardData.icon) {
+                                cardIcon.textContent = cardData.icon;
+                            }
+                        }
+                    });
+                }
+            }
+            
+            if (section === 'news' && data) {
+                // Update news section
+                const newsTitle = document.querySelector('#news h2');
+                const newsViewAll = document.querySelector('#news .view-all');
+                
+                if (newsTitle && data.title) {
+                    newsTitle.textContent = data.title;
+                }
+                
+                if (newsViewAll && data.viewAll) {
+                    newsViewAll.textContent = data.viewAll;
+                }
+            }
+            
+            console.log(`✅ Seção ${section} sincronizada com sucesso!`);
+        }
+        
+        // Override original loadAdminData to use new system
+        function loadAdminData() {
+            const siteData = JSON.parse(localStorage.getItem('b2c2SiteData')) || {};
+            
+            if (Object.keys(siteData).length > 0) {
+                console.log('📥 Carregando dados do novo sistema admin...', siteData);
+                
+                if (siteData.hero) {
+                    applySectionChanges('hero', siteData.hero);
+                }
+                
+                if (siteData.solutions) {
+                    applySectionChanges('solutions', siteData.solutions);
+                }
+                
+                if (siteData.news) {
+                    applySectionChanges('news', siteData.news);
+                }
+            }
+        }
+        
+        // Sync check every 2 seconds
+        setInterval(function() {
+            const lastSync = localStorage.getItem('b2c2-last-sync');
+            if (lastSync && window.lastKnownSync !== lastSync) {
+                window.lastKnownSync = lastSync;
+                loadContentFromAdmin();
+            }
+        }, 2000);
+        
     </script>
 </body>
 </html>

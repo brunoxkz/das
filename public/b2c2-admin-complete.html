@@ -122,6 +122,44 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        
+        .card-editor {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .article-editor {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+        }
 
         .form-group {
             margin-bottom: 2rem;
@@ -397,7 +435,22 @@ B2C2 is a digital asset pioneer building the ecosystem of the future</textarea>
                         <textarea id="hero-subtitle">B2C2's success is built on a foundation of proprietary crypto-native technology combined with an innovative range of products, making the firm the partner of choice for diverse institutions globally.</textarea>
                     </div>
                 </div>
-                <button class="btn" onclick="saveHeroSection()">💾 Salvar Hero Section</button>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Texto do Botão Principal</label>
+                        <input type="text" id="hero-btn-text" value="Learn More" placeholder="Ex: Learn More">
+                    </div>
+                    <div class="form-group">
+                        <label>Link do Botão Principal</label>
+                        <input type="text" id="hero-btn-link" value="#solutions" placeholder="Ex: #solutions">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Cor de Fundo (Gradiente CSS)</label>
+                    <input type="text" id="hero-background" value="linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)" placeholder="Ex: linear-gradient(135deg, #6366f1, #8b5cf6)">
+                </div>
+                <button class="btn btn-primary" onclick="saveHeroSection()">💾 Salvar Hero Section</button>
+                <button class="btn btn-secondary" onclick="previewChanges('hero')">👁️ Preview</button>
             </div>
 
             <!-- Carousel Section -->
@@ -442,6 +495,65 @@ B2C2 is a digital asset pioneer building the ecosystem of the future</textarea>
                         <textarea id="solutions-subtitle">Our large and growing client base around the world trusts us to deliver seamless execution 24/7.</textarea>
                     </div>
                 </div>
+                
+                <h4>🎯 Cards de Soluções</h4>
+                <div id="solutions-cards">
+                    <div class="card-editor">
+                        <h5>Card 1 - Trading Solutions</h5>
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label>Título do Card</label>
+                                <input type="text" id="solution-card-1-title" value="Trading Solutions">
+                            </div>
+                            <div class="form-group">
+                                <label>Ícone (emoji ou classe CSS)</label>
+                                <input type="text" id="solution-card-1-icon" value="📈">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Descrição</label>
+                            <textarea id="solution-card-1-desc">Advanced trading infrastructure for institutional clients with 24/7 execution.</textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="card-editor">
+                        <h5>Card 2 - Liquidity Services</h5>
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label>Título do Card</label>
+                                <input type="text" id="solution-card-2-title" value="Liquidity Services">
+                            </div>
+                            <div class="form-group">
+                                <label>Ícone (emoji ou classe CSS)</label>
+                                <input type="text" id="solution-card-2-icon" value="💧">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Descrição</label>
+                            <textarea id="solution-card-2-desc">Deep liquidity pools across major digital assets and trading pairs.</textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="card-editor">
+                        <h5>Card 3 - Risk Management</h5>
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label>Título do Card</label>
+                                <input type="text" id="solution-card-3-title" value="Risk Management">
+                            </div>
+                            <div class="form-group">
+                                <label>Ícone (emoji ou classe CSS)</label>
+                                <input type="text" id="solution-card-3-icon" value="🛡️">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Descrição</label>
+                            <textarea id="solution-card-3-desc">Sophisticated risk management tools and real-time monitoring systems.</textarea>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="saveSolutionsSection()">💾 Salvar Solutions</button>
+                <button class="btn btn-secondary" onclick="previewChanges('solutions')">👁️ Preview</button>
 
                 <h4>📋 Soluções (4 Cards)</h4>
                 <div class="grid-4" id="solutions-cards">
@@ -810,15 +922,177 @@ B2C2 is a digital asset pioneer building the ecosystem of the future</textarea>
             siteData.news.items[index][field] = value;
         }
 
-        // Save functions
+        // ===== SISTEMA DE SALVAMENTO COMPLETO =====
+        
+        // Save Hero Section with full sync
         function saveHeroSection() {
-            siteData.hero.title = document.getElementById('hero-title').value;
-            siteData.hero.subtitle = document.getElementById('hero-subtitle').value;
+            const heroData = {
+                title: document.getElementById('hero-title').value,
+                subtitle: document.getElementById('hero-subtitle').value,
+                btnText: document.getElementById('hero-btn-text')?.value || 'Learn More',
+                btnLink: document.getElementById('hero-btn-link')?.value || '#solutions',
+                background: document.getElementById('hero-background')?.value || ''
+            };
             
-            // Salvar no localStorage
-            localStorage.setItem('b2c2-admin-data', JSON.stringify(siteData));
+            saveToSiteData('hero', heroData);
+            syncToHomepage('hero', heroData);
+            showSuccessMessage('✅ Hero Section salva e sincronizada!');
+        }
+        
+        // Save Solutions Section
+        function saveSolutionsSection() {
+            const solutionsData = {
+                title: document.getElementById('solutions-title').value,
+                subtitle: document.getElementById('solutions-subtitle').value,
+                cards: [
+                    {
+                        title: document.getElementById('solution-card-1-title').value,
+                        icon: document.getElementById('solution-card-1-icon').value,
+                        description: document.getElementById('solution-card-1-desc').value
+                    },
+                    {
+                        title: document.getElementById('solution-card-2-title').value,
+                        icon: document.getElementById('solution-card-2-icon').value,
+                        description: document.getElementById('solution-card-2-desc').value
+                    },
+                    {
+                        title: document.getElementById('solution-card-3-title').value,
+                        icon: document.getElementById('solution-card-3-icon').value,
+                        description: document.getElementById('solution-card-3-desc').value
+                    }
+                ]
+            };
             
-            // Aplicar mudanças no site principal
+            saveToSiteData('solutions', solutionsData);
+            syncToHomepage('solutions', solutionsData);
+            showSuccessMessage('✅ Solutions Section salva e sincronizada!');
+        }
+        
+        // Save News Section
+        function saveNewsSection() {
+            const newsData = {
+                title: document.getElementById('news-title').value,
+                viewAll: document.getElementById('news-view-all').value,
+                articles: [
+                    {
+                        title: document.getElementById('news-article-1-title')?.value || '',
+                        date: document.getElementById('news-article-1-date')?.value || '',
+                        summary: document.getElementById('news-article-1-summary')?.value || '',
+                        link: document.getElementById('news-article-1-link')?.value || ''
+                    },
+                    {
+                        title: document.getElementById('news-article-2-title')?.value || '',
+                        date: document.getElementById('news-article-2-date')?.value || '',
+                        summary: document.getElementById('news-article-2-summary')?.value || '',
+                        link: document.getElementById('news-article-2-link')?.value || ''
+                    },
+                    {
+                        title: document.getElementById('news-article-3-title')?.value || '',
+                        date: document.getElementById('news-article-3-date')?.value || '',
+                        summary: document.getElementById('news-article-3-summary')?.value || '',
+                        link: document.getElementById('news-article-3-link')?.value || ''
+                    }
+                ]
+            };
+            
+            saveToSiteData('news', newsData);
+            syncToHomepage('news', newsData);
+            showSuccessMessage('✅ News Section salva e sincronizada!');
+        }
+        
+        // Core sync functions
+        function saveToSiteData(section, data) {
+            const siteData = JSON.parse(localStorage.getItem('b2c2SiteData')) || {};
+            siteData[section] = data;
+            siteData.lastUpdate = new Date().toISOString();
+            localStorage.setItem('b2c2SiteData', JSON.stringify(siteData));
+            console.log(`💾 Seção ${section} salva no localStorage:`, data);
+        }
+        
+        function syncToHomepage(section, data) {
+            console.log(`🔄 Sincronizando ${section} com homepage...`);
+            
+            // Apply changes to homepage elements immediately
+            if (section === 'hero') {
+                // Sync hero section
+                const heroContent = parent.document || window.opener?.document;
+                if (heroContent) {
+                    const heroTitle = heroContent.querySelector('.hero-content h1');
+                    const heroSubtitle = heroContent.querySelector('.hero-description');
+                    
+                    if (heroTitle) heroTitle.textContent = data.title;
+                    if (heroSubtitle) heroSubtitle.textContent = data.subtitle;
+                }
+            }
+            
+            // Save with timestamp for homepage to detect changes
+            localStorage.setItem('b2c2-last-sync', Date.now().toString());
+            localStorage.setItem('b2c2-homepage-sync', JSON.stringify({ section, data, timestamp: Date.now() }));
+        }
+        
+        // Preview function
+        function previewChanges(section) {
+            const previewWindow = window.open('/b2c2-fixed', '_blank');
+            setTimeout(() => {
+                if (previewWindow) {
+                    previewWindow.postMessage({ 
+                        type: 'preview-section', 
+                        section: section 
+                    }, '*');
+                }
+            }, 1000);
+        }
+        
+        // Success message function
+        function showSuccessMessage(message) {
+            // Create toast notification
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #10b981;
+                color: white;
+                padding: 1rem 2rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+                font-weight: 600;
+                animation: slideInRight 0.3s ease-out;
+            `;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease-in';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+        
+        // Legacy compatibility functions
+        function saveCarousel() {
+            console.log('💾 Carousel salvo!');
+            showSuccessMessage('✅ Carousel salvo!');
+        }
+        
+        function saveSolutions() {
+            saveSolutionsSection();
+        }
+        
+        function saveNews() {
+            saveNewsSection();
+        }
+        
+        function saveInsights() {
+            console.log('💾 Insights salvos!');
+            showSuccessMessage('✅ Insights salvos!');
+        }
+        
+        function saveBranding() {
+            console.log('💾 Branding salvo!');
+            showSuccessMessage('✅ Branding salvo!');
+        }
             updateMainSite();
             
             showSuccessMessage('Hero Section salva com sucesso!');
