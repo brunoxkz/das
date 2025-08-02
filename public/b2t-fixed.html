@@ -173,6 +173,12 @@
             margin: 0 auto;
             padding: 0;
             height: 200px;
+            overflow: hidden;
+            cursor: grab;
+        }
+        
+        .hero-carousel-container:active {
+            cursor: grabbing;
         }
 
         .hero-carousel {
@@ -2783,55 +2789,140 @@
             }
         }
         
-        // =================== ENHANCED CAROUSEL FUNCTIONS ===================
+        // =================== CARROSSEL DRAG + SETAS SINCRONIZADAS ===================
         
         let currentSlide = 0;
         const totalSlides = 4; // Number of carousel cards (GENIUS, HASHKEY, PV01, OPENPAYD)
+        let isUserInteracting = false;
+        let dragStartX = 0;
+        let dragCurrentX = 0;
+        let initialTranslate = 0;
+        let animationID;
+        
+        function initializeCarousel() {
+            const carousel = document.getElementById('hero-carousel');
+            if (!carousel) return;
+            
+            // Touch/Mouse events para arrastar
+            carousel.addEventListener('touchstart', touchStart);
+            carousel.addEventListener('touchmove', touchMove);
+            carousel.addEventListener('touchend', touchEnd);
+            carousel.addEventListener('mousedown', touchStart);
+            carousel.addEventListener('mousemove', touchMove);
+            carousel.addEventListener('mouseup', touchEnd);
+            carousel.addEventListener('mouseleave', touchEnd);
+            
+            // Prevenir comportamento padrão
+            carousel.addEventListener('dragstart', e => e.preventDefault());
+            
+            console.log('🎠 Carrossel inicializado com drag & drop');
+        }
         
         function slideCarousel(direction) {
+            if (isUserInteracting) return; // Não interferir se usuário está arrastando
+            
             console.log('🎠 Carousel - direção:', direction, 'slide atual:', currentSlide);
             const carousel = document.getElementById('hero-carousel');
-            if (!carousel) {
-                console.error('❌ Carousel não encontrado');
-                return;
-            }
+            if (!carousel) return;
             
             // Update current slide with infinite loop
             currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
             console.log('🎠 Novo slide:', currentSlide);
             
-            // CÁLCULO SIMPLES E EFETIVO - funciona em qualquer resolução
-            const cardWidth = window.innerWidth <= 768 ? 
-                (carousel.parentElement.offsetWidth - 32) : // Mobile: largura container - padding
-                296; // Desktop: 280px card + 16px gap
+            updateCarouselPosition();
             
-            const translateX = -(currentSlide * cardWidth);
-            carousel.style.transform = `translateX(${translateX}px)`;
-            carousel.style.transition = 'transform 0.5s ease-in-out';
-            
-            console.log('🎠 Card width:', cardWidth, 'TranslateX:', translateX);
-            
-            // Add visual feedback to buttons
-            const prevBtn = document.querySelector('.carousel-prev');
-            const nextBtn = document.querySelector('.carousel-next');
-            
-            if (direction === -1 && prevBtn) {
-                prevBtn.style.transform = 'translateY(-50%) scale(0.9)';
+            // Visual feedback nas setas
+            const btn = direction === -1 ? document.querySelector('.carousel-prev') : document.querySelector('.carousel-next');
+            if (btn) {
+                btn.style.transform = 'translateY(-50%) scale(0.9)';
                 setTimeout(() => {
-                    prevBtn.style.transform = 'translateY(-50%) scale(1)';
-                }, 150);
-            } else if (direction === 1 && nextBtn) {
-                nextBtn.style.transform = 'translateY(-50%) scale(0.9)';
-                setTimeout(() => {
-                    nextBtn.style.transform = 'translateY(-50%) scale(1)';
+                    btn.style.transform = 'translateY(-50%) scale(1)';
                 }, 150);
             }
         }
         
-        // Auto-advance carousel every 5 seconds
+        function updateCarouselPosition() {
+            const carousel = document.getElementById('hero-carousel');
+            if (!carousel) return;
+            
+            // Cálculo baseado na largura real do card
+            const firstCard = carousel.querySelector('.hero-card');
+            if (!firstCard) return;
+            
+            const cardWidth = firstCard.offsetWidth + 16; // width + gap
+            const translateX = -(currentSlide * cardWidth);
+            
+            carousel.style.transform = `translateX(${translateX}px)`;
+            carousel.style.transition = isUserInteracting ? 'none' : 'transform 0.5s ease-out';
+            
+            console.log('🎠 Posição atualizada:', translateX, 'px');
+        }
+        
+        function touchStart(e) {
+            isUserInteracting = true;
+            const carousel = document.getElementById('hero-carousel');
+            
+            dragStartX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            
+            // Pegar posição atual
+            const transform = getComputedStyle(carousel).transform;
+            if (transform !== 'none') {
+                const matrix = new DOMMatrix(transform);
+                initialTranslate = matrix.m41;
+            } else {
+                initialTranslate = 0;
+            }
+            
+            carousel.style.transition = 'none';
+            console.log('🖱️ Drag start:', dragStartX);
+        }
+        
+        function touchMove(e) {
+            if (!isUserInteracting) return;
+            e.preventDefault();
+            
+            const carousel = document.getElementById('hero-carousel');
+            dragCurrentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            
+            const dragDistance = dragCurrentX - dragStartX;
+            const newTranslate = initialTranslate + dragDistance;
+            
+            carousel.style.transform = `translateX(${newTranslate}px)`;
+        }
+        
+        function touchEnd(e) {
+            if (!isUserInteracting) return;
+            isUserInteracting = false;
+            
+            const carousel = document.getElementById('hero-carousel');
+            const dragDistance = dragCurrentX - dragStartX;
+            const threshold = 50; // Pixels mínimos para trocar slide
+            
+            if (Math.abs(dragDistance) > threshold) {
+                if (dragDistance > 0) {
+                    // Arrastar para direita = slide anterior
+                    currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+                } else {
+                    // Arrastar para esquerda = próximo slide  
+                    currentSlide = (currentSlide + 1) % totalSlides;
+                }
+            }
+            
+            updateCarouselPosition();
+            console.log('🖱️ Drag end. Novo slide:', currentSlide);
+        }
+        
+        // Auto-advance carousel every 5 seconds (só se usuário não estiver interagindo)
         setInterval(() => {
-            slideCarousel(1);
+            if (!isUserInteracting) {
+                slideCarousel(1);
+            }
         }, 5000);
+        
+        // Inicializar carrossel quando DOM carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeCarousel();
+        });
         
         // =================== SCROLL TO SECTION ===================
         
