@@ -2754,30 +2754,43 @@
         // =================== MOBILE MENU FUNCTIONS ===================
         
         function toggleMobileMenu() {
-            console.log('🔄 Toggle menu mobile');
+            console.log('🔄 Toggle menu mobile - INICIANDO');
             const menu = document.getElementById('mobileMenu');
             const overlay = document.getElementById('mobileOverlay');
             
+            console.log('🔍 Elementos encontrados:', {
+                menu: !!menu,
+                overlay: !!overlay,
+                menuClasses: menu?.className,
+                overlayClasses: overlay?.className
+            });
+            
             if (menu && overlay) {
                 const isActive = menu.classList.contains('active');
-                console.log('Menu ativo:', isActive);
+                console.log('📱 Menu está ativo?', isActive);
                 
                 if (isActive) {
-                    closeMobileMenu();
-                    console.log('✅ Menu fechado');
+                    // Fechar menu
+                    menu.classList.remove('active');
+                    overlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                    console.log('✅ Menu mobile FECHADO');
                 } else {
+                    // Abrir menu
                     menu.classList.add('active');
                     overlay.classList.add('active');
                     document.body.style.overflow = 'hidden';
-                    console.log('✅ Menu aberto');
+                    console.log('✅ Menu mobile ABERTO');
                 }
             } else {
-                console.error('❌ Elementos do menu não encontrados', {menu, overlay});
+                console.error('❌ ERRO: Elementos do menu não encontrados');
+                console.error('Menu element:', menu);
+                console.error('Overlay element:', overlay);
             }
         }
         
         function closeMobileMenu() {
-            console.log('🔄 Fechando menu mobile');
+            console.log('🔄 Fechando menu mobile - FUNÇÃO DIRETA');
             const menu = document.getElementById('mobileMenu');
             const overlay = document.getElementById('mobileOverlay');
             
@@ -2785,7 +2798,9 @@
                 menu.classList.remove('active');
                 overlay.classList.remove('active');
                 document.body.style.overflow = '';
-                console.log('✅ Menu mobile fechado');
+                console.log('✅ Menu mobile fechado com sucesso');
+            } else {
+                console.error('❌ Erro ao fechar: elementos não encontrados');
             }
         }
         
