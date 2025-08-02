@@ -91,6 +91,12 @@
             color: #6366f1;
         }
 
+        .nav-menu a.active {
+            color: #6366f1;
+            font-weight: 600;
+            border-bottom: 2px solid #6366f1;
+        }
+
         .nav-subscribe {
             background: #6366f1;
             color: white !important;
@@ -587,6 +593,187 @@
             .institutional-container {
                 grid-template-columns: 1fr;
                 gap: 3rem;
+            }
+        }
+
+        /* Contact Modal Styles */
+        .contact-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+        }
+
+        .contact-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .contact-modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .contact-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .contact-modal-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .contact-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            color: #666;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .contact-modal-close:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .contact-modal-body {
+            padding: 1.5rem;
+        }
+
+        .contact-form .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .contact-form label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        .contact-form input,
+        .contact-form select,
+        .contact-form textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: border-color 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .contact-form input:focus,
+        .contact-form select:focus,
+        .contact-form textarea:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .contact-form textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        .btn-primary, .btn-secondary {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: #6366f1;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5856eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Smooth Scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        @media (max-width: 768px) {
+            .contact-modal-content {
+                width: 95%;
+                margin: 1rem;
+            }
+            
+            .contact-modal-header, .contact-modal-body {
+                padding: 1rem;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .btn-primary, .btn-secondary {
+                width: 100%;
             }
         }
 
@@ -1344,19 +1531,67 @@
                 <img src="/images-b2t/b2t-logo.png" alt="B2T Exchange" style="height: 45px; width: auto;">
             </a>
             <ul class="nav-menu">
-                <li><a href="#solutions">Solutions</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#news">News</a></li>
-                <li><a href="#insights">Insights</a></li>
-                <li><a href="#join">Careers</a></li>
-                <li><a href="#contact">Contact</a></li>
-                <li><a href="#subscribe" class="nav-subscribe">Subscribe</a></li>
+                <li><a href="#hero" class="nav-link">Home</a></li>
+                <li><a href="#solutions" class="nav-link">Solutions</a></li>
+                <li><a href="#about" class="nav-link">About</a></li>
+                <li><a href="#news" class="nav-link">News</a></li>
+                <li><a href="#insights" class="nav-link">Insights</a></li>
+                <li><a href="#" class="nav-link" onclick="openContactModal(); return false;">Contact</a></li>
+                <li><a href="#subscribe" class="nav-subscribe nav-link">Subscribe</a></li>
             </ul>
         </nav>
     </header>
 
+    <!-- Contact Modal -->
+    <div id="contactModal" class="contact-modal">
+        <div class="contact-modal-content">
+            <div class="contact-modal-header">
+                <h3>Contact B2T Exchange</h3>
+                <button class="contact-modal-close" onclick="closeContactModal()">&times;</button>
+            </div>
+            <div class="contact-modal-body">
+                <form id="contactForm" class="contact-form">
+                    <div class="form-group">
+                        <label for="contactName">Full Name</label>
+                        <input type="text" id="contactName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactEmail">Email Address</label>
+                        <input type="email" id="contactEmail" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactCompany">Company</label>
+                        <input type="text" id="contactCompany" name="company">
+                    </div>
+                    <div class="form-group">
+                        <label for="contactSubject">Subject</label>
+                        <select id="contactSubject" name="subject" required>
+                            <option value="">Select a subject</option>
+                            <option value="institutional-solutions">Institutional Solutions</option>
+                            <option value="trading-overview">Trading Overview</option>
+                            <option value="otc-products">OTC Products</option>
+                            <option value="liquidity-partner">Liquidity Partner</option>
+                            <option value="client-onboarding">Client Onboarding</option>
+                            <option value="partnership">Partnership Opportunities</option>
+                            <option value="support">Technical Support</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactMessage">Message</label>
+                        <textarea id="contactMessage" name="message" rows="5" required placeholder="Tell us about your requirements or questions..."></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeContactModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">Send Message</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Hero Section -->
-    <section class="hero">
+    <section id="hero" class="hero">
         <div class="hero-content">
             <div class="hero-text">
                 <h1 data-editable="hero-title" contenteditable="false">
@@ -1560,7 +1795,7 @@
     </section>
 
     <!-- Subscribe Section -->
-    <section class="subscribe-section">
+    <section id="subscribe" class="subscribe-section">
         <div class="subscribe-content">
             <div class="subscribe-text">
                 <h2>Subscribe</h2>
@@ -2069,6 +2304,168 @@
                 loadContentFromAdmin();
             }
         }, 2000);
+        
+        // =================== CONTACT MODAL FUNCTIONS ===================
+        
+        function openContactModal() {
+            const modal = document.getElementById('contactModal');
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                
+                // Focus on first input
+                setTimeout(() => {
+                    const firstInput = modal.querySelector('input[type="text"]');
+                    if (firstInput) firstInput.focus();
+                }, 100);
+            }
+        }
+        
+        function closeContactModal() {
+            const modal = document.getElementById('contactModal');
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+                
+                // Reset form
+                const form = document.getElementById('contactForm');
+                if (form) form.reset();
+            }
+        }
+        
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('contactModal');
+            if (modal && e.target === modal) {
+                closeContactModal();
+            }
+        });
+        
+        // Close modal with ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeContactModal();
+            }
+        });
+        
+        // =================== CONTACT FORM SUBMISSION ===================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const contactForm = document.getElementById('contactForm');
+            if (contactForm) {
+                contactForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const formData = new FormData(contactForm);
+                    const data = {
+                        name: formData.get('name'),
+                        email: formData.get('email'),
+                        company: formData.get('company'),
+                        subject: formData.get('subject'),
+                        message: formData.get('message')
+                    };
+                    
+                    // Show loading state
+                    const submitBtn = contactForm.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.textContent;
+                    submitBtn.textContent = 'Sending...';
+                    submitBtn.disabled = true;
+                    
+                    // Simulate sending email (replace with actual email service)
+                    setTimeout(() => {
+                        alert('✅ Message sent successfully! We will contact you soon.');
+                        console.log('Contact form submitted:', data);
+                        
+                        // Reset form and close modal
+                        contactForm.reset();
+                        closeContactModal();
+                        
+                        // Reset button
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                        
+                        // Here you would typically send the data to your backend
+                        // fetch('/api/contact', { method: 'POST', body: JSON.stringify(data) })
+                        
+                    }, 1500);
+                });
+            }
+        });
+        
+        // =================== SMOOTH SCROLL NAVIGATION ===================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add smooth scroll behavior to all nav links
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    const href = this.getAttribute('href');
+                    
+                    // Only handle internal anchor links
+                    if (href && href.startsWith('#') && href !== '#') {
+                        e.preventDefault();
+                        
+                        const targetElement = document.querySelector(href);
+                        if (targetElement) {
+                            // Calculate offset for fixed header
+                            const headerHeight = document.querySelector('.header')?.offsetHeight || 0;
+                            const targetPosition = targetElement.offsetTop - headerHeight - 20;
+                            
+                            // Smooth scroll to target
+                            window.scrollTo({
+                                top: targetPosition,
+                                behavior: 'smooth'
+                            });
+                            
+                            // Update active nav state
+                            updateActiveNavItem(href);
+                        }
+                    }
+                });
+            });
+            
+            // Update active nav item on scroll
+            window.addEventListener('scroll', throttle(updateActiveNavOnScroll, 100));
+        });
+        
+        function updateActiveNavItem(activeHref) {
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === activeHref) {
+                    link.classList.add('active');
+                }
+            });
+        }
+        
+        function updateActiveNavOnScroll() {
+            const sections = document.querySelectorAll('section[id]');
+            const scrollPos = window.scrollY + 100; // Offset for header
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.offsetHeight;
+                const sectionId = section.getAttribute('id');
+                
+                if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+                    updateActiveNavItem(`#${sectionId}`);
+                }
+            });
+        }
+        
+        // Throttle function for performance
+        function throttle(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
         
     </script>
 </body>
