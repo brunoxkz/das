@@ -483,6 +483,113 @@
             font-weight: 600;
         }
 
+        /* New Institutional Solutions Section */
+        .institutional-solutions {
+            background: linear-gradient(135deg, #a91fb5 0%, #8b5aa6 50%, #6b4895 100%);
+            padding: 4rem 2rem;
+            color: white;
+        }
+
+        .institutional-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6rem;
+            align-items: center;
+        }
+
+        .institutional-left h2 {
+            font-size: 2rem;
+            font-weight: 400;
+            color: white;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .institutional-left p {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 2rem;
+            line-height: 1.5;
+            max-width: 320px;
+        }
+
+        .institutional-explore-btn {
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 0.7rem 1.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .institutional-explore-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .institutional-right {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .institutional-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .institutional-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .institutional-menu-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            padding-left: 0.5rem;
+        }
+
+        .institutional-menu-icon {
+            color: rgba(255, 255, 255, 0.8);
+            min-width: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .institutional-menu-text {
+            flex: 1;
+            font-weight: 400;
+            color: white;
+            font-size: 0.95rem;
+        }
+
+        .institutional-menu-arrow {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.6);
+            transition: all 0.2s ease;
+            font-weight: 300;
+        }
+
+        .institutional-menu-item:hover .institutional-menu-arrow {
+            color: rgba(255, 255, 255, 0.9);
+            transform: translateX(3px);
+        }
+
+        @media (max-width: 768px) {
+            .institutional-container {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+        }
+
         /* Institutional Solutions Section */
         .institutional-solutions {
             background: linear-gradient(135deg, #d946ef 0%, #7c3aed 50%, #3b82f6 100%);
@@ -1309,66 +1416,53 @@
     </section>
 
     <!-- Institutional Solutions -->
-    <section class="solutions" id="solutions">
-        <div class="solutions-content">
-            <div class="solutions-header">
-                <div class="solutions-left">
-                    <h2 data-editable="solutions-title" contenteditable="false">Institutional solutions</h2>
-                    <p data-editable="solutions-subtitle" contenteditable="false">Our large and growing client base around the world trusts us to deliver seamless execution 24/7.</p>
-                    <button class="solutions-explore-btn" data-editable="solutions-btn" contenteditable="false">Explore institutional solutions →</button>
-                </div>
-                <div class="solutions-right">
-                    <div class="solutions-faq">
-                        <div class="solution-item" onclick="toggleFaq(this)">
-                            <div class="solution-header">
-                                <div class="solution-icon">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                                    </svg>
-                                </div>
-                                <span class="solution-title" data-editable="solution-1-title" contenteditable="false">Trading overview</span>
-                                <div class="solution-arrow">›</div>
-                            </div>
-                        </div>
-                        <div class="solution-item" onclick="toggleFaq(this)">
-                            <div class="solution-header">
-                                <div class="solution-icon">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                                        <line x1="9" y1="9" x2="15" y2="15"/>
-                                        <line x1="15" y1="9" x2="9" y2="15"/>
-                                    </svg>
-                                </div>
-                                <span class="solution-title" data-editable="solution-2-title" contenteditable="false">OTC Products</span>
-                                <div class="solution-arrow">›</div>
-                            </div>
-                        </div>
-                        <div class="solution-item" onclick="toggleFaq(this)">
-                            <div class="solution-header">
-                                <div class="solution-icon">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="12" cy="12" r="3"/>
-                                        <path d="M12 1v6m0 6v6"/>
-                                        <path d="M1 12h6m6 0h6"/>
-                                    </svg>
-                                </div>
-                                <span class="solution-title" data-editable="solution-3-title" contenteditable="false">Liquidity Partner</span>
-                                <div class="solution-arrow">›</div>
-                            </div>
-                        </div>
-                        <div class="solution-item" onclick="toggleFaq(this)">
-                            <div class="solution-header">
-                                <div class="solution-icon">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                        <circle cx="12" cy="7" r="4"/>
-                                    </svg>
-                                </div>
-                                <span class="solution-title" data-editable="solution-4-title" contenteditable="false">Client onboarding</span>
-                                <div class="solution-arrow">›</div>
-                            </div>
-                        </div>
+    <section class="institutional-solutions" id="solutions">
+        <div class="institutional-container">
+            <div class="institutional-left">
+                <h2 data-editable="solutions-title" contenteditable="false">Institutional solutions</h2>
+                <p data-editable="solutions-subtitle" contenteditable="false">Our large and growing client base around the world trusts us to deliver seamless execution 24/7.</p>
+                <button class="institutional-explore-btn" data-editable="solutions-btn" contenteditable="false">Explore institutional solutions ></button>
+            </div>
+            <div class="institutional-right">
+                <div class="institutional-menu-item">
+                    <div class="institutional-menu-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
+                        </svg>
                     </div>
+                    <span class="institutional-menu-text" data-editable="solution-1-title" contenteditable="false">Trading overview</span>
+                    <div class="institutional-menu-arrow">></div>
+                </div>
+                <div class="institutional-menu-item">
+                    <div class="institutional-menu-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <rect x="7" y="7" width="10" height="10" rx="1" ry="1"/>
+                        </svg>
+                    </div>
+                    <span class="institutional-menu-text" data-editable="solution-2-title" contenteditable="false">OTC Products</span>
+                    <div class="institutional-menu-arrow">></div>
+                </div>
+                <div class="institutional-menu-item">
+                    <div class="institutional-menu-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M12 1v6m0 6v6"/>
+                            <path d="m21 21-4.35-4.35M3 3l4.35 4.35"/>
+                        </svg>
+                    </div>
+                    <span class="institutional-menu-text" data-editable="solution-3-title" contenteditable="false">Liquidity Partner</span>
+                    <div class="institutional-menu-arrow">></div>
+                </div>
+                <div class="institutional-menu-item">
+                    <div class="institutional-menu-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </div>
+                    <span class="institutional-menu-text" data-editable="solution-4-title" contenteditable="false">Client onboarding</span>
+                    <div class="institutional-menu-arrow">></div>
                 </div>
             </div>
         </div>
