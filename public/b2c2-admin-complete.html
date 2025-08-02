@@ -387,28 +387,28 @@
                 <p>Sistema de Edição Completo</p>
             </div>
             <ul class="sidebar-menu">
-                <li><a href="#" class="menu-item active" data-section="hero">
+                <li><a href="javascript:void(0)" class="menu-item active" data-section="hero" onclick="showSection('hero'); setActiveMenu(this);">
                     <span class="icon">🎯</span> Hero Section
                 </a></li>
-                <li><a href="#" class="menu-item" data-section="carousel">
+                <li><a href="javascript:void(0)" class="menu-item" data-section="carousel" onclick="showSection('carousel'); setActiveMenu(this);">
                     <span class="icon">🎠</span> Carousel Homepage
                 </a></li>
-                <li><a href="#" class="menu-item" data-section="solutions">
+                <li><a href="javascript:void(0)" class="menu-item" data-section="solutions" onclick="showSection('solutions'); setActiveMenu(this);">
                     <span class="icon">💼</span> Institutional Solutions
                 </a></li>
-                <li><a href="#" class="menu-item" data-section="news">
+                <li><a href="javascript:void(0)" class="menu-item" data-section="news" onclick="showSection('news'); setActiveMenu(this);">
                     <span class="icon">📰</span> Latest News
                 </a></li>
-                <li><a href="#" class="menu-item" data-section="insights">
+                <li><a href="javascript:void(0)" class="menu-item" data-section="insights" onclick="showSection('insights'); setActiveMenu(this);">
                     <span class="icon">💡</span> Institutional Insights
                 </a></li>
-                <li><a href="#" class="menu-item" data-section="branding">
+                <li><a href="javascript:void(0)" class="menu-item" data-section="branding" onclick="showSection('branding'); setActiveMenu(this);">
                     <span class="icon">🎨</span> Logo & Branding
                 </a></li>
-                <li><a href="#" class="menu-item" data-section="pages">
+                <li><a href="javascript:void(0)" class="menu-item" data-section="pages" onclick="showSection('pages'); setActiveMenu(this);">
                     <span class="icon">📄</span> Páginas Internas
                 </a></li>
-                <li><a href="#" class="menu-item" data-section="settings">
+                <li><a href="javascript:void(0)" class="menu-item" data-section="settings" onclick="showSection('settings'); setActiveMenu(this);">
                     <span class="icon">⚙️</span> Configurações
                 </a></li>
             </ul>
@@ -1266,6 +1266,24 @@ B2C2 is a digital asset pioneer building the ecosystem of the future</textarea>
         function previewSite() {
             window.open('/b2c2-fixed', '_blank');
         }
+        
+        // Set active menu item
+        function setActiveMenu(clickedElement) {
+            console.log('🎯 setActiveMenu chamada para:', clickedElement.getAttribute('data-section'));
+            
+            // Remove active class from all menu items
+            const menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(item => {
+                item.classList.remove('active');
+                console.log('  - Removida classe active de:', item.getAttribute('data-section'));
+            });
+            
+            // Add active class to clicked item
+            clickedElement.classList.add('active');
+            console.log('  ✅ Classe active adicionada a:', clickedElement.getAttribute('data-section'));
+        }
+        
+        console.log('🚀 Admin B2C2 - Todas as funções carregadas!');
     </script>
 </body>
 </html>
