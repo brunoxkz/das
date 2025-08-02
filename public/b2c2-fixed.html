@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B2C2 | Digital Asset Pioneer</title>
+    <title>B2T | Digital Asset Pioneer</title>
     <style>
         * {
             margin: 0;
@@ -109,7 +109,7 @@
             color: white !important;
         }
 
-        /* Hero Section - B2C2 ORIGINAL */
+        /* Hero Section - B2T ORIGINAL */
         .hero {
             background: linear-gradient(135deg, #d946ef 0%, #7c3aed 50%, #3b82f6 100%);
             color: white;
@@ -244,39 +244,46 @@
             font-size: 0.75rem;
         }
 
-        /* Navigation arrows - B2C2 ORIGINAL */
+        /* Navigation arrows - B2T ENHANCED */
         .carousel-nav {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            width: 32px;
-            height: 32px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid rgba(99, 102, 241, 0.3);
+            color: #6366f1;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: normal;
-            transition: all 0.2s ease;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s ease;
             backdrop-filter: blur(10px);
-            z-index: 10;
+            z-index: 15;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
         .carousel-nav:hover {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: #6366f1;
+            color: white;
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .carousel-nav:active {
+            transform: translateY(-50%) scale(0.95);
         }
 
         .carousel-prev {
-            left: -16px;
+            left: 15px;
         }
 
         .carousel-next {
-            right: -16px;
+            right: 15px;
         }
 
         /* Institutional Solutions */
@@ -1385,6 +1392,16 @@
                 display: none;
             }
 
+            /* News Grid Mobile Spacing Fix */
+            .news-grid {
+                gap: 1.5rem !important;
+                padding: 0 1rem;
+            }
+
+            .news-item {
+                margin-bottom: 1rem;
+            }
+
             .hero {
                 padding: 6rem 1rem 4rem;
                 text-align: center;
@@ -1496,19 +1513,138 @@
                 align-items: center;
             }
 
+            /* Mobile Carousel Navigation */
             .carousel-nav {
-                position: relative;
-                top: auto;
-                transform: none;
-                margin: 1rem 0.5rem 0;
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+                background: rgba(255, 255, 255, 0.95);
+                border: 2px solid #6366f1;
+                color: #6366f1;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            }
+
+            .carousel-nav:hover {
+                background: #6366f1;
+                color: white;
+                transform: translateY(-50%) scale(1.05);
             }
 
             .carousel-prev {
-                left: auto;
+                left: 5px;
             }
 
             .carousel-next {
-                right: auto;
+                right: 5px;
+            }
+
+            /* Mobile Menu Hamburger */
+            .mobile-menu-toggle {
+                display: block;
+                background: linear-gradient(135deg, #6366f1, #8b5cf6);
+                color: white;
+                border: none;
+                padding: 0.75rem;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 1.2rem;
+                box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            }
+
+            .mobile-menu {
+                position: fixed;
+                top: 0;
+                left: -100%;
+                width: 280px;
+                height: 100vh;
+                background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+                transition: left 0.3s ease;
+                z-index: 1000;
+                padding: 2rem;
+                box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+            }
+
+            .mobile-menu.active {
+                left: 0;
+            }
+
+            .mobile-menu-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 2rem;
+                padding-bottom: 1rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            }
+
+            .mobile-menu-close {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 1.5rem;
+                cursor: pointer;
+                padding: 0.5rem;
+                border-radius: 4px;
+                transition: background 0.2s ease;
+            }
+
+            .mobile-menu-close:hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
+
+            .mobile-nav-menu {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            .mobile-nav-menu li {
+                margin-bottom: 1rem;
+            }
+
+            .mobile-nav-menu a {
+                color: white;
+                text-decoration: none;
+                font-size: 1.1rem;
+                font-weight: 500;
+                padding: 1rem;
+                display: block;
+                border-radius: 8px;
+                transition: all 0.2s ease;
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+            }
+
+            .mobile-nav-menu a:hover {
+                background: rgba(255, 255, 255, 0.2);
+                transform: translateX(5px);
+            }
+
+            .mobile-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+                z-index: 999;
+            }
+
+            .mobile-overlay.active {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            /* Display mobile menu elements on mobile */
+            .mobile-menu,
+            .mobile-overlay {
+                display: block;
             }
 
             .solutions-content,
@@ -1539,8 +1675,27 @@
                 <li><a href="#" class="nav-link" onclick="openContactModal(); return false;">Contact</a></li>
                 <li><a href="#subscribe" class="nav-subscribe nav-link">Subscribe</a></li>
             </ul>
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" style="display: none;">☰</button>
         </nav>
     </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileMenu()"></div>
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <img src="/images-b2t/b2t-logo.png" alt="B2T Exchange" style="height: 35px; width: auto;">
+            <button class="mobile-menu-close" onclick="closeMobileMenu()">×</button>
+        </div>
+        <ul class="mobile-nav-menu">
+            <li><a href="#hero" onclick="closeMobileMenu()">Home</a></li>
+            <li><a href="#solutions" onclick="closeMobileMenu()">Solutions</a></li>
+            <li><a href="#about" onclick="closeMobileMenu()">About</a></li>
+            <li><a href="#news" onclick="closeMobileMenu()">News</a></li>
+            <li><a href="#insights" onclick="closeMobileMenu()">Insights</a></li>
+            <li><a href="#" onclick="openContactModal(); closeMobileMenu();">Contact</a></li>
+            <li><a href="#subscribe" onclick="closeMobileMenu()">Subscribe</a></li>
+        </ul>
+    </div>
 
     <!-- Contact Modal -->
     <div id="contactModal" class="contact-modal">
@@ -1595,14 +1750,14 @@
         <div class="hero-content">
             <div class="hero-text">
                 <h1 data-editable="hero-title" contenteditable="false">
-                    More than just a liquidity provider, <span class="highlight">B2C2 is a digital asset pioneer</span> building the ecosystem of the future
+                    More than just a liquidity provider, <span class="highlight">B2T is a digital asset pioneer</span> building the ecosystem of the future
                 </h1>
                 <p data-editable="hero-subtitle" contenteditable="false">
-                    B2C2's success is built on a foundation of proprietary crypto-native technology combined with an innovative range of products, making the firm the partner of choice for diverse institutions globally.
+                    B2T's success is built on a foundation of proprietary crypto-native technology combined with an innovative range of products, making the firm the partner of choice for diverse institutions globally.
                 </p>
             </div>
             <div class="hero-carousel-container">
-                <button class="carousel-nav carousel-prev" onclick="slideCarousel(-1)">‹</button>
+                <button class="carousel-nav carousel-prev" onclick="slideCarousel(-1)"><</button>
                 <div class="hero-carousel" id="hero-carousel">
                     <div class="hero-card">
                         <div class="hero-card-image genius-bg">
@@ -1620,7 +1775,7 @@
                         </div>
                         <div class="hero-card-content">
                             <div class="hero-card-badge">Press release</div>
-                            <h4>HashKey Exchange, Hong Kong's Largest Licensed Virtual Asset Exchange, Partners with B2C2</h4>
+                            <h4>HashKey Exchange, Hong Kong's Largest Licensed Virtual Asset Exchange, Partners with B2T</h4>
                             <div class="date">March 10, 2025</div>
                         </div>
                     </div>
@@ -1630,7 +1785,7 @@
                         </div>
                         <div class="hero-card-content">
                             <div class="hero-card-badge">Press release</div>
-                            <h4>B2C2 and PV01 Pioneer Corporate Bond on Blockchain</h4>
+                            <h4>B2T and PV01 Pioneer Corporate Bond on Blockchain</h4>
                             <div class="date">November 25, 2024</div>
                         </div>
                     </div>
@@ -1640,12 +1795,12 @@
                         </div>
                         <div class="hero-card-content">
                             <div class="hero-card-badge">Press release</div>
-                            <h4>B2C2 Partners with OpenPayd to Expand its Global Instant Settlement Network</h4>
+                            <h4>B2T Partners with OpenPayd to Expand its Global Instant Settlement Network</h4>
                             <div class="date">October 28, 2024</div>
                         </div>
                     </div>
                 </div>
-                <button class="carousel-nav carousel-next" onclick="slideCarousel(1)">›</button>
+                <button class="carousel-nav carousel-next" onclick="slideCarousel(1)">></button>
             </div>
         </div>
     </section>
@@ -1718,30 +1873,30 @@
             <div class="news-carousel-wrapper">
                 <div class="news-carousel active" id="news-carousel">
                     <div class="news-item">
-                        <div class="news-logo" data-editable="news-logo-1" contenteditable="false">B2C2</div>
+                        <div class="news-logo" data-editable="news-logo-1" contenteditable="false">B2T</div>
                         <div class="news-content-item">
                             <div class="news-badge" data-editable="news-badge-1" contenteditable="false">Press release</div>
-                            <h3 data-editable="news-title-1" contenteditable="false">B2C2 Partners with OpenPayd to Expand its Global Instant Settlement Network</h3>
+                            <h3 data-editable="news-title-1" contenteditable="false">B2T Partners with OpenPayd to Expand its Global Instant Settlement Network</h3>
                             <div class="news-date" data-editable="news-date-1" contenteditable="false">October 28, 2024</div>
                             <a href="#" class="read-more" data-editable="read-more-1" contenteditable="false">Read more ></a>
                         </div>
                     </div>
                     
                     <div class="news-item">
-                        <div class="news-logo" data-editable="news-logo-2" contenteditable="false">B2C2</div>
+                        <div class="news-logo" data-editable="news-logo-2" contenteditable="false">B2T</div>
                         <div class="news-content-item">
                             <div class="news-badge" data-editable="news-badge-2" contenteditable="false">Press release</div>
-                            <h3 data-editable="news-title-2" contenteditable="false">B2C2 Appoints Cactus Raazi as US CEO</h3>
+                            <h3 data-editable="news-title-2" contenteditable="false">B2T Appoints Cactus Raazi as US CEO</h3>
                             <div class="news-date" data-editable="news-date-2" contenteditable="false">September 2, 2024</div>
                             <a href="#" class="read-more" data-editable="read-more-2" contenteditable="false">Read more ></a>
                         </div>
                     </div>
                     
                     <div class="news-item">
-                        <div class="news-logo" data-editable="news-logo-3" contenteditable="false">B2C2</div>
+                        <div class="news-logo" data-editable="news-logo-3" contenteditable="false">B2T</div>
                         <div class="news-content-item">
                             <div class="news-badge" data-editable="news-badge-3" contenteditable="false">Press release</div>
-                            <h3 data-editable="news-title-3" contenteditable="false">Arbelos and B2C2 Complete First Bilateral OTC Option Transaction on BVIV Index</h3>
+                            <h3 data-editable="news-title-3" contenteditable="false">Arbelos and B2T Complete First Bilateral OTC Option Transaction on BVIV Index</h3>
                             <div class="news-date" data-editable="news-date-3" contenteditable="false">June 4, 2024</div>
                             <a href="#" class="read-more" data-editable="read-more-3" contenteditable="false">Read more ></a>
                         </div>
@@ -1775,11 +1930,11 @@
                                     <span class="circle">2</span>
                                 </div>
                             </div>
-                            <h3>B2C2 joins forces with Future Frontiers to support social mobility by hosting student career development program</h3>
+                            <h3>B2T joins forces with Future Frontiers to support social mobility by hosting student career development program</h3>
                             <div class="insights-nav">
-                                <button class="nav-arrow prev">‹</button>
+                                <button class="nav-arrow prev"><</button>
                                 <span class="site-url">b2c2.com</span>
-                                <button class="nav-arrow next">›</button>
+                                <button class="nav-arrow next">></button>
                             </div>
                         </div>
                     </div>
@@ -1787,7 +1942,7 @@
                 
                 <div class="insights-sidebar">
                     <div class="insights-date">October 1, 2024</div>
-                    <h4>B2C2 joins forces with Future Frontiers to support social mobility by hosting student career development program</h4>
+                    <h4>B2T joins forces with Future Frontiers to support social mobility by hosting student career development program</h4>
                     <a href="#" class="read-more">Read more ></a>
                 </div>
             </div>
@@ -1840,7 +1995,7 @@
             </div>
             <div class="footer-section">
                 <h3>Company</h3>
-                <p><a href="#">About B2C2</a></p>
+                <p><a href="#">About B2T</a></p>
                 <p><a href="#">Careers</a></p>
                 <p><a href="#">News & Events</a></p>
                 <p><a href="#">Contact</a></p>
@@ -2466,6 +2621,98 @@
                 timeout = setTimeout(later, wait);
             };
         }
+        
+        // =================== MOBILE MENU FUNCTIONS ===================
+        
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.getElementById('mobileOverlay');
+            
+            if (menu && overlay) {
+                const isActive = menu.classList.contains('active');
+                
+                if (isActive) {
+                    closeMobileMenu();
+                } else {
+                    menu.classList.add('active');
+                    overlay.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+        }
+        
+        function closeMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.getElementById('mobileOverlay');
+            
+            if (menu && overlay) {
+                menu.classList.remove('active');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+        
+        // =================== ENHANCED CAROUSEL FUNCTIONS ===================
+        
+        let currentSlide = 0;
+        const totalSlides = 3; // Number of carousel cards
+        
+        function slideCarousel(direction) {
+            const carousel = document.getElementById('hero-carousel');
+            if (!carousel) return;
+            
+            // Update current slide with infinite loop
+            currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
+            
+            // Calculate transform value
+            const translateX = -(currentSlide * 100);
+            carousel.style.transform = `translateX(${translateX}%)`;
+            
+            // Add visual feedback to buttons
+            const prevBtn = document.querySelector('.carousel-prev');
+            const nextBtn = document.querySelector('.carousel-next');
+            
+            if (direction === -1 && prevBtn) {
+                prevBtn.style.transform = 'translateY(-50%) scale(0.9)';
+                setTimeout(() => {
+                    prevBtn.style.transform = 'translateY(-50%) scale(1)';
+                }, 150);
+            } else if (direction === 1 && nextBtn) {
+                nextBtn.style.transform = 'translateY(-50%) scale(0.9)';
+                setTimeout(() => {
+                    nextBtn.style.transform = 'translateY(-50%) scale(1)';
+                }, 150);
+            }
+        }
+        
+        // Auto-advance carousel every 5 seconds
+        setInterval(() => {
+            slideCarousel(1);
+        }, 5000);
+        
+        // =================== RESPONSIVE MOBILE MENU ===================
+        
+        function updateMobileMenuVisibility() {
+            const mobileToggle = document.querySelector('.mobile-menu-toggle');
+            const navMenu = document.querySelector('.nav-menu');
+            
+            if (window.innerWidth <= 768) {
+                if (mobileToggle) mobileToggle.style.display = 'block';
+                if (navMenu) navMenu.style.display = 'none';
+            } else {
+                if (mobileToggle) mobileToggle.style.display = 'none';
+                if (navMenu) navMenu.style.display = 'flex';
+                closeMobileMenu(); // Close mobile menu if open
+            }
+        }
+        
+        // Update on resize
+        window.addEventListener('resize', updateMobileMenuVisibility);
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateMobileMenuVisibility();
+        });
         
     </script>
 </body>
