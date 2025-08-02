@@ -432,11 +432,11 @@ app.get('/icon-512x512.png', (req, res) => {
 // ===== IMAGENS B2T - ROTA PARA ASSETS =====
 app.use('/images-b2t', express.static(path.join(process.cwd(), 'public/images-b2t')));
 
-// ===== B2C2 SITE - ROTA PRIORITÁRIA ANTES DO VITE =====
-app.get('/b2c2-fixed', (req, res) => {
+// ===== B2T SITE - ROTA PRIORITÁRIA ANTES DO VITE =====
+app.get('/b2t-fixed', (req, res) => {
   console.log('🔥 SERVINDO B2T-FIXED DIRETAMENTE - BYPASS TOTAL DO VITE');
   try {
-    const filePath = path.join(process.cwd(), 'public', 'b2c2-fixed.html');
+    const filePath = path.join(process.cwd(), 'public', 'b2t-fixed.html');
     
     if (fs.existsSync(filePath)) {
       const content = fs.readFileSync(filePath, 'utf8');
@@ -456,11 +456,22 @@ app.get('/b2c2-fixed', (req, res) => {
   }
 });
 
-// ===== B2C2 ADMIN - SISTEMA CATEGORIZADO =====
+// ===== COMPATIBILIDADE B2C2 → B2T =====
+app.get('/b2c2-fixed', (req, res) => {
+  console.log('🔗 REDIRECIONAMENTO B2C2 → B2T');
+  res.redirect(301, '/b2t-fixed');
+});
+
 app.get('/b2c2-admin', (req, res) => {
-  console.log('🔥 SERVINDO B2C2-ADMIN COMPLETO - BYPASS TOTAL DO VITE');
+  console.log('🔗 REDIRECIONAMENTO B2C2-ADMIN → B2T-ADMIN');
+  res.redirect(301, '/b2t-admin');
+});
+
+// ===== B2T ADMIN - SISTEMA CATEGORIZADO =====
+app.get('/b2t-admin', (req, res) => {
+  console.log('🔥 SERVINDO B2T-ADMIN COMPLETO - BYPASS TOTAL DO VITE');
   try {
-    const filePath = path.join(process.cwd(), 'public', 'b2c2-admin-complete.html');
+    const filePath = path.join(process.cwd(), 'public', 'b2t-admin-complete.html');
     
     if (fs.existsSync(filePath)) {
       const content = fs.readFileSync(filePath, 'utf8');
