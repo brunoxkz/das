@@ -434,7 +434,7 @@ app.use('/images-b2t', express.static(path.join(process.cwd(), 'public/images-b2
 
 // ===== B2C2 SITE - ROTA PRIORITÁRIA ANTES DO VITE =====
 app.get('/b2c2-fixed', (req, res) => {
-  console.log('🔥 SERVINDO B2C2-FIXED DIRETAMENTE - BYPASS TOTAL DO VITE');
+  console.log('🔥 SERVINDO B2T-FIXED DIRETAMENTE - BYPASS TOTAL DO VITE');
   try {
     const filePath = path.join(process.cwd(), 'public', 'b2c2-fixed.html');
     
@@ -442,14 +442,16 @@ app.get('/b2c2-fixed', (req, res) => {
       const content = fs.readFileSync(filePath, 'utf8');
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.send(content);
-      console.log('✅ B2C2-FIXED SERVIDO COM SUCESSO - TAMANHO:', content.length);
+      console.log('✅ B2T-FIXED SERVIDO COM SUCESSO - TAMANHO:', content.length);
     } else {
-      console.error('❌ B2C2-FIXED NÃO ENCONTRADO:', filePath);
-      res.status(404).send('Arquivo B2C2 não encontrado');
+      console.error('❌ B2T-FIXED NÃO ENCONTRADO:', filePath);
+      res.status(404).send('Arquivo B2T não encontrado');
     }
   } catch (err) {
-    console.error('❌ ERRO CRÍTICO B2C2-FIXED:', err);
+    console.error('❌ ERRO CRÍTICO B2T-FIXED:', err);
     res.status(500).send('Erro interno do servidor');
   }
 });

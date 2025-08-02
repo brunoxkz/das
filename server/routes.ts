@@ -5,23 +5,7 @@ import { insertNews, insertEvents, insertSolutions, insertInsights, insertNewsle
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
-  // B2C2 FIXED - 100% Idêntico ao B2C2.com (BYPASS VITE COMPLETO)
-  app.get('/b2c2-fixed', (req, res) => {
-    console.log('🔥 SERVINDO B2C2-FIXED: 100% IDÊNTICO');
-    const path = require('path');
-    const fs = require('fs');
-    const filePath = path.join(__dirname, '../public/b2c2-fixed.html');
-    
-    fs.readFile(filePath, 'utf8', (err, data) => {
-      if (err) {
-        console.error('Erro ao ler arquivo:', err);
-        res.status(404).send('Arquivo não encontrado');
-        return;
-      }
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.send(data);
-    });
-  });
+  // B2C2 FIXED - Removido duplicação (já está em server/index.ts)
 
   // B2C2 ADMIN COMPLETO - Sistema categorizado de edição
   app.get('/b2c2-admin', (req, res) => {
