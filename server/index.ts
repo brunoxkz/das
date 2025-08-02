@@ -429,6 +429,9 @@ app.get('/icon-512x512.png', (req, res) => {
   }
 });
 
+// ===== IMAGENS B2T - ROTA PARA ASSETS =====
+app.use('/images-b2t', express.static(path.join(process.cwd(), 'public/images-b2t')));
+
 // ===== B2C2 SITE - ROTA PRIORITÁRIA ANTES DO VITE =====
 app.get('/b2c2-fixed', (req, res) => {
   console.log('🔥 SERVINDO B2C2-FIXED DIRETAMENTE - BYPASS TOTAL DO VITE');
