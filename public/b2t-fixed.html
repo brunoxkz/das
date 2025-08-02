@@ -222,6 +222,16 @@
         .hashkey-bg { background: linear-gradient(135deg, #1f2937 0%, #4b5563 100%); }
         .pv01-bg { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
         .openpayd-bg { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }
+        
+        /* NOVOS BACKGROUNDS PARA CARDS ROTATIVOS */
+        .goldman-bg { background: linear-gradient(135deg, #002d5c 0%, #004080 100%); }
+        .citadel-bg { background: linear-gradient(135deg, #8b0000 0%, #cc1414 100%); }
+        .circle-bg { background: linear-gradient(135deg, #0066cc 0%, #0080ff 100%); }
+        .binance-bg { background: linear-gradient(135deg, #f0b90b 0%, #ffd700 100%); }
+        .coinbase-bg { background: linear-gradient(135deg, #0052ff 0%, #1652f0 100%); }
+        .visa-bg { background: linear-gradient(135deg, #1a1f71 0%, #2e3b9e 100%); }
+        .jpmorgan-bg { background: linear-gradient(135deg, #005ca9 0%, #0072ce 100%); }
+        .blackrock-bg { background: linear-gradient(135deg, #000000 0%, #333333 100%); }
 
         .hero-card-content {
             padding: 1rem;
@@ -2804,17 +2814,148 @@
             }
         }
         
-        // =================== CARROSSEL DRAG + SETAS SINCRONIZADAS ===================
+        // =================== CARROSSEL DINÂMICO COM CAMPOS ROTATIVOS ===================
+        
+        // DADOS DINÂMICOS DO CARROSSEL - 12 CARDS ROTATIVOS
+        const carouselData = [
+            {
+                id: 'genius',
+                badge: 'Insights',
+                title: 'A very stable GENIUS: The US stablecoin bill and the next key to scaling adoption',
+                date: 'July 23, 2025',
+                logo: 'GENIUS',
+                bgClass: 'genius-bg'
+            },
+            {
+                id: 'hashkey',
+                badge: 'Press release',
+                title: 'HashKey Exchange, Hong Kong\'s Largest Licensed Virtual Asset Exchange, Partners with B2T',
+                date: 'March 10, 2025',
+                logo: 'HASHKEY',
+                bgClass: 'hashkey-bg'
+            },
+            {
+                id: 'pv01',
+                badge: 'Press release',
+                title: 'B2T and PV01 Pioneer Corporate Bond on Blockchain',
+                date: 'November 25, 2024',
+                logo: 'PV01',
+                bgClass: 'pv01-bg'
+            },
+            {
+                id: 'openpayd',
+                badge: 'Press release',
+                title: 'B2T Partners with OpenPayd to Expand its Global Instant Payments Network',
+                date: 'January 15, 2025',
+                logo: 'OPENPAYD',
+                bgClass: 'openpayd-bg'
+            },
+            {
+                id: 'goldman',
+                badge: 'News',
+                title: 'Goldman Sachs Integrates B2T Infrastructure for Digital Asset Trading',
+                date: 'February 5, 2025',
+                logo: 'GOLDMAN',
+                bgClass: 'goldman-bg'
+            },
+            {
+                id: 'citadel',
+                badge: 'Partnership',
+                title: 'Citadel Securities Chooses B2T for Institutional Crypto Liquidity',
+                date: 'December 18, 2024',
+                logo: 'CITADEL',
+                bgClass: 'citadel-bg'
+            },
+            {
+                id: 'circle',
+                badge: 'Integration',
+                title: 'Circle and B2T Launch Enterprise USDC Solution for Institutions',
+                date: 'January 30, 2025',
+                logo: 'CIRCLE',
+                bgClass: 'circle-bg'
+            },
+            {
+                id: 'binance',
+                badge: 'Insights',
+                title: 'Binance and B2T: Revolutionizing Cross-Border Institutional Trading',
+                date: 'February 12, 2025',
+                logo: 'BINANCE',
+                bgClass: 'binance-bg'
+            },
+            {
+                id: 'coinbase',
+                badge: 'Press release',
+                title: 'Coinbase Prime Expands with B2T\'s Advanced Trading Infrastructure',
+                date: 'January 8, 2025',
+                logo: 'COINBASE',
+                bgClass: 'coinbase-bg'
+            },
+            {
+                id: 'visa',
+                badge: 'Partnership',
+                title: 'Visa Partners with B2T for Next-Gen Digital Payment Solutions',
+                date: 'March 1, 2025',
+                logo: 'VISA',
+                bgClass: 'visa-bg'
+            },
+            {
+                id: 'jpmorgan',
+                badge: 'News',
+                title: 'JPMorgan Adopts B2T Technology for Institutional Crypto Services',
+                date: 'February 20, 2025',
+                logo: 'JPMORGAN',
+                bgClass: 'jpmorgan-bg'
+            },
+            {
+                id: 'blackrock',
+                badge: 'Insights',
+                title: 'BlackRock Bitcoin ETF Powered by B2T\'s Institutional Infrastructure',
+                date: 'March 15, 2025',
+                logo: 'BLACKROCK',
+                bgClass: 'blackrock-bg'
+            }
+        ];
         
         let currentSlide = 0;
-        const totalSlides = 4; // Number of carousel cards (GENIUS, HASHKEY, PV01, OPENPAYD)
+        let totalSlides = carouselData.length;
         let isUserInteracting = false;
         let dragStartX = 0;
         let dragCurrentX = 0;
         let initialTranslate = 0;
         let animationID;
         
+        function generateCarouselCards() {
+            const carousel = document.getElementById('hero-carousel');
+            if (!carousel) return;
+            
+            // Limpar conteúdo existente
+            carousel.innerHTML = '';
+            
+            // Gerar todos os cards
+            carouselData.forEach(card => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'hero-card';
+                
+                cardElement.innerHTML = `
+                    <div class="hero-card-image ${card.bgClass}">
+                        <span style="font-size: 1.2rem;">${card.logo}</span>
+                    </div>
+                    <div class="hero-card-content">
+                        <div class="hero-card-badge">${card.badge}</div>
+                        <h4>${card.title}</h4>
+                        <div class="date">${card.date}</div>
+                    </div>
+                `;
+                
+                carousel.appendChild(cardElement);
+            });
+            
+            console.log('🎠 Cards dinâmicos gerados:', totalSlides);
+        }
+        
         function initializeCarousel() {
+            generateCarouselCards();
+            
             const carousel = document.getElementById('hero-carousel');
             if (!carousel) return;
             
@@ -2830,7 +2971,7 @@
             // Prevenir comportamento padrão
             carousel.addEventListener('dragstart', e => e.preventDefault());
             
-            console.log('🎠 Carrossel inicializado com drag & drop');
+            console.log('🎠 Carrossel inicializado com', totalSlides, 'cards rotativos');
         }
         
         function slideCarousel(direction) {
