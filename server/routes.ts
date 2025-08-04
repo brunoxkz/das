@@ -74,6 +74,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('b2c2.html', { root: 'public' });
   });
 
+  // B2C2 STANDALONE FIXED - Serve arquivo estático SEM interferência do Vite
+  app.get('/b2c2-standalone', (req, res) => {
+    console.log('🔥 SERVINDO B2C2-STANDALONE-FIXED - SEM VITE SERVICE WORKER');
+    const path = require('path');
+    const fs = require('fs');
+    const filePath = path.join(__dirname, '../b2c2-standalone-fixed/index.html');
+    
+    fs.readFile(filePath, 'utf8', (err: any, data: string) => {
+      if (err) {
+        console.error('❌ Erro ao ler B2C2 standalone:', err);
+        res.status(404).send('Arquivo não encontrado');
+        return;
+      }
+      
+      // Headers específicos para evitar cache e service worker
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('X-Frame-Options', 'DENY');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      
+      console.log('✅ B2C2 STANDALONE SERVIDO - TAMANHO:', data.length);
+      res.send(data);
+    });
+  });
+
   // CORS middleware
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
