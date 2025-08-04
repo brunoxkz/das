@@ -35,7 +35,8 @@ Two concurrent development projects:
 - **✅ CARROSSEL 4 CARDS FINAL**: Altura reduzida para 280px, 4 cards com cores B2C2 autênticas conforme referência
 - **✅ CORES E ESTILOS B2C2**: Gradientes roxos, cinza escuro, verde - exatamente como nas imagens de referência  
 - **✅ LOGO B2T IMPLEMENTADO**: Logo oficial B2T baixado e integrado no header substituindo os circles
-- **✅ ZIP FINAL**: B2T-EXCHANGE-4-CARDS-FINAL.zip com layout otimizado, cores corretas e logo B2T
+- **✅ RESPONSIVO MOBILE CORRIGIDO**: Menu hamburger funcional + carrossel horizontal com scroll touch no mobile
+- **✅ ZIP FINAL**: B2T-EXCHANGE-4-CARDS-FINAL.zip com layout otimizado, cores corretas, logo B2T e mobile responsivo
 
 ## User Preferences
 Preferred communication style: Simple, everyday language (Portuguese).
