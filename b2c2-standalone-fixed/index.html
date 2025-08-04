@@ -50,26 +50,15 @@
             gap: 0.5rem;
         }
 
-        .logo-icon {
-            display: flex;
-            gap: 2px;
+        .logo img {
+            height: 40px;
+            width: auto;
+            transition: opacity 0.3s ease;
         }
 
-        .logo-circle {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 800;
-            font-size: 14px;
+        .logo:hover img {
+            opacity: 0.8;
         }
-
-        .logo-circle:nth-child(1) { background: #6366f1; }
-        .logo-circle:nth-child(2) { background: #8b5cf6; }
-        .logo-circle:nth-child(3) { background: #a855f7; }
 
         .nav-menu {
             display: flex;
@@ -717,11 +706,7 @@
     <header class="header">
         <nav class="nav-container">
             <a href="#" class="logo">
-                <div class="logo-icon">
-                    <div class="logo-circle">B</div>
-                    <div class="logo-circle">2</div>
-                    <div class="logo-circle">T</div>
-                </div>
+                <img src="b2t-logo.png" alt="B2T Exchange" style="height: 40px; width: auto;">
             </a>
             <ul class="nav-menu">
                 <li><a href="#hero">Home</a></li>
