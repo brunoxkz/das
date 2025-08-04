@@ -63,32 +63,35 @@ import {
 
 const app = express();
 
-// ===== B2C2 STANDALONE - ROTA PRIORITÁRIA MÁXIMA =====
-// DEVE ESTAR ANTES DE QUALQUER MIDDLEWARE PARA EVITAR INTERCEPTAÇÃO DO VITE
-app.get('/b2c2-standalone', (req, res) => {
-  try {
-    const standalonePath = path.join(process.cwd(), 'b2c2-standalone-fixed/index.html');
-    console.log('🔥 SERVINDO B2C2-STANDALONE - PRIORIDADE MÁXIMA (ANTES DE TODOS OS MIDDLEWARES):', standalonePath);
-    
-    if (fs.existsSync(standalonePath)) {
-      const htmlContent = fs.readFileSync(standalonePath, 'utf-8');
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      res.send(htmlContent);
-      console.log('✅ B2C2-STANDALONE SERVIDO - PRIORIDADE MÁXIMA - BYPASS COMPLETO');
-      return;
-    } else {
-      console.log('❌ B2C2-STANDALONE HTML NÃO ENCONTRADO:', standalonePath);
-      res.status(404).send('B2C2-Standalone not found');
+// ===== INTERCEPTAÇÃO UNIVERSAL B2C2-STANDALONE =====
+// MIDDLEWARE QUE INTERCEPTA TODAS AS REQUISIÇÕES PARA /b2c2-standalone
+app.use((req, res, next) => {
+  if (req.path === '/b2c2-standalone' || req.url === '/b2c2-standalone') {
+    try {
+      const standalonePath = path.join(process.cwd(), 'b2c2-standalone-fixed/index.html');
+      console.log('🔥 INTERCEPTAÇÃO UNIVERSAL B2C2-STANDALONE:', standalonePath);
+      
+      if (fs.existsSync(standalonePath)) {
+        const htmlContent = fs.readFileSync(standalonePath, 'utf-8');
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        res.send(htmlContent);
+        console.log('✅ B2C2-STANDALONE INTERCEPTADO UNIVERSALMENTE - BYPASS TOTAL');
+        return; // NÃO chama next() - termina aqui
+      } else {
+        console.log('❌ B2C2-STANDALONE HTML NÃO ENCONTRADO:', standalonePath);
+        res.status(404).send('B2C2-Standalone not found');
+        return;
+      }
+    } catch (error) {
+      console.error('❌ ERRO CRÍTICO B2C2-STANDALONE INTERCEPTAÇÃO UNIVERSAL:', error);
+      res.status(500).send('Server error');
       return;
     }
-  } catch (error) {
-    console.error('❌ ERRO CRÍTICO B2C2-STANDALONE:', error);
-    res.status(500).send('Server error');
-    return;
   }
+  next(); // Só chama next() se NÃO for /b2c2-standalone
 });
 
 // 🔒 CONFIGURAÇÃO DE PROXY PARA RATE LIMITING
@@ -364,18 +367,6 @@ app.get('/b2c2', (req, res) => {
 });
 
 // (B2C2-STANDALONE JÁ DEFINIDO NO INÍCIO DO ARQUIVO - PRIORIDADE MÁXIMA)
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.status(200).send(htmlContent);
-      console.log('✅ B2C2 SITE SERVIDO DIRETAMENTE - BYPASS VITE');
-    } else {
-      console.log('❌ B2C2 HTML NÃO ENCONTRADO:', b2c2Path);
-      res.status(404).send('B2C2 site not found');
-    }
-  } catch (error) {
-    console.error('❌ ERRO CRÍTICO B2C2:', error);
-    res.status(500).send('Internal server error');
-  }
-});
 
 // FAVICON HD FORÇADO - INTERCEPTAÇÃO CRÍTICA ANTES DE TUDO
 app.get('/favicon.ico', (req, res) => {
@@ -1145,6 +1136,8 @@ app.use('/api/quiz-ia', (req, res, next) => {
 });
 
 // Setup Vite middleware for dev and production APÓS todas as rotas
+// (B2C2-STANDALONE JÁ INTERCEPTADO NO MIDDLEWARE UNIVERSAL ACIMA)
+
 setupVite(app, server);
 
 // Sistema de debug avançado
