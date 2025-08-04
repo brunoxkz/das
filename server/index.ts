@@ -513,10 +513,28 @@ app.get('/b2t-fixed', (req, res) => {
   res.redirect(301, '/b2t-exchange');
 });
 
-// ===== COMPATIBILIDADE B2C2 → B2T =====
+// ===== B2C2 ORIGINAL (VERSÃO QUE ESTAVA FUNCIONANDO) =====
 app.get('/b2c2-fixed', (req, res) => {
-  console.log('🔗 REDIRECIONAMENTO B2C2 → B2T');
-  res.redirect(301, '/b2t-exchange');
+  console.log('🔥 SERVINDO B2C2 ORIGINAL - VERSÃO COMPLETA');
+  try {
+    const filePath = path.join(process.cwd(), 'public', 'b2c2-fixed.html');
+    
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.send(content);
+      console.log('✅ B2C2 ORIGINAL SERVIDO - TAMANHO:', content.length);
+    } else {
+      console.error('❌ B2C2 ORIGINAL NÃO ENCONTRADO:', filePath);
+      res.status(404).send('Arquivo B2C2 Original não encontrado');
+    }
+  } catch (err) {
+    console.error('❌ ERRO CRÍTICO B2C2 ORIGINAL:', err);
+    res.status(500).send('Erro interno do servidor');
+  }
 });
 
 app.get('/b2c2-admin', (req, res) => {
