@@ -28,6 +28,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // B2C2 FIXED - Removido duplicação (já está em server/index.ts)
 
+  // ZIP DOWNLOAD ROUTE - Serve arquivos ZIP para hospedagem
+  app.get('/download/:filename', (req, res) => {
+    const { filename } = req.params;
+    const fs = require('fs');
+    const path = require('path');
+    
+    // Apenas arquivos ZIP específicos do B2C2
+    if (!filename.includes('B2C2') || !filename.endsWith('.zip')) {
+      return res.status(404).send('Arquivo não encontrado');
+    }
+    
+    const filePath = path.join(__dirname, '../public', filename);
+    
+    if (fs.existsSync(filePath)) {
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.download(filePath);
+      console.log(`📥 DOWNLOAD ZIP: ${filename}`);
+    } else {
+      res.status(404).send('Arquivo não encontrado');
+    }
+  });
+
   // B2C2 ADMIN COMPLETO - Sistema categorizado de edição
   app.get('/b2c2-admin', (req, res) => {
     console.log('🔥 SERVINDO B2C2-ADMIN COMPLETO');
