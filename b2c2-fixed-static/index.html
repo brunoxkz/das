@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B2T | Digital Asset Pioneer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #fff;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            padding: 0;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #1a1a1a;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            display: flex;
+            gap: 2px;
+        }
+
+        .logo-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            font-size: 14px;
+        }
+
+        .logo-circle:nth-child(1) { background: #6366f1; }
+        .logo-circle:nth-child(2) { background: #8b5cf6; }
+        .logo-circle:nth-child(3) { background: #a855f7; }
+        .logo-circle:nth-child(4) { background: #f59e0b; }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        /* Mobile Menu Toggle - Hidden by default */
+        .mobile-menu-toggle {
+            display: none;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Mobile Menu - Hidden by default */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 280px;
+            height: 100vh;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+            transition: left 0.3s ease;
+            z-index: 1000;
+            padding: 2rem;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .nav-menu a {
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-menu a:hover {
+            color: #6366f1;
+        }
+
+        .nav-menu a.active {
+            color: #6366f1;
+            font-weight: 600;
+            border-bottom: 2px solid #6366f1;
+        }
+
+        .nav-subscribe {
+            background: #6366f1;
+            color: white !important;
+            border-radius: 25px;
+            padding: 0.7rem 1.5rem !important;
+        }
+
+        .nav-subscribe:hover {
+            background: #5856eb !important;
+            color: white !important;
+        }
+
+        /* Hero Section - B2T ORIGINAL */
+        .hero {
+            background: linear-gradient(135deg, #d946ef 0%, #7c3aed 50%, #3b82f6 100%);
+            color: white;
+            padding: 8rem 2rem 6rem;
+            position: relative;
+            overflow: hidden;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .hero-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 300;
+            margin-bottom: 2rem;
+            line-height: 1.1;
+            max-width: 800px;
+        }
+
+        .hero h1 span {
+            font-weight: 600;
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 3rem;
+            max-width: 600px;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        /* Solutions Section */
+        .institutional-solutions {
+            background: linear-gradient(135deg, #d946ef 0%, #8b5cf6 50%, #6b46c1 100%);
+            color: white;
+            padding: 6rem 2rem;
+        }
+
+        .institutional-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6rem;
+            align-items: center;
+        }
+
+        .institutional-text h2 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        .institutional-text p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+            max-width: 400px;
+        }
+
+        .institutional-btn {
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .institutional-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .institutional-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 1.2rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .menu-icon {
+            font-size: 1.2rem;
+            margin-right: 1rem;
+            width: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .menu-item span {
+            flex: 1;
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        .menu-arrow {
+            font-size: 1.2rem;
+            opacity: 0.6;
+            transition: all 0.2s ease;
+        }
+
+        .menu-item:hover .menu-arrow {
+            opacity: 1;
+            transform: translateX(3px);
+        }
+
+        /* News Section */
+        .news {
+            background: #0f0f23;
+            color: white;
+            padding: 6rem 2rem;
+        }
+
+        .news-content {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .news-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .news h2 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        .news-item {
+            background: #1a1a2e;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .news-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .news-image {
+            height: 200px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .news-content-item {
+            padding: 2rem;
+        }
+
+        .news-badge {
+            background: rgba(99, 102, 241, 0.2);
+            color: #8b5cf6;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+
+        .news-item h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+
+        .news-date {
+            color: #9ca3af;
+            font-size: 0.9rem;
+        }
+
+        /* Insights Section */
+        .insights {
+            background: linear-gradient(135deg, #d946ef 0%, #8b5cf6 50%, #6b46c1 100%);
+            padding: 6rem 2rem;
+            color: white;
+        }
+
+        .insights-content {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .insights-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+        }
+
+        .insights h2 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            color: white;
+            margin: 0;
+        }
+
+        .view-all-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .view-all-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .insights-card {
+            display: flex;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            overflow: hidden;
+            min-height: 300px;
+        }
+
+        .insights-image {
+            flex: 2;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            position: relative;
+            display: flex;
+            align-items: center;
+            padding: 3rem;
+            overflow: hidden;
+        }
+
+        .insights-logo {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+        }
+
+        .insights-card-content {
+            max-width: 60%;
+            z-index: 2;
+        }
+
+        .insights-card-content h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 2rem;
+            line-height: 1.3;
+        }
+
+        .insights-url {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .insights-sidebar {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .insights-date {
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+            width: fit-content;
+        }
+
+        .insights-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+            line-height: 1.4;
+            margin-bottom: 2rem;
+        }
+
+        .read-more-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: fit-content;
+        }
+
+        .read-more-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Footer */
+        .footer {
+            background: #1f2937;
+            color: white;
+            padding: 4rem 2rem 2rem;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .footer-section h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .footer-section p {
+            color: #9ca3af;
+            line-height: 1.6;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-section a {
+            color: #9ca3af;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: #6366f1;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid #374151;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            text-align: center;
+            color: #9ca3af;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-container {
+                padding: 0.5rem 1rem;
+            }
+
+            .nav-menu {
+                display: none;
+            }
+
+            /* Mobile Menu - Show only on mobile */
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .mobile-menu {
+                display: block;
+                position: fixed;
+                top: 0;
+                left: -100%;
+                width: 280px;
+                height: 100vh;
+                background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+                transition: left 0.3s ease;
+                z-index: 1000;
+                padding: 2rem;
+                box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+            }
+
+            .mobile-menu.active {
+                left: 0;
+            }
+
+            .mobile-menu-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 2rem;
+                padding-bottom: 1rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            }
+
+            .mobile-menu-close {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 1.5rem;
+                cursor: pointer;
+                padding: 0.5rem;
+                border-radius: 4px;
+                transition: background 0.2s ease;
+            }
+
+            .mobile-menu-close:hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
+
+            .mobile-nav-menu {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            .mobile-nav-menu li {
+                margin-bottom: 1rem;
+            }
+
+            .mobile-nav-menu a {
+                color: white;
+                text-decoration: none;
+                font-size: 1.1rem;
+                font-weight: 500;
+                padding: 1rem;
+                display: block;
+                border-radius: 8px;
+                transition: all 0.2s ease;
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+            }
+
+            .mobile-nav-menu a:hover {
+                background: rgba(255, 255, 255, 0.2);
+                transform: translateX(5px);
+            }
+
+            .mobile-overlay {
+                display: block;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+                z-index: 999;
+            }
+
+            .mobile-overlay.active {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .institutional-content {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            .insights-card {
+                flex-direction: column;
+            }
+
+            .news-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+                padding: 0 1rem;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Smooth Scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileMenu()"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav-container">
+            <a href="#" class="logo">
+                <div class="logo-icon">
+                    <div class="logo-circle">B</div>
+                    <div class="logo-circle">2</div>
+                    <div class="logo-circle">T</div>
+                    <div class="logo-circle">★</div>
+                </div>
+                <span style="margin-left: 0.5rem;">B2T</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="#hero" class="nav-link">Home</a></li>
+                <li><a href="#solutions" class="nav-link">Solutions</a></li>
+                <li><a href="#news" class="nav-link">News</a></li>
+                <li><a href="#insights" class="nav-link">Insights</a></li>
+                <li><a href="mailto:contact@b2texchange.com" class="nav-link">Contact</a></li>
+            </ul>
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+        </nav>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <div class="logo-icon">
+                <div class="logo-circle">B</div>
+                <div class="logo-circle">2</div>
+                <div class="logo-circle">T</div>
+                <div class="logo-circle">★</div>
+            </div>
+            <button class="mobile-menu-close" onclick="closeMobileMenu()">×</button>
+        </div>
+        <ul class="mobile-nav-menu">
+            <li><a href="#hero" onclick="closeMobileMenu()">Home</a></li>
+            <li><a href="#solutions" onclick="closeMobileMenu()">Solutions</a></li>
+            <li><a href="#news" onclick="closeMobileMenu()">News</a></li>
+            <li><a href="#insights" onclick="closeMobileMenu()">Insights</a></li>
+            <li><a href="mailto:contact@b2texchange.com" onclick="closeMobileMenu()">Contact</a></li>
+        </ul>
+    </div>
+
+    <!-- Hero Section -->
+    <section id="hero" class="hero">
+        <div class="hero-content">
+            <h1>More than just a <span>liquidity provider</span></h1>
+            <p>B2T is a digital asset pioneer building the ecosystem of the future. We provide institutional-grade trading solutions, advanced liquidity services, and cutting-edge blockchain technology.</p>
+        </div>
+    </section>
+
+    <!-- Institutional Solutions Section -->
+    <section id="solutions" class="institutional-solutions">
+        <div class="institutional-content">
+            <div class="institutional-text">
+                <h2>Institutional Solutions</h2>
+                <p>Comprehensive digital asset services designed for institutional clients seeking advanced trading capabilities.</p>
+                <button class="institutional-btn">Learn more ></button>
+            </div>
+            <div class="institutional-menu">
+                <div class="menu-item">
+                    <div class="menu-icon">⚡</div>
+                    <span>High-Frequency Trading</span>
+                    <div class="menu-arrow">></div>
+                </div>
+                <div class="menu-item">
+                    <div class="menu-icon">🔒</div>
+                    <span>Custody Solutions</span>
+                    <div class="menu-arrow">></div>
+                </div>
+                <div class="menu-item">
+                    <div class="menu-icon">💧</div>
+                    <span>Liquidity Provision</span>
+                    <div class="menu-arrow">></div>
+                </div>
+                <div class="menu-item">
+                    <div class="menu-icon">📊</div>
+                    <span>Risk Management</span>
+                    <div class="menu-arrow">></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- News Section -->
+    <section id="news" class="news">
+        <div class="news-content">
+            <div class="news-header">
+                <h2>Latest News</h2>
+            </div>
+            <div class="news-grid">
+                <div class="news-item">
+                    <div class="news-image">Regulatory Update</div>
+                    <div class="news-content-item">
+                        <div class="news-badge">Compliance</div>
+                        <h3>B2T Exchange Receives Regulatory Approval in Multiple Jurisdictions</h3>
+                        <div class="news-date">January 15, 2025</div>
+                    </div>
+                </div>
+                <div class="news-item">
+                    <div class="news-image">Technology Innovation</div>
+                    <div class="news-content-item">
+                        <div class="news-badge">Platform</div>
+                        <h3>New Trading Engine Reduces Latency by 40% with Advanced Matching Algorithm</h3>
+                        <div class="news-date">January 10, 2025</div>
+                    </div>
+                </div>
+                <div class="news-item">
+                    <div class="news-image">Market Expansion</div>
+                    <div class="news-content-item">
+                        <div class="news-badge">Growth</div>
+                        <h3>B2T Exchange Expands to Asian Markets with New Regional Office</h3>
+                        <div class="news-date">January 5, 2025</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Institutional Insights Section -->
+    <section id="insights" class="insights">
+        <div class="insights-content">
+            <div class="insights-header">
+                <h2>Institutional Insights</h2>
+                <button class="view-all-btn">View all ></button>
+            </div>
+            
+            <div class="insights-card">
+                <div class="insights-image">
+                    <div class="insights-logo">
+                        <div class="logo-icon">
+                            <div class="logo-circle">B</div>
+                            <div class="logo-circle">2</div>
+                            <div class="logo-circle">T</div>
+                            <div class="logo-circle">★</div>
+                        </div>
+                    </div>
+                    <div class="insights-card-content">
+                        <h3>B2T Exchange joins forces with Future Frontiers to support social mobility by hosting student career development program</h3>
+                        <div class="insights-url">b2texchange.com</div>
+                    </div>
+                </div>
+                <div class="insights-sidebar">
+                    <div class="insights-date">October 1, 2024</div>
+                    <div class="insights-title">B2T Exchange joins forces with Future Frontiers to support social mobility by hosting student career development program</div>
+                    <button class="read-more-btn">Read more ></button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>B2T Exchange</h3>
+                <p>Leading digital asset trading platform providing institutional-grade solutions for the modern financial ecosystem.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Products</h3>
+                <p><a href="#solutions">Institutional Trading</a></p>
+                <p><a href="#solutions">Liquidity Solutions</a></p>
+                <p><a href="#solutions">Risk Management</a></p>
+                <p><a href="#solutions">Custody Services</a></p>
+            </div>
+            <div class="footer-section">
+                <h3>Company</h3>
+                <p><a href="#news">About Us</a></p>
+                <p><a href="#news">News</a></p>
+                <p><a href="#insights">Insights</a></p>
+                <p><a href="mailto:careers@b2texchange.com">Careers</a></p>
+            </div>
+            <div class="footer-section">
+                <h3>Support</h3>
+                <p><a href="mailto:support@b2texchange.com">Contact Support</a></p>
+                <p><a href="mailto:sales@b2texchange.com">Sales Inquiries</a></p>
+                <p><a href="#insights">Documentation</a></p>
+                <p><a href="#insights">API Reference</a></p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 B2T Exchange. All rights reserved. | Licensed and regulated digital asset exchange.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu functionality
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.getElementById('mobileOverlay');
+            
+            if (menu && overlay) {
+                const isActive = menu.classList.contains('active');
+                
+                if (isActive) {
+                    closeMobileMenu();
+                } else {
+                    menu.classList.add('active');
+                    overlay.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+        }
+        
+        function closeMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.getElementById('mobileOverlay');
+            
+            if (menu && overlay) {
+                menu.classList.remove('active');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+        
+        // Update mobile menu visibility based on screen size
+        function updateMobileMenuVisibility() {
+            const mobileToggle = document.querySelector('.mobile-menu-toggle');
+            const navMenu = document.querySelector('.nav-menu');
+            
+            if (window.innerWidth <= 768) {
+                if (mobileToggle) mobileToggle.style.display = 'block';
+                if (navMenu) navMenu.style.display = 'none';
+            } else {
+                if (mobileToggle) mobileToggle.style.display = 'none';
+                if (navMenu) navMenu.style.display = 'flex';
+                closeMobileMenu(); // Close mobile menu if open
+            }
+        }
+        
+        // Update on resize
+        window.addEventListener('resize', updateMobileMenuVisibility);
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateMobileMenuVisibility();
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Button handlers
+        document.querySelector('.view-all-btn').addEventListener('click', function() {
+            alert('View all insights feature coming soon!');
+        });
+
+        document.querySelector('.read-more-btn').addEventListener('click', function() {
+            alert('Full article will be available soon!');
+        });
+
+        document.querySelector('.institutional-btn').addEventListener('click', function() {
+            document.querySelector('#solutions').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        });
+    </script>
+</body>
+</html>

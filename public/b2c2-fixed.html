@@ -79,6 +79,48 @@
             align-items: center;
         }
 
+        /* Mobile Menu Toggle - Hidden by default */
+        .mobile-menu-toggle {
+            display: none;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Mobile Menu - Hidden by default */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 280px;
+            height: 100vh;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+            transition: left 0.3s ease;
+            z-index: 1000;
+            padding: 2rem;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
         .nav-menu a {
             color: #333;
             text-decoration: none;
@@ -1541,20 +1583,13 @@
                 right: 5px;
             }
 
-            /* Mobile Menu Hamburger */
+            /* Mobile Menu - Show only on mobile */
             .mobile-menu-toggle {
                 display: block;
-                background: linear-gradient(135deg, #6366f1, #8b5cf6);
-                color: white;
-                border: none;
-                padding: 0.75rem;
-                border-radius: 8px;
-                cursor: pointer;
-                font-size: 1.2rem;
-                box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
             }
 
             .mobile-menu {
+                display: block;
                 position: fixed;
                 top: 0;
                 left: -100%;
@@ -1624,6 +1659,7 @@
             }
 
             .mobile-overlay {
+                display: block;
                 position: fixed;
                 top: 0;
                 left: 0;
@@ -1639,12 +1675,6 @@
             .mobile-overlay.active {
                 opacity: 1;
                 visibility: visible;
-            }
-
-            /* Display mobile menu elements on mobile */
-            .mobile-menu,
-            .mobile-overlay {
-                display: block;
             }
 
             .solutions-content,
@@ -1675,7 +1705,7 @@
                 <li><a href="#" class="nav-link" onclick="openContactModal(); return false;">Contact</a></li>
                 <li><a href="#subscribe" class="nav-subscribe nav-link">Subscribe</a></li>
             </ul>
-            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" style="display: none;">☰</button>
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
         </nav>
     </header>
 
