@@ -85,9 +85,13 @@
             display: none;
             background: none;
             border: none;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             cursor: pointer;
             color: #333;
+            padding: 0.5rem;
+            line-height: 1;
+            z-index: 1001;
+            position: relative;
         }
 
         .mobile-menu {
@@ -101,6 +105,8 @@
             border-top: 1px solid rgba(0, 0, 0, 0.1);
             padding: 1rem 0;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            width: 100%;
         }
 
         .mobile-menu.active {
@@ -196,6 +202,26 @@
             gap: 1rem;
             height: 100%;
             padding: 1rem;
+        }
+
+        /* Mobile carousel override */
+        @media screen and (max-width: 768px) {
+            .carousel-track {
+                display: flex !important;
+                grid-template-columns: none !important;
+                flex-direction: row !important;
+                overflow-x: scroll !important;
+                scroll-snap-type: x mandatory !important;
+                -webkit-overflow-scrolling: touch !important;
+                gap: 1rem !important;
+                padding: 1rem !important;
+                scrollbar-width: none !important;
+                -ms-overflow-style: none !important;
+            }
+            
+            .carousel-track::-webkit-scrollbar {
+                display: none !important;
+            }
         }
 
         .hero-card {
@@ -688,22 +714,23 @@
         }
 
         /* Responsive Design */
-        @media (max-width: 768px) {
+        @media screen and (max-width: 768px) {
             .nav-menu {
-                display: none;
+                display: none !important;
             }
 
             .mobile-menu-toggle {
-                display: block;
+                display: block !important;
+                z-index: 1000;
             }
 
             .nav-container {
-                padding: 1rem;
+                padding: 1rem !important;
                 position: relative;
             }
 
             .hero {
-                padding: 6rem 1rem 4rem;
+                padding: 6rem 1rem 4rem !important;
             }
 
             .hero-content {
@@ -712,12 +739,12 @@
             }
 
             .hero-text h1 {
-                font-size: 2rem;
+                font-size: 2rem !important;
                 line-height: 1.2;
             }
 
             .hero-text p {
-                font-size: 1rem;
+                font-size: 1rem !important;
             }
 
             .institutional-container,
@@ -748,56 +775,67 @@
             }
 
             .hero-carousel {
-                height: auto;
-                min-height: 400px;
+                height: auto !important;
+                min-height: 300px;
+                padding: 1rem 0;
             }
 
             .carousel-track {
-                display: flex;
-                overflow-x: auto;
-                gap: 1rem;
-                padding: 1rem;
+                display: flex !important;
+                flex-direction: row !important;
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
+                gap: 1rem !important;
+                padding: 1rem !important;
                 scroll-snap-type: x mandatory;
                 -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+
+            .carousel-track::-webkit-scrollbar {
+                display: none;
             }
 
             .hero-card {
-                flex: 0 0 280px;
-                min-height: 180px;
+                flex: 0 0 280px !important;
+                min-height: 180px !important;
                 scroll-snap-align: start;
+                display: block !important;
             }
 
             .hero-card h3 {
-                font-size: 0.9rem;
+                font-size: 0.9rem !important;
             }
         }
 
-        @media (max-width: 480px) {
+        @media screen and (max-width: 480px) {
             .hero-text h1 {
-                font-size: 1.8rem;
+                font-size: 1.6rem !important;
             }
 
             .hero-carousel {
-                height: auto;
-                min-height: 350px;
+                height: auto !important;
+                min-height: 280px !important;
             }
 
             .carousel-track {
-                gap: 0.8rem;
+                gap: 0.8rem !important;
+                padding: 0.5rem !important;
             }
 
             .hero-card {
-                flex: 0 0 250px;
-                min-height: 160px;
+                flex: 0 0 240px !important;
+                min-height: 160px !important;
             }
 
             .hero-card h3 {
-                font-size: 0.85rem;
+                font-size: 0.8rem !important;
             }
 
             .hero-card-badge {
-                font-size: 0.65rem;
-                padding: 0.2rem 0.6rem;
+                font-size: 0.6rem !important;
+                padding: 0.2rem 0.5rem !important;
             }
         }
     </style>
