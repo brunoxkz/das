@@ -63,6 +63,34 @@ import {
 
 const app = express();
 
+// ===== B2C2 STANDALONE - ROTA PRIORITÁRIA MÁXIMA =====
+// DEVE ESTAR ANTES DE QUALQUER MIDDLEWARE PARA EVITAR INTERCEPTAÇÃO DO VITE
+app.get('/b2c2-standalone', (req, res) => {
+  try {
+    const standalonePath = path.join(process.cwd(), 'b2c2-standalone-fixed/index.html');
+    console.log('🔥 SERVINDO B2C2-STANDALONE - PRIORIDADE MÁXIMA (ANTES DE TODOS OS MIDDLEWARES):', standalonePath);
+    
+    if (fs.existsSync(standalonePath)) {
+      const htmlContent = fs.readFileSync(standalonePath, 'utf-8');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.send(htmlContent);
+      console.log('✅ B2C2-STANDALONE SERVIDO - PRIORIDADE MÁXIMA - BYPASS COMPLETO');
+      return;
+    } else {
+      console.log('❌ B2C2-STANDALONE HTML NÃO ENCONTRADO:', standalonePath);
+      res.status(404).send('B2C2-Standalone not found');
+      return;
+    }
+  } catch (error) {
+    console.error('❌ ERRO CRÍTICO B2C2-STANDALONE:', error);
+    res.status(500).send('Server error');
+    return;
+  }
+});
+
 // 🔒 CONFIGURAÇÃO DE PROXY PARA RATE LIMITING
 app.set('trust proxy', 1); // Confia no primeiro proxy (necessário para rate limiting no Replit)
 
@@ -323,6 +351,19 @@ app.get('/b2c2', (req, res) => {
     if (fs.existsSync(b2c2Path)) {
       const htmlContent = fs.readFileSync(b2c2Path, 'utf-8');
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(htmlContent);
+      console.log('✅ B2C2 SITE SERVIDO DIRETAMENTE - BYPASS VITE');
+    } else {
+      console.log('❌ B2C2 HTML NÃO ENCONTRADO:', b2c2Path);
+      res.status(404).send('B2C2 site not found');
+    }
+  } catch (error) {
+    console.error('❌ ERRO CRÍTICO B2C2:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// (B2C2-STANDALONE JÁ DEFINIDO NO INÍCIO DO ARQUIVO - PRIORIDADE MÁXIMA)
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.status(200).send(htmlContent);
       console.log('✅ B2C2 SITE SERVIDO DIRETAMENTE - BYPASS VITE');
