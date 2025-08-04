@@ -9,8 +9,13 @@ Site B2T Exchange 100% HTML/CSS/JavaScript - **SEM Node.js** - Perfeito para GoD
 ## 📁 Arquivos Incluídos
 
 - `index.html` - Site principal B2T Exchange
-- `admin.html` - Painel administrativo
-- `README.md` - Este guia
+- `admin.html` - Painel administrativo  
+- `.htaccess` - Configurações Apache (ESSENCIAL)
+- `robots.txt` - SEO e indexação
+- `sitemap.xml` - Mapeamento para buscadores
+- `favicon.ico` - Ícone do site
+- `manifest.json` - PWA manifest
+- `README.md` - Este guia completo
 
 ## 🎯 Funcionalidades
 
@@ -36,13 +41,22 @@ Site B2T Exchange 100% HTML/CSS/JavaScript - **SEM Node.js** - Perfeito para GoD
 ### Método 1: cPanel File Manager (RECOMENDADO)
 1. **Login no cPanel** do seu GoDaddy
 2. **Abra File Manager**
-3. **Vá para public_html/**
-4. **Upload dos arquivos**:
+3. **Vá para public_html/** (ou remova arquivos existentes)
+4. **Upload TODOS os arquivos**:
    - `index.html`
    - `admin.html`
+   - `.htaccess` ⚠️ **ESSENCIAL** (corrige erro 403)
+   - `robots.txt`
+   - `sitemap.xml`
+   - `favicon.ico`
+   - `manifest.json`
    - `README.md`
-5. **Acesse seu site**: `https://seudominio.com`
-6. **Admin**: `https://seudominio.com/admin.html`
+5. **Configurar permissões**:
+   - Arquivos: 644 (ou 755 se necessário)
+   - Pasta public_html: 755
+6. **Aguardar**: 2-5 minutos para propagação
+7. **Acesse**: `https://seudominio.com`
+8. **Admin**: `https://seudominio.com/admin.html`
 
 ### Método 2: FTP/SFTP
 ```bash
@@ -127,9 +141,16 @@ put README.md
 
 ### Problemas Comuns
 
+**❓ Erro 403 Forbidden**
+- **CERTIFIQUE**: arquivo `.htaccess` foi carregado
+- **Permissões**: arquivos 644, pastas 755
+- **cPanel**: Settings → Show Hidden Files = ON
+- **Aguarde**: 2-5 minutos após upload
+
 **❓ Site não carrega**
-- Verifique se os arquivos estão em `public_html/`
-- Confirme permissões de arquivo (644)
+- Verifique se TODOS os arquivos estão em `public_html/`
+- Confirme `.htaccess` presente e visible
+- Limpar cache DNS (8.8.8.8)
 
 **❓ Edições não salvam**
 - Limpar cache do navegador
