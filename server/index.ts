@@ -432,11 +432,14 @@ app.get('/icon-512x512.png', (req, res) => {
 // ===== IMAGENS B2T - ROTA PARA ASSETS =====
 app.use('/images-b2t', express.static(path.join(process.cwd(), 'public/images-b2t')));
 
-// ===== B2T SITE - ROTA PRIORITÁRIA ANTES DO VITE =====
-app.get('/b2t-fixed', (req, res) => {
-  console.log('🔥 SERVINDO B2T-FIXED DIRETAMENTE - BYPASS TOTAL DO VITE');
+// ===== B2T EXCHANGE ROUTES - PRIORITÁRIAS ANTES DO VITE =====
+console.log('🚀 CONFIGURANDO ROTAS B2T EXCHANGE ANTES DO VITE');
+
+// B2T Site Principal - /b2t-exchange
+app.get('/b2t-exchange', (req, res) => {
+  console.log('🎯 SERVINDO B2T EXCHANGE HOMEPAGE - BYPASS TOTAL DO VITE');
   try {
-    const filePath = path.join(process.cwd(), 'public', 'b2t-fixed.html');
+    const filePath = path.join(process.cwd(), 'public', 'b2t-exchange.html');
     
     if (fs.existsSync(filePath)) {
       const content = fs.readFileSync(filePath, 'utf8');
@@ -445,21 +448,75 @@ app.get('/b2t-fixed', (req, res) => {
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
       res.send(content);
-      console.log('✅ B2T-FIXED SERVIDO COM SUCESSO - TAMANHO:', content.length);
+      console.log('✅ B2T EXCHANGE SERVIDO - TAMANHO:', content.length);
     } else {
-      console.error('❌ B2T-FIXED NÃO ENCONTRADO:', filePath);
-      res.status(404).send('Arquivo B2T não encontrado');
+      console.error('❌ B2T EXCHANGE NÃO ENCONTRADO:', filePath);
+      res.status(404).send('Arquivo B2T Exchange não encontrado');
     }
   } catch (err) {
-    console.error('❌ ERRO CRÍTICO B2T-FIXED:', err);
+    console.error('❌ ERRO CRÍTICO B2T EXCHANGE:', err);
     res.status(500).send('Erro interno do servidor');
   }
+});
+
+// B2T Admin Panel - /b2t-admin
+app.get('/b2t-admin', (req, res) => {
+  console.log('⚙️ SERVINDO B2T ADMIN PANEL - BYPASS TOTAL DO VITE');
+  try {
+    const filePath = path.join(process.cwd(), 'public', 'b2t-exchange-admin.html');
+    
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.send(content);
+      console.log('✅ B2T ADMIN SERVIDO - TAMANHO:', content.length);
+    } else {
+      console.error('❌ B2T ADMIN NÃO ENCONTRADO:', filePath);
+      res.status(404).send('Arquivo B2T Admin não encontrado');
+    }
+  } catch (err) {
+    console.error('❌ ERRO CRÍTICO B2T ADMIN:', err);
+    res.status(500).send('Erro interno do servidor');
+  }
+});
+
+// B2T Test Page - /b2t-test
+app.get('/b2t-test', (req, res) => {
+  console.log('🔍 SERVINDO B2T TEST PAGE - BYPASS TOTAL DO VITE');
+  try {
+    const filePath = path.join(process.cwd(), 'public', 'b2t-exchange-test.html');
+    
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.send(content);
+      console.log('✅ B2T TEST SERVIDO - TAMANHO:', content.length);
+    } else {
+      console.error('❌ B2T TEST NÃO ENCONTRADO:', filePath);
+      res.status(404).send('Arquivo B2T Test não encontrado');
+    }
+  } catch (err) {
+    console.error('❌ ERRO CRÍTICO B2T TEST:', err);
+    res.status(500).send('Erro interno do servidor');
+  }
+});
+
+// ===== COMPATIBILIDADE B2T-FIXED (ROTA ANTIGA) =====
+app.get('/b2t-fixed', (req, res) => {
+  console.log('🔗 REDIRECIONAMENTO B2T-FIXED → B2T-EXCHANGE');
+  res.redirect(301, '/b2t-exchange');
 });
 
 // ===== COMPATIBILIDADE B2C2 → B2T =====
 app.get('/b2c2-fixed', (req, res) => {
   console.log('🔗 REDIRECIONAMENTO B2C2 → B2T');
-  res.redirect(301, '/b2t-fixed');
+  res.redirect(301, '/b2t-exchange');
 });
 
 app.get('/b2c2-admin', (req, res) => {
@@ -467,27 +524,7 @@ app.get('/b2c2-admin', (req, res) => {
   res.redirect(301, '/b2t-admin');
 });
 
-// ===== B2T ADMIN - SISTEMA CATEGORIZADO =====
-app.get('/b2t-admin', (req, res) => {
-  console.log('🔥 SERVINDO B2T-ADMIN COMPLETO - BYPASS TOTAL DO VITE');
-  try {
-    const filePath = path.join(process.cwd(), 'public', 'b2t-admin-complete.html');
-    
-    if (fs.existsSync(filePath)) {
-      const content = fs.readFileSync(filePath, 'utf8');
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.send(content);
-      console.log('✅ B2C2-ADMIN SERVIDO COM SUCESSO - TAMANHO:', content.length);
-    } else {
-      console.error('❌ B2C2-ADMIN NÃO ENCONTRADO:', filePath);
-      res.status(404).send('Arquivo B2C2 Admin não encontrado');
-    }
-  } catch (err) {
-    console.error('❌ ERRO CRÍTICO B2C2-ADMIN:', err);
-    res.status(500).send('Erro interno do servidor');
-  }
-});
+// (Rota B2T Admin já definida acima - removendo duplicação)
 
 // ===== B2C2 ADMIN COMPLETE - ROTA ALTERNATIVA =====
 app.get('/b2c2-admin-complete', (req, res) => {
