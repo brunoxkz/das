@@ -146,30 +146,32 @@
         /* Hero Carousel */
         .hero-carousel {
             position: relative;
-            overflow: hidden;
             border-radius: 20px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
             height: 400px;
             width: 100%;
-            max-width: 600px;
             margin: 0 auto;
+            overflow: hidden;
         }
 
         .carousel-track {
-            display: flex;
-            transition: transform 0.5s ease;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
             height: 100%;
+            padding: 1rem;
         }
 
         .hero-card {
-            min-width: 100%;
+            width: 100%;
             height: 100%;
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
-            padding: 2rem;
+            padding: 1.5rem;
             position: relative;
             color: white;
+            border-radius: 15px;
         }
 
         .genius-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
@@ -183,7 +185,7 @@
             color: white;
             padding: 0.2rem 0.6rem;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             margin-bottom: 1rem;
             align-self: flex-start;
             backdrop-filter: blur(10px);
@@ -191,33 +193,15 @@
         }
 
         .hero-card h3 {
-            font-size: 1.5rem;
+            font-size: 1.1rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
             line-height: 1.3;
         }
 
         .carousel-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            padding: 1rem;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
+            display: none;
         }
-
-        .carousel-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .carousel-btn-prev { left: 1rem; }
-        .carousel-btn-next { right: 1rem; }
 
         /* Institutional Solutions Section */
         .institutional-solutions {
@@ -690,8 +674,17 @@
             }
 
             .hero-carousel {
-                max-width: 100%;
                 height: 300px;
+            }
+
+            .carousel-track {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                overflow-y: auto;
+            }
+
+            .hero-card {
+                min-height: 150px;
             }
         }
     </style>
@@ -741,13 +734,7 @@
                         <div class="hero-card-badge">Press release</div>
                         <h3>B2T and PV01 Pioneer Corporate Bond on Blockchain</h3>
                     </div>
-                    <div class="hero-card openpayd-bg">
-                        <div class="hero-card-badge">Press release</div>
-                        <h3>B2T Partners with OpenPayd to Expand its Global Instant Settlement Network</h3>
-                    </div>
                 </div>
-                <button class="carousel-btn carousel-btn-prev" onclick="slideCarousel(-1)">‹</button>
-                <button class="carousel-btn carousel-btn-next" onclick="slideCarousel(1)">›</button>
             </div>
         </div>
     </section>
@@ -920,27 +907,7 @@
     </footer>
 
     <script>
-        let currentSlide = 0;
-        const track = document.getElementById('carousel-track');
-        const totalSlides = 4;
-
-        function slideCarousel(direction) {
-            currentSlide += direction;
-            
-            if (currentSlide >= totalSlides) {
-                currentSlide = 0;
-            } else if (currentSlide < 0) {
-                currentSlide = totalSlides - 1;
-            }
-            
-            const translateX = -currentSlide * 100;
-            track.style.transform = `translateX(${translateX}%)`;
-        }
-
-        // Auto-scroll carousel every 3 seconds
-        setInterval(() => {
-            slideCarousel(1);
-        }, 3000);
+        // No carousel functionality needed - showing 3 cards simultaneously
 
         // Smooth scrolling for navigation links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {

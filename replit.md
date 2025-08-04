@@ -30,6 +30,8 @@ Two concurrent development projects:
 - **✅ ZIP ATUALIZADO**: B2T-EXCHANGE-CORRIGIDO-LAYOUT.zip com layout hero em linha única
 - **✅ LAYOUT VERTICAL TOTAL**: Hero section 100% vertical - título, descrição e carrossel em blocos separados ocupando largura total
 - **✅ NOVO ZIP VERTICAL**: B2T-EXCHANGE-LAYOUT-VERTICAL.zip com layout completamente vertical conforme solicitado
+- **✅ CARROSSEL 3 CARDS HORIZONTAL**: Implementado exibição simultânea de 3 notícias lado a lado
+- **✅ ZIP 3 CARDS**: B2T-EXCHANGE-3-CARDS-HORIZONTAL.zip com 3 cards de notícias visíveis simultaneamente
 
 ## User Preferences
 Preferred communication style: Simple, everyday language (Portuguese).
