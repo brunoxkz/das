@@ -1694,13 +1694,7 @@
     <header class="header">
         <nav class="nav-container">
             <a href="#" class="logo">
-                <div class="logo-icon">
-                    <div class="logo-circle">B</div>
-                    <div class="logo-circle">2</div>
-                    <div class="logo-circle">T</div>
-                    <div class="logo-circle">★</div>
-                </div>
-                <span style="margin-left: 0.5rem;">B2T</span>
+                <img src="/images-b2t/b2t-logo.png" alt="B2T Exchange" style="height: 45px; width: auto;">
             </a>
             <ul class="nav-menu">
                 <li><a href="#hero" class="nav-link">Home</a></li>
@@ -1708,7 +1702,7 @@
                 <li><a href="#about" class="nav-link">About</a></li>
                 <li><a href="#news" class="nav-link">News</a></li>
                 <li><a href="#insights" class="nav-link">Insights</a></li>
-                <li><a href="mailto:contact@b2texchange.com" class="nav-link">Contact</a></li>
+                <li><a href="#" class="nav-link" onclick="openContactModal(); return false;">Contact</a></li>
 
             </ul>
             <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
@@ -1719,12 +1713,7 @@
     <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileMenu()"></div>
     <div class="mobile-menu" id="mobileMenu">
         <div class="mobile-menu-header">
-            <div class="logo-icon">
-                <div class="logo-circle">B</div>
-                <div class="logo-circle">2</div>
-                <div class="logo-circle">T</div>
-                <div class="logo-circle">★</div>
-            </div>
+            <img src="/images-b2t/b2t-logo.png" alt="B2T Exchange" style="height: 35px; width: auto;">
             <button class="mobile-menu-close" onclick="closeMobileMenu()">×</button>
         </div>
         <ul class="mobile-nav-menu">
@@ -1733,7 +1722,7 @@
             <li><a href="#about" onclick="closeMobileMenu()">About</a></li>
             <li><a href="#news" onclick="closeMobileMenu()">News</a></li>
             <li><a href="#insights" onclick="closeMobileMenu()">Insights</a></li>
-            <li><a href="mailto:contact@b2texchange.com" onclick="closeMobileMenu()">Contact</a></li>
+            <li><a href="#" onclick="openContactModal(); closeMobileMenu();">Contact</a></li>
 
         </ul>
     </div>
