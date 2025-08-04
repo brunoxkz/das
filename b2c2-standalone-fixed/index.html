@@ -50,14 +50,28 @@
             gap: 0.5rem;
         }
 
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
         .logo img {
             height: 40px;
             width: auto;
             transition: opacity 0.3s ease;
+            display: block;
         }
 
         .logo:hover img {
             opacity: 0.8;
+        }
+
+        /* Ensure logo visibility on mobile */
+        @media screen and (max-width: 768px) {
+            .logo img {
+                height: 35px !important;
+            }
         }
 
         .nav-menu {
