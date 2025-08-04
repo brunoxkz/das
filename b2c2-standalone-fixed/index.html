@@ -937,10 +937,10 @@
             track.style.transform = `translateX(${translateX}%)`;
         }
 
-        // Auto-scroll carousel
+        // Auto-scroll carousel every 3 seconds
         setInterval(() => {
             slideCarousel(1);
-        }, 5000);
+        }, 3000);
 
         // Smooth scrolling for navigation links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
