@@ -36,7 +36,8 @@ Two concurrent development projects:
 - **✅ CORES E ESTILOS B2C2**: Gradientes roxos, cinza escuro, verde - exatamente como nas imagens de referência  
 - **✅ LOGO B2T IMPLEMENTADO**: Logo oficial B2T baixado e integrado no header substituindo os circles
 - **✅ RESPONSIVO MOBILE CORRIGIDO**: Menu hamburger funcional + carrossel horizontal com scroll touch no mobile
-- **✅ ZIP FINAL**: B2T-EXCHANGE-4-CARDS-FINAL.zip com layout otimizado, cores corretas, logo B2T e mobile responsivo
+- **✅ CARROSSEL MOBILE ULTRA-CORRIGIDO**: CSS com seletores específicos (.hero-carousel .carousel-track) e !important forçado
+- **✅ ZIP FINAL MOBILE**: B2T-EXCHANGE-CARROSSEL-MOBILE-FIXO.zip com carrossel horizontal funcional no mobile
 
 ## User Preferences
 Preferred communication style: Simple, everyday language (Portuguese).
