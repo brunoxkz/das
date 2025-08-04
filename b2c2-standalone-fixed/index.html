@@ -218,46 +218,74 @@
             padding: 1rem;
         }
 
-        /* Mobile carousel override - STRONGEST PRIORITY */
+        /* Mobile carousel - 1 card with arrows */
         @media screen and (max-width: 768px) {
+            .hero-carousel {
+                position: relative !important;
+                overflow: hidden !important;
+                padding: 0 50px !important;
+            }
+            
             .hero-carousel .carousel-track {
                 display: flex !important;
                 grid-template-columns: none !important;
                 flex-direction: row !important;
-                overflow-x: scroll !important;
-                overflow-y: hidden !important;
-                scroll-snap-type: x mandatory !important;
-                -webkit-overflow-scrolling: touch !important;
+                transition: transform 0.3s ease !important;
                 gap: 1rem !important;
                 padding: 1rem !important;
-                scrollbar-width: none !important;
-                -ms-overflow-style: none !important;
-                width: 100% !important;
-                height: auto !important;
-            }
-            
-            .hero-carousel .carousel-track::-webkit-scrollbar {
-                display: none !important;
-                width: 0 !important;
-                height: 0 !important;
+                width: 400% !important; /* 4 cards = 400% */
             }
             
             .hero-carousel .hero-card {
-                flex: 0 0 280px !important;
-                min-width: 280px !important;
-                max-width: 280px !important;
-                min-height: 160px !important;
-                scroll-snap-align: start !important;
+                flex: 0 0 calc(25% - 0.75rem) !important; /* 1/4 of container minus gap */
+                min-width: calc(25% - 0.75rem) !important;
+                min-height: 180px !important;
                 display: flex !important;
                 flex-direction: column !important;
+            }
+            
+            /* Navigation arrows */
+            .carousel-nav {
+                position: absolute !important;
+                top: 50% !important;
+                transform: translateY(-50%) !important;
+                background: rgba(99, 102, 241, 0.8) !important;
+                border: none !important;
+                color: white !important;
+                width: 40px !important;
+                height: 40px !important;
+                border-radius: 50% !important;
+                cursor: pointer !important;
+                font-size: 18px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                z-index: 10 !important;
+                transition: background 0.3s ease !important;
+            }
+            
+            .carousel-nav:hover {
+                background: rgba(99, 102, 241, 1) !important;
+            }
+            
+            .carousel-nav.prev {
+                left: 10px !important;
+            }
+            
+            .carousel-nav.next {
+                right: 10px !important;
             }
         }
         
         @media screen and (max-width: 480px) {
-            .hero-carousel .hero-card {
-                flex: 0 0 250px !important;
-                min-width: 250px !important;
-                max-width: 250px !important;
+            .hero-carousel {
+                padding: 0 45px !important;
+            }
+            
+            .carousel-nav {
+                width: 35px !important;
+                height: 35px !important;
+                font-size: 16px !important;
             }
         }
 
@@ -927,6 +955,7 @@
                 </p>
             </div>
             <div class="hero-carousel" id="hero-carousel">
+                <button class="carousel-nav prev" onclick="previousCard()">‹</button>
                 <div class="carousel-track" id="carousel-track">
                     <div class="hero-card genius-bg">
                         <div class="hero-card-badge">Press release</div>
@@ -945,6 +974,7 @@
                         <h3>B2T Partners with OpenPayd to Expand its Global Instant Settlement Network</h3>
                     </div>
                 </div>
+                <button class="carousel-nav next" onclick="nextCard()">›</button>
             </div>
         </div>
     </section>
@@ -1150,6 +1180,42 @@
                     });
                 }
             });
+        });
+
+        // Mobile carousel navigation
+        let currentCardIndex = 0;
+        const totalCards = 4;
+
+        function nextCard() {
+            const carouselTrack = document.getElementById('carousel-track');
+            if (window.innerWidth <= 768 && carouselTrack) {
+                currentCardIndex = (currentCardIndex + 1) % totalCards;
+                const translateX = -currentCardIndex * 25; // 25% per card
+                carouselTrack.style.transform = `translateX(${translateX}%)`;
+            }
+        }
+
+        function previousCard() {
+            const carouselTrack = document.getElementById('carousel-track');
+            if (window.innerWidth <= 768 && carouselTrack) {
+                currentCardIndex = (currentCardIndex - 1 + totalCards) % totalCards;
+                const translateX = -currentCardIndex * 25; // 25% per card
+                carouselTrack.style.transform = `translateX(${translateX}%)`;
+            }
+        }
+
+        // Reset carousel on window resize
+        window.addEventListener('resize', function() {
+            const carouselTrack = document.getElementById('carousel-track');
+            if (carouselTrack) {
+                if (window.innerWidth > 768) {
+                    carouselTrack.style.transform = 'translateX(0)';
+                    currentCardIndex = 0;
+                } else {
+                    const translateX = -currentCardIndex * 25;
+                    carouselTrack.style.transform = `translateX(${translateX}%)`;
+                }
+            }
         });
     </script>
 </body>
