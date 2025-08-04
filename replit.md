@@ -28,6 +28,8 @@ Two concurrent development projects:
 - **✅ NAVEGAÇÃO ADMIN CORRIGIDA**: Todos os 8 links do menu lateral agora funcionais com JavaScript onclick
 - **✅ SISTEMA DUAL COMPLETO**: Homepage + Admin Panel 100% funcionais com sincronização bidirecional
 - **✅ ZIP ATUALIZADO**: B2T-EXCHANGE-CORRIGIDO-LAYOUT.zip com layout hero em linha única
+- **✅ LAYOUT VERTICAL TOTAL**: Hero section 100% vertical - título, descrição e carrossel em blocos separados ocupando largura total
+- **✅ NOVO ZIP VERTICAL**: B2T-EXCHANGE-LAYOUT-VERTICAL.zip com layout completamente vertical conforme solicitado
 
 ## User Preferences
 Preferred communication style: Simple, everyday language (Portuguese).
