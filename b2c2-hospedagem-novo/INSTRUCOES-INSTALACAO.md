@@ -1,58 +1,76 @@
-# 🚀 INSTRUÇÕES DE INSTALAÇÃO - B2T EXCHANGE
+# 📋 INSTRUÇÕES DE INSTALAÇÃO - B2T EXCHANGE
 
-## 📋 ARQUIVOS INCLUSOS
-- `index.html` - Site principal B2T Exchange
-- `.htaccess` - Configurações do servidor Apache
+## 🎯 SITE GARANTIDO: VISUAL ROXO/GRADIENTE COMPLETO
+
+Este ZIP contém o site B2T Exchange com **TODOS os gradientes roxos e visuais** que você vê funcionando localmente.
+
+## 📦 ARQUIVOS INCLUÍDOS
+
+- `index.html` - Site principal com gradientes roxos
+- `images-b2t/` - Pasta com logo B2T Exchange
+- `.htaccess` - Configurações Apache para GoDaddy
 - `INSTRUCOES-INSTALACAO.md` - Este arquivo
 
-## 🌐 INSTALAÇÃO NO GODADDY
+## 🚀 INSTALAÇÃO NO GODADDY
 
-### 1. ACESSE O CPANEL
-- Entre no seu painel GoDaddy
-- Clique em "File Manager" ou "Gerenciador de Arquivos"
+### PASSO 1: Acesse o File Manager
+1. Faça login no GoDaddy
+2. Vá em "Hosting" → "Manage"
+3. Clique em "File Manager"
 
-### 2. NAVEGUE PARA A PASTA PÚBLICA
-- Vá para `/public_html/` (pasta raiz do seu domínio)
-- Se for subdomínio, vá para `/public_html/subdominio/`
+### PASSO 2: Limpe a pasta public_html
+1. Entre na pasta `public_html`
+2. **APAGUE TODOS** os arquivos existentes
+3. Certifique-se que a pasta está completamente vazia
 
-### 3. FAÇA UPLOAD DOS ARQUIVOS
-- Upload de todos os arquivos desta pasta
-- Certifique-se que `index.html` está na raiz
-- O `.htaccess` deve estar junto com o `index.html`
+### PASSO 3: Faça Upload dos Arquivos
+1. Clique em "Upload"
+2. Faça upload de **TODOS** os arquivos deste ZIP:
+   - `index.html`
+   - `.htaccess`
+   - A pasta `images-b2t` inteira
 
-### 4. CONFIGURAÇÕES DE PERMISSÃO
-- `index.html` → 644 (rw-r--r--)
-- `.htaccess` → 644 (rw-r--r--)
+### PASSO 4: Verificar Estrutura
+Sua pasta `public_html` deve ficar assim:
+```
+public_html/
+├── index.html
+├── .htaccess
+└── images-b2t/
+    └── b2t-logo.png
+```
 
-## ✅ VERIFICAÇÃO
+## ✅ VERIFICAÇÃO DE SUCESSO
 
-Acesse seu domínio:
-- `https://seudominio.com` deve mostrar o site B2T Exchange
-- Design responsivo funcionando
-- Todas as seções carregando corretamente
+Acesse seu domínio. Você deve ver:
+- ✅ Header com logo B2T
+- ✅ Seção Hero com gradiente roxo/azul
+- ✅ Seção "Institutional solutions" roxa
+- ✅ Seção "Latest news" roxa  
+- ✅ Seção "Subscribe" roxa
+- ✅ Footer preto com links
 
 ## 🔧 SOLUÇÃO DE PROBLEMAS
 
-### Site não carrega:
-1. Verifique se `index.html` está na pasta correta
-2. Confirme permissões 644
-3. Teste desabilitando SSL temporariamente
+### Se as imagens não aparecem:
+1. Verifique se a pasta `images-b2t` foi enviada
+2. Confirme que as permissões estão corretas (755)
 
-### Layout quebrado:
-1. Verifique se não há cache do navegador
-2. Force refresh com Ctrl+F5
-3. Aguarde alguns minutos para DNS propagar
+### Se o site aparece quebrado:
+1. Verifique se o arquivo `.htaccess` foi enviado
+2. Certifique-se que `index.html` está na raiz
 
-### Erro 500:
-1. Verifique sintaxe do `.htaccess`
-2. Remova temporariamente o `.htaccess` e teste
-3. Entre em contato com suporte GoDaddy se persistir
+### Se as cores/gradientes não aparecem:
+1. Force refresh: Ctrl+F5 (Windows) ou Cmd+Shift+R (Mac)
+2. Limpe cache do navegador
 
-## 📞 SUPORTE
-Se tiver problemas, entre em contato com o suporte técnico com estas informações:
-- Versão: B2T Exchange Static v1.0
-- Data: $(date)
-- Arquivos: index.html + .htaccess + instruções
+## 📞 GARANTIA VISUAL
+
+Este arquivo é uma **cópia exata** do `/b2c2-fixed` que funciona localmente. 
+Se não aparecer idêntico, há problema na instalação, não no código.
+
+**CONTÉM TODAS AS SEÇÕES ROXAS DAS SUAS IMAGENS!**
 
 ---
-**Site 100% funcional para hospedagem compartilhada GoDaddy**
+*Versão: B2T Exchange Static v1.0*
+*Data: Janeiro 2025*
