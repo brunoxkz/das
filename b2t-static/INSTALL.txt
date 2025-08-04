@@ -1,0 +1,63 @@
+🚀 B2T EXCHANGE - INSTALAÇÃO RÁPIDA GODADDY
+
+=== PASSO A PASSO DEFINITIVO ===
+
+1. ACESSE CPANEL GODADDY
+   - Login na sua conta GoDaddy
+   - Clique em "cPanel" ou "Web Hosting"
+
+2. FILE MANAGER
+   - Clique em "File Manager"
+   - Vá para pasta "public_html"
+
+3. LIMPAR PASTA (IMPORTANTE!)
+   - DELETE todos os arquivos existentes
+   - Principalmente: index.html, index.php antigos
+
+4. UPLOAD TODOS OS ARQUIVOS
+   ✅ index.html (site principal)
+   ✅ admin.html (painel admin)
+   ✅ .htaccess (configurações - CRÍTICO!)
+   ✅ favicon.ico (ícone)
+   ✅ robots.txt (seo)
+   ✅ sitemap.xml (google)
+   ✅ manifest.json (pwa)
+   ✅ test.html (teste)
+   ✅ INSTALL.txt (este arquivo)
+
+5. VERIFICAR .HTACCESS
+   - Se não aparecer: Settings > Show Hidden Files = ON
+   - Deve estar visível na lista
+
+6. PERMISSÕES (SE NECESSÁRIO)
+   - Selecionar todos os arquivos
+   - Permissions: 644
+   - Apply to files
+
+7. TESTE IMEDIATO
+   - Acesse: https://seudominio.com/test.html
+   - Se carregar = Upload OK!
+   - Depois acesse: https://seudominio.com
+
+8. ADMIN PANEL
+   - https://seudominio.com/admin.html
+
+=== SOLUÇÃO DE PROBLEMAS ===
+
+❌ Erro 403 Forbidden:
+- Verifique se .htaccess foi carregado
+- Show Hidden Files = ON
+- Aguarde 5 minutos
+
+❌ Página em branco:
+- Limpe cache do navegador (Ctrl+F5)
+- Verifique se index.html foi carregado
+
+❌ Layout quebrado:
+- Todos os arquivos foram carregados?
+- Teste com test.html primeiro
+
+✅ FUNCIONOU? 
+Site: https://seudominio.com
+Admin: https://seudominio.com/admin.html
+Edição: Ctrl+E no site principal
