@@ -1,0 +1,24 @@
+{
+  "name": "b2t-exchange-standalone",
+  "version": "1.0.0",
+  "description": "B2T Exchange - Site Standalone com SQLite",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "setup": "node setup-db.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "sqlite3": "^5.1.6",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2",
+    "path": "^0.12.7"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": ["b2t", "exchange", "crypto", "standalone"],
+  "author": "B2T Exchange",
+  "license": "MIT"
+}
