@@ -5,10 +5,13 @@ Two concurrent development projects:
 1) **Chrome/Opera Browser Extension** - Screen-splitting sidebar with productivity tools (to-do list, Pomodoro timer, ambient sounds) with universal website compatibility
 2) **WordPress Theme** - Professional B2C2.com replica theme for fintech/blockchain companies with complete Elementor compatibility
 
-## Recent Changes (January 31, 2025)
+## Recent Changes (February 4, 2025)
 - **✅ B2C2 SITE STANDALONE CRIADO**: Site HTML puro com design 100% idêntico ao B2C2.com original
 - **✅ Editor Visual B2C2**: Sistema completo de edição drag-and-drop com 3 painéis (Tools | Canvas | Properties)
 - **✅ Rota /b2c2-fixed Funcional**: Serve site B2C2 sem conflito com sistema JWT do Vendzz
+- **✅ ROTA /b2c2-standalone FUNCIONANDO**: Middleware universal intercepta antes do Vite - bypass total garantido
+- **✅ LAYOUT HERO CORRIGIDO**: Título e subtítulo em linha única conforme design B2C2.com original
+- **✅ INTERCEPTAÇÃO UNIVERSAL**: Sistema middleware que captura /b2c2-standalone antes de qualquer outro middleware
 - **✅ EDIÇÃO INLINE IMPLEMENTADA**: Sistema "Edit Mode" com click-to-edit em todos os textos
 - **✅ ADMIN COMPLETO CATEGORIZADO**: /b2c2-admin com 8 seções organizadas (Hero, Carousel, Solutions, News, Insights, Branding, Pages, Settings)
 - **✅ SINCRONIZAÇÃO ADMIN ↔ HOMEPAGE**: Sistema localStorage com auto-save e carregamento em tempo real
@@ -24,6 +27,7 @@ Two concurrent development projects:
 - **✅ LOGO B2T IMPLEMENTADO**: Substituído logo B2C2 por B2T Exchange na homepage (/b2c2-fixed)
 - **✅ NAVEGAÇÃO ADMIN CORRIGIDA**: Todos os 8 links do menu lateral agora funcionais com JavaScript onclick
 - **✅ SISTEMA DUAL COMPLETO**: Homepage + Admin Panel 100% funcionais com sincronização bidirecional
+- **✅ ZIP ATUALIZADO**: B2T-EXCHANGE-CORRIGIDO-LAYOUT.zip com layout hero em linha única
 
 ## User Preferences
 Preferred communication style: Simple, everyday language (Portuguese).

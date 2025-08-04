@@ -116,10 +116,20 @@
         }
 
         .hero-text h1 {
-            font-size: clamp(2.5rem, 4vw, 3.5rem);
+            font-size: clamp(2rem, 3.5vw, 2.8rem);
             font-weight: 300;
-            line-height: 1.2;
+            line-height: 1.3;
             margin-bottom: 2rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @media (max-width: 1400px) {
+            .hero-text h1 {
+                white-space: normal;
+                font-size: clamp(1.8rem, 3vw, 2.5rem);
+            }
         }
 
         .highlight {
@@ -701,9 +711,7 @@
     <section id="hero" class="hero">
         <div class="hero-content">
             <div class="hero-text">
-                <h1>
-                    More than just a liquidity provider, <span class="highlight">B2T is a digital asset pioneer</span> building the ecosystem of the future
-                </h1>
+                <h1>More than just a liquidity provider, <span class="highlight">B2T is a digital asset pioneer</span> building the ecosystem of the future</h1>
                 <p>
                     B2T's success is built on a foundation of proprietary crypto-native technology combined with an innovative range of products, making the firm the partner of choice for diverse institutions globally.
                 </p>
