@@ -5,6 +5,27 @@ import { insertNews, insertEvents, insertSolutions, insertInsights, insertNewsle
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // B2T EXCHANGE ROUTES - Site HTML estático para GoDaddy
+  console.log('🚀 REGISTRANDO ROTAS B2T EXCHANGE');
+  
+  // B2T Site Principal - HTML estático
+  app.get('/b2t-exchange', (req, res) => {
+    console.log('🎯 SERVINDO B2T EXCHANGE HOMEPAGE');
+    res.sendFile('b2t-exchange.html', { root: 'public' });
+  });
+  
+  // B2T Admin Panel - Sistema completo de edição
+  app.get('/b2t-admin', (req, res) => {
+    console.log('⚙️ SERVINDO B2T ADMIN PANEL');
+    res.sendFile('b2t-exchange-admin.html', { root: 'public' });
+  });
+  
+  // B2T Test Page - Verificação rápida
+  app.get('/b2t-test', (req, res) => {
+    console.log('🔍 SERVINDO B2T TEST PAGE');
+    res.sendFile('b2t-exchange-test.html', { root: 'public' });
+  });
+
   // B2C2 FIXED - Removido duplicação (já está em server/index.ts)
 
   // B2C2 ADMIN COMPLETO - Sistema categorizado de edição
@@ -14,7 +35,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const fs = require('fs');
     const filePath = path.join(__dirname, '../public/b2c2-admin-complete.html');
     
-    fs.readFile(filePath, 'utf8', (err, data) => {
+    fs.readFile(filePath, 'utf8', (err: any, data: string) => {
       if (err) {
         console.error('Erro ao ler arquivo:', err);
         res.status(404).send('Arquivo não encontrado');
@@ -420,7 +441,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, message: 'Successfully subscribed to newsletter', subscription });
     } catch (error) {
       console.error('Error subscribing to newsletter:', error);
-      if (error.message === 'Email already subscribed') {
+      if ((error as Error).message === 'Email already subscribed') {
         return res.status(409).json({ error: 'Email is already subscribed' });
       }
       res.status(500).json({ error: 'Failed to subscribe to newsletter' });
