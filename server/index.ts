@@ -348,16 +348,10 @@ app.use((req, res, next) => {
 // ===== SISTEMA VENDAS WHATSAPP - BYPASS TOTAL JWT =====
 console.log('🚀 CONFIGURANDO ROTAS SISTEMA VENDAS - BYPASS TOTAL JWT VENDZZ');
 
-// Teste básico primeiro
-app.get('/vendas-test', (req, res) => {
-  const html = `<!DOCTYPE html><html><head><title>Teste</title></head><body><h1>FUNCIONOU!</h1><button onclick="alert('JS OK')">Teste JS</button><script>console.log('TESTE CARREGADO');</script></body></html>`;
-  res.send(html);
-});
-
-// Dashboard Vendas - ROTA PRIORITÁRIA ANTES DO VITE
-app.get('/vendas-dashboard', (req, res) => {
+// Sistema Vendas WhatsApp - ISOLADO DO VENDZZ
+app.get('/sistema-vendas-whatsapp', (req, res) => {
   try {
-    console.log('💰 ACESSANDO VENDAS DASHBOARD - ANTES DO VITE');
+    console.log('💰 SISTEMA VENDAS WHATSAPP - ISOLADO TOTAL DO VENDZZ');
     
     // HTML inline para garantir funcionamento
     const html = `
@@ -434,9 +428,9 @@ app.get('/vendas-dashboard', (req, res) => {
             showMessage('Processando login...', 'success');
             
             try {
-                console.log('📡 Fazendo requisição para:', '/api/vendas-proxy/auth/login');
+                console.log('📡 Fazendo requisição para:', '/whatsapp-vendas/auth/login');
                 
-                const response = await fetch('/api/vendas-proxy/auth/login', {
+                const response = await fetch('/whatsapp-vendas/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
@@ -476,7 +470,7 @@ app.get('/vendas-dashboard', (req, res) => {
         async function loadStats() {
             try {
                 console.log('📊 Carregando estatísticas...');
-                const response = await fetch('/api/vendas-proxy/dashboard/stats');
+                const response = await fetch('/whatsapp-vendas/dashboard/stats');
                 const stats = await response.json();
                 
                 console.log('📊 Stats recebidas:', stats);
@@ -528,7 +522,7 @@ app.get('/vendas-dashboard', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.send(html);
-    console.log('✅ DASHBOARD VENDAS SERVIDO - HTML INLINE GARANTIDO');
+    console.log('✅ SISTEMA VENDAS WHATSAPP SERVIDO - ISOLADO DO VENDZZ');
     
   } catch (error) {
     console.error('❌ ERRO CRÍTICO DASHBOARD VENDAS:', error);
