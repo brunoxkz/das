@@ -56,7 +56,7 @@
             <div id="message"></div>
             <input type="text" id="user" placeholder="Usuário" value="admin">
             <input type="password" id="pass" placeholder="Senha" value="admin123">
-            <button onclick="doLogin()">Entrar</button>
+            <button type="button" onclick="doLogin(); console.log('ONCLICK DISPARADO');">Entrar</button>
             <p><strong>Teste:</strong> admin / admin123</p>
         </div>
         
@@ -83,31 +83,41 @@
         }
         
         async function doLogin() {
-            console.log('LOGIN INICIADO');
+            console.log('🔐 LOGIN INICIADO - VERSÃO DEBUG TOTAL');
             const user = document.getElementById('user').value;
             const pass = document.getElementById('pass').value;
             
+            console.log('📝 Valores capturados:', { user, pass: '***' });
+            showMessage('Processando login...', 'success');
+            
             try {
+                console.log('📡 Fazendo fetch para API...');
                 const response = await fetch('/api/vendas-proxy/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: user, password: pass })
                 });
                 
+                console.log('📡 Response status:', response.status);
+                console.log('📡 Response ok:', response.ok);
+                
                 const data = await response.json();
-                console.log('RESPOSTA:', data);
+                console.log('📋 RESPOSTA COMPLETA:', data);
                 
                 if (data.success) {
-                    showMessage('Login realizado!', 'success');
+                    console.log('✅ LOGIN SUCESSO - Redirecionando...');
+                    showMessage('Login realizado com sucesso!', 'success');
                     document.getElementById('welcome').textContent = `Bem-vindo, ${data.user.name}!`;
                     document.getElementById('login').classList.add('hidden');
                     document.getElementById('dashboard').classList.remove('hidden');
+                    console.log('📊 Carregando estatísticas...');
                     loadStats();
                 } else {
+                    console.log('❌ LOGIN FALHOU:', data.message);
                     showMessage('Erro: ' + data.message);
                 }
             } catch (error) {
-                console.error('ERRO:', error);
+                console.error('❌ ERRO CATCH:', error);
                 showMessage('Erro de conexão: ' + error.message);
             }
         }
@@ -134,8 +144,26 @@
         
         // Testar conexão
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM CARREGADO - Sistema pronto');
-            showMessage('Sistema carregado. Faça login!', 'success');
+            console.log('🚀 DOM CARREGADO - Sistema pronto para uso');
+            console.log('🔍 Elementos encontrados:', {
+                login: !!document.getElementById('login'),
+                dashboard: !!document.getElementById('dashboard'),
+                user: !!document.getElementById('user'),
+                pass: !!document.getElementById('pass'),
+                message: !!document.getElementById('message')
+            });
+            showMessage('Sistema carregado e pronto! Clique em "Entrar"', 'success');
+            
+            // Adicionar evento ao botão diretamente
+            const button = document.querySelector('button');
+            if (button) {
+                button.addEventListener('click', function(e) {
+                    console.log('🔘 BOTÃO CLICADO - Executando doLogin()');
+                    e.preventDefault();
+                    doLogin();
+                });
+                console.log('✅ Event listener adicionado ao botão');
+            }
         });
     </script>
 </body>
