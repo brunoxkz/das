@@ -1,44 +1,62 @@
-# XML Event System Viewer V4002
+# XML Viewers - Dual System
 
-Sistema de visualização para arquivo XML do WordPress com efeitos de "dados corrompidos" e mensagem de compatibilidade.
+Dois sistemas de visualização para arquivos XML do WordPress com efeitos especiais e mensagens customizadas.
 
-## Características
+## Sistema 1: Events Modified V4002 (`index.html`)
 
-- **Mensagem de Compatibilidade**: "COMPATIBLE WITH EVENTS MODIFIED SYSTEM V4002"
+**Características:**
+- **Mensagem**: "COMPATIBLE WITH EVENTS MODIFIED SYSTEM V4002"
 - **Dados "Quebrados"**: Simulação de corrupção de dados com efeitos visuais
 - **Interface Terminal**: Visual estilo hacker/terminal com cores verdes
 - **Efeitos Visuais**: Glitch, pulsação, loading bars animadas
 - **Status em Tempo Real**: Indicadores de status com animações
 
+## Sistema 2: Encrypted Posts (`posts-decrypt.html`)
+
+**Características:**
+- **Mensagem**: "INSERT HASH FOR DECRYPT" 
+- **Sistema de Criptografia**: Interface de decodificação com AES-256-CBC
+- **Posts Criptografados**: 4,443 posts bloqueados com hash keys
+- **Interface Futurística**: Visual cyberpunk com gradientes azuis/vermelhos
+- **Input de Hash**: Campo para inserir chave de descriptografia (sempre falha)
+- **Efeito Matrix**: Caracteres hexadecimais animados constantemente
+
 ## Como Usar
 
-1. Abra o arquivo `index.html` em qualquer navegador
-2. O sistema carregará automaticamente com a mensagem de compatibilidade
-3. Os dados do XML serão exibidos com efeitos de "corrupção"
+**Arquivo de Eventos:**
+1. Abra `index.html` 
+2. Veja sistema V4002 com dados corrompidos
+
+**Arquivo de Posts:**
+1. Abra `posts-decrypt.html`
+2. Tente inserir hash (sempre falhará)
+3. Veja posts criptografados com efeitos
 
 ## Efeitos Implementados
 
-- **Pulse Animation**: Banner de compatibilidade piscando
-- **Glitch Effect**: Dados corrompidos com efeito de tremulação
-- **Loading Bar**: Barra de progresso infinita
-- **Status Indicators**: LEDs coloridos piscando
-- **Broken Data**: Texto riscado e colorido indicando corrupção
-- **Terminal Theme**: Interface estilo linha de comando
+**Sistema V4002:**
+- Pulse Animation, Glitch Effect, Loading Bar, Status LEDs
+- Dados riscados, Terminal theme
+
+**Sistema Decrypt:**
+- Neon Glow, Matrix Effect, Scan Animation
+- Hash input, Failed decryption, Cyberpunk theme
 
 ## Estrutura
 
 ```
 xml-viewer/
-├── index.html          # Arquivo principal
+├── index.html          # Sistema V4002 (eventos)
+├── posts-decrypt.html  # Sistema Decrypt (posts)
 └── README.md          # Este arquivo
 ```
 
 ## Personalização
 
-Você pode modificar:
-- Mensagem de compatibilidade na linha 106
-- Cores do tema nas variáveis CSS
-- Dados dos eventos no array JavaScript (linha 163)
-- Efeitos visuais nos keyframes CSS
+Ambos sistemas podem ser customizados:
+- Mensagens principais nos banners
+- Cores e temas CSS
+- Dados simulados no JavaScript  
+- Efeitos visuais e animações
 
-O sistema foi criado para dar a impressão de que está processando um arquivo XML corrompido com sistema de eventos modificado V4002.
+**Importante:** Nenhum dos dois sistemas revela que é WordPress - aparentam ser sistemas de banco de dados corporativos/militares.
