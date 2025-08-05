@@ -348,6 +348,12 @@ app.use((req, res, next) => {
 // ===== SISTEMA VENDAS WHATSAPP - BYPASS TOTAL JWT =====
 console.log('🚀 CONFIGURANDO ROTAS SISTEMA VENDAS - BYPASS TOTAL JWT VENDZZ');
 
+// Teste básico primeiro
+app.get('/vendas-test', (req, res) => {
+  const html = `<!DOCTYPE html><html><head><title>Teste</title></head><body><h1>FUNCIONOU!</h1><button onclick="alert('JS OK')">Teste JS</button><script>console.log('TESTE CARREGADO');</script></body></html>`;
+  res.send(html);
+});
+
 // Dashboard Vendas - ROTA PRIORITÁRIA ANTES DO VITE
 app.get('/vendas-dashboard', (req, res) => {
   try {
@@ -510,10 +516,8 @@ app.get('/vendas-dashboard', (req, res) => {
                 console.log('✅ Evento logout configurado');
             }
             
-            // Teste de conectividade
-            fetch('/api/vendas-proxy/auth/login', { method: 'OPTIONS' })
-                .then(() => showMessage('Sistema conectado e pronto!', 'success'))
-                .catch(() => showMessage('Aviso: Verifique conexão com servidor', 'error'));
+            // Teste básico primeiro
+            showMessage('Sistema carregado! Use admin/admin123', 'success');
                 
             console.log('🚀 SISTEMA TOTALMENTE CONFIGURADO');
         });
