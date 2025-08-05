@@ -255,16 +255,27 @@
     </div>
 
     <script>
+        console.log('🚀 INICIANDO SISTEMA DE VENDAS WHATSAPP - DEBUG TOTAL');
+        
         // Variáveis globais
         let currentUser = null;
         let authToken = null;
         
         // Elementos DOM
+        console.log('🔍 Buscando elementos DOM...');
         const authSection = document.getElementById('authSection');
         const dashboard = document.getElementById('dashboard');
         const loginForm = document.getElementById('loginForm');
         const logoutBtn = document.getElementById('logoutBtn');
         const alertContainer = document.getElementById('alertContainer');
+        
+        console.log('📋 Elementos encontrados:', {
+            authSection: !!authSection,
+            dashboard: !!dashboard,
+            loginForm: !!loginForm,
+            logoutBtn: !!logoutBtn,
+            alertContainer: !!alertContainer
+        });
         
         // Sistema de Alerts
         function showAlert(message, type = 'error') {
@@ -280,47 +291,59 @@
         }
         
         // Login
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            
-            console.log('🔐 Tentando login...', { username });
-            
-            try {
-                const response = await fetch('/api/vendas-proxy/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ username, password })
-                });
+        console.log('🔧 Configurando evento de login...');
+        if (loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                console.log('🔐 FORMULÁRIO SUBMETIDO - Processando...');
                 
-                const data = await response.json();
-                console.log('📋 Resposta da API:', data);
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
                 
-                if (data.success && data.user && data.token) {
-                    currentUser = data.user;
-                    authToken = data.token;
+                console.log('🔐 Tentando login...', { username, password: '***' });
+                
+                try {
+                    console.log('📡 Fazendo requisição para API...');
+                    const response = await fetch('/api/vendas-proxy/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ username, password })
+                    });
                     
-                    console.log('✅ Login realizado! Usuário:', currentUser);
-                    showAlert('Login realizado com sucesso!', 'success');
+                    console.log('📡 Status da resposta:', response.status);
+                    const data = await response.json();
+                    console.log('📋 Resposta completa da API:', data);
                     
-                    // Redirecionar para o dashboard
-                    setTimeout(() => {
-                        showDashboard();
-                    }, 500);
-                } else {
-                    console.log('❌ Login falhou:', data);
-                    showAlert(data.message || 'Erro no login');
+                    if (data.success && data.user && data.token) {
+                        currentUser = data.user;
+                        authToken = data.token;
+                        
+                        console.log('✅ Login realizado! Usuário:', currentUser);
+                        console.log('🎯 Token recebido:', authToken);
+                        
+                        showAlert('Login realizado com sucesso!', 'success');
+                        
+                        console.log('🔄 Redirecionando para dashboard em 1 segundo...');
+                        setTimeout(() => {
+                            console.log('📊 Chamando showDashboard()...');
+                            showDashboard();
+                        }, 1000);
+                    } else {
+                        console.log('❌ Login falhou - dados:', data);
+                        showAlert(data.message || 'Erro no login');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Erro CATCH no login:', error);
+                    showAlert('Erro ao fazer login: ' + error.message);
                 }
-                
-            } catch (error) {
-                console.error('❌ Erro no login:', error);
-                showAlert('Erro ao fazer login: ' + error.message);
-            }
-        });
+            });
+            console.log('✅ Event listener de login configurado');
+        } else {
+            console.error('❌ ERRO: loginForm não encontrado!');
+        }
         
         // Logout
         logoutBtn.addEventListener('click', () => {
@@ -340,14 +363,39 @@
         
         // Mostrar dashboard
         function showDashboard() {
+            console.log('📊 SHOWDASHBOARD CHAMADO - Iniciando...');
+            console.log('📊 CurrentUser:', currentUser);
+            console.log('📊 AuthToken:', authToken);
+            
+            if (!authSection || !dashboard) {
+                console.error('❌ ERRO: Elementos DOM não encontrados!', {
+                    authSection: !!authSection,
+                    dashboard: !!dashboard
+                });
+                return;
+            }
+            
+            console.log('🔄 Ocultando seção de auth...');
             authSection.classList.add('hidden');
+            
+            console.log('🔄 Mostrando dashboard...');
             dashboard.classList.remove('hidden');
             
             // Atualizar informações do usuário
-            document.getElementById('welcomeUser').textContent = `Bem-vindo, ${currentUser.name}!`;
-            document.getElementById('userRole').textContent = `Função: ${currentUser.role === 'admin' ? 'Administrador' : 'Atendente'}`;
+            const welcomeUser = document.getElementById('welcomeUser');
+            const userRole = document.getElementById('userRole');
             
-            // Carregar dados do dashboard
+            if (welcomeUser && currentUser) {
+                welcomeUser.textContent = `Bem-vindo, ${currentUser.name}!`;
+                console.log('✅ Welcome message atualizado');
+            }
+            
+            if (userRole && currentUser) {
+                userRole.textContent = `Função: ${currentUser.role === 'admin' ? 'Administrador' : 'Atendente'}`;
+                console.log('✅ User role atualizado');
+            }
+            
+            console.log('📊 Carregando dados do dashboard...');
             loadDashboardData();
         }
         
@@ -468,8 +516,19 @@
         }
         
         // Inicializar aplicação
-        console.log('🚀 Sistema de Vendas WhatsApp Inicializado');
-        showAuth();
+        console.log('🚀 SISTEMA DE VENDAS WHATSAPP INICIALIZADO - VERSÃO DEBUG COMPLETA');
+        console.log('🔍 Verificando DOM ready state:', document.readyState);
+        
+        if (document.readyState === 'loading') {
+            console.log('📄 DOM ainda carregando, aguardando...');
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('📄 DOM LOADED - Inicializando app...');
+                showAuth();
+            });
+        } else {
+            console.log('📄 DOM já pronto - Inicializando app imediatamente...');
+            showAuth();
+        }
     </script>
 </body>
 </html>
