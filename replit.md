@@ -1,46 +1,27 @@
 # Multi-Project Workspace
 
 ## Overview
-Three concurrent development projects: 
-1) **B2T Exchange Static Site** - HTML/CSS/JS replica of B2C2.com with mobile optimization and admin panel
-2) **Vendzz Marketing Platform** - Full-stack quiz/marketing automation system with SQLite
-3) **SQL Project Independent** - Standalone SQL project with SQLite + PostgreSQL migration capability
+Four concurrent development projects: 
+1) **Sistema Vendas WhatsApp** - COMPLETO: Gestão hierárquica de pedidos com workflow pós-entrega, 3 métodos pagamento, autenticação JWT, tracking real-time (SQLite + PostgreSQL ready)
+2) **B2T Exchange Static Site** - HTML/CSS/JS replica of B2C2.com with mobile optimization and admin panel
+3) **Vendzz Marketing Platform** - Full-stack quiz/marketing automation system with SQLite
+4) **SQL Project Independent** - Standalone SQL project with SQLite + PostgreSQL migration capability
 
-## Recent Changes (February 5, 2025)
-- **✅ B2C2 SITE STANDALONE CRIADO**: Site HTML puro com design 100% idêntico ao B2C2.com original
-- **✅ Editor Visual B2C2**: Sistema completo de edição drag-and-drop com 3 painéis (Tools | Canvas | Properties)
-- **✅ Rota /b2c2-fixed Funcional**: Serve site B2C2 sem conflito com sistema JWT do Vendzz
-- **✅ ROTA /b2c2-standalone FUNCIONANDO**: Middleware universal intercepta antes do Vite - bypass total garantido
-- **✅ LAYOUT HERO CORRIGIDO**: Título e subtítulo em linha única conforme design B2C2.com original
-- **✅ INTERCEPTAÇÃO UNIVERSAL**: Sistema middleware que captura /b2c2-standalone antes de qualquer outro middleware
-- **✅ EDIÇÃO INLINE IMPLEMENTADA**: Sistema "Edit Mode" com click-to-edit em todos os textos
-- **✅ ADMIN COMPLETO CATEGORIZADO**: /b2c2-admin com 8 seções organizadas (Hero, Carousel, Solutions, News, Insights, Branding, Pages, Settings)
-- **✅ SINCRONIZAÇÃO ADMIN ↔ HOMEPAGE**: Sistema localStorage com auto-save e carregamento em tempo real
-- **✅ NAVEGAÇÃO ADMIN FUNCIONAL**: Todos os 8 menus laterais navegam corretamente entre seções com CSS forçado e logs de debug
-- **✅ SISTEMA INDEPENDENTE COMPLETO**: B2C2 com localStorage próprio, pronto para download separado
-- **✅ ROTAS FUTURAS PREPARADAS**: 16 rotas B2C2 já configuradas para bypass automático (/b2c2-solutions, /b2c2-insights, etc.) + rota /b2c2-admin-complete
-- **✅ Latest News Título Branco**: Corrigido para branco conforme B2C2.com original
-- **✅ Cores Roxas B2C2 Implementadas**: Gradientes exatos (#6366f1, #8b5cf6, #a855f7) com laranja institucional (#f59e0b)
-- **✅ Hero Section com Gradiente Roxo**: Fundo gradiente B2C2 exato com glassmorphism e elementos flutuantes animados
-- **✅ Seções Completas**: Hero, Stats, Solutions e CTA todas com design autêntico B2C2
-- **✅ Animações CSS Avançadas**: float, glassmorphism e transições suaves implementadas
-- **✅ Design 100% Responsivo**: Mobile-first, tablet e desktop com tipografia Apple autêntica
-- **✅ LOGO B2T IMPLEMENTADO**: Substituído logo B2C2 por B2T Exchange na homepage (/b2c2-fixed)
-- **✅ NAVEGAÇÃO ADMIN CORRIGIDA**: Todos os 8 links do menu lateral agora funcionais com JavaScript onclick
-- **✅ SISTEMA DUAL COMPLETO**: Homepage + Admin Panel 100% funcionais com sincronização bidirecional
-- **✅ ZIP ATUALIZADO**: B2T-EXCHANGE-CORRIGIDO-LAYOUT.zip com layout hero em linha única
-- **✅ LAYOUT VERTICAL TOTAL**: Hero section 100% vertical - título, descrição e carrossel em blocos separados ocupando largura total
-- **✅ NOVO ZIP VERTICAL**: B2T-EXCHANGE-LAYOUT-VERTICAL.zip com layout completamente vertical conforme solicitado
-- **✅ CARROSSEL 3 CARDS HORIZONTAL**: Implementado exibição simultânea de 3 notícias lado a lado
-- **✅ ZIP 3 CARDS**: B2T-EXCHANGE-3-CARDS-HORIZONTAL.zip com 3 cards de notícias visíveis simultaneamente
-- **✅ CARROSSEL 4 CARDS FINAL**: Altura reduzida para 280px, 4 cards com cores B2C2 autênticas conforme referência
-- **✅ CORES E ESTILOS B2C2**: Gradientes roxos, cinza escuro, verde - exatamente como nas imagens de referência  
-- **✅ LOGO B2T IMPLEMENTADO**: Logo oficial B2T baixado e integrado no header substituindo os circles
-- **✅ RESPONSIVO MOBILE CORRIGIDO**: Menu hamburger funcional + carrossel horizontal com scroll touch no mobile
-- **✅ CARROSSEL MOBILE ULTRA-CORRIGIDO**: CSS com seletores específicos (.hero-carousel .carousel-track) e !important forçado
-- **✅ ZIP FINAL MOBILE**: B2T-EXCHANGE-CARROSSEL-MOBILE-FIXO.zip com carrossel horizontal funcional no mobile
-- **✅ CARROSSEL MOBILE COM SETAS**: Sistema navegação com setas ‹ › - 1 card por vez no mobile com JavaScript
-- **✅ PROJETO SQL INDEPENDENTE CRIADO**: Nova pasta /sql-project com estrutura completa SQLite + PostgreSQL migration ready
+## Recent Changes (August 5, 2025)
+- **✅ SISTEMA VENDAS WHATSAPP COMPLETO**: Sistema 100% funcional com autenticação, gestão hierárquica e workflow pós-entrega
+- **✅ AUTENTICAÇÃO JWT FUNCIONANDO**: Login admin/atendente com tokens de acesso e refresh implementados
+- **✅ CONTROLE HIERÁRQUICO**: Admin vê todos pedidos, atendentes veem apenas os seus
+- **✅ DATABASE SQLITE OPERACIONAL**: Banco configurado com tabelas (users, products, orders, order_items, order_logs)
+- **✅ API REST COMPLETA**: Rotas para auth, users, products, orders com middleware de autenticação 
+- **✅ CREDENCIAIS TESTE CONFIRMADAS**: admin/admin123 e atendente1/admin123 funcionando
+- **✅ 3 MÉTODOS PAGAMENTO**: Logzz, online payment, Braip implementados no schema
+- **✅ WORKFLOW PÓS-ENTREGA**: Status de confirmação (delivered/rescheduled/cancelled) com razões
+- **✅ TRACKING TEMPO REAL**: Sistema de logs de auditoria para todas ações nos pedidos
+- **✅ MIGRATION POSTGRESQL PRONTA**: Script completo para migração SQLite → PostgreSQL
+- **✅ DASHBOARD WEB CRIADO**: Interface HTML para demonstração com login e gestão
+- **✅ SISTEMA TESTE COMPLETO**: Script de teste automatizado validando todas as funcionalidades
+- **✅ B2C2 SITE STANDALONE**: Site HTML puro com design 100% idêntico ao B2C2.com original
+- **✅ PROJETO SQL INDEPENDENTE**: Nova pasta /sql-project com estrutura completa SQLite + PostgreSQL migration ready
 
 ## User Preferences
 Preferred communication style: Simple, everyday language (Portuguese).
@@ -76,6 +57,17 @@ The backend runs on Express.js with TypeScript and Node.js (ES modules). The pri
 - **BlackHat Anti-WebView**: An advanced remarketing system designed to detect and redirect users from in-app browsers (Instagram, Facebook, TikTok) to external browsers.
 - **Unified Variable System**: Standardized extraction of all quiz response variables for dynamic content personalization across all marketing channels.
 - **Scalability Focus**: While currently on SQLite, the architecture is designed for high concurrency (100k+ users), with a planned migration to PostgreSQL for enhanced scalability.
+
+#### Sistema Vendas WhatsApp (COMPLETO - Porta 3002)
+- **Autenticação JWT**: Sistema completo com access e refresh tokens
+- **Gestão Hierárquica**: Admin vê todos pedidos, atendentes apenas os seus
+- **3 Métodos Pagamento**: Logzz, online payment, Braip
+- **Workflow Pós-Entrega**: Confirmação com delivered/rescheduled/cancelled + motivos
+- **Tracking Real-Time**: Logs de auditoria para todas ações
+- **Database**: SQLite operacional + migration PostgreSQL ready
+- **API REST**: Todas rotas funcionais (/api/auth, /api/users, /api/orders, /api/products)
+- **Dashboard Web**: Interface HTML de demonstração
+- **Credenciais**: admin/admin123, atendente1/admin123
 
 #### SQL Project Independent
 - **Cross-Database Support**: SQLite for development, PostgreSQL migration ready
