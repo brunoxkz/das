@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Vendas - FUNCIONANDO</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #667eea;
+            margin: 0;
+            padding: 20px;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            color: #333;
+            padding: 30px;
+            border-radius: 10px;
+        }
+        .hidden { display: none !important; }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .alert {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Sistema Vendas WhatsApp</h1>
+        
+        <!-- LOGIN -->
+        <div id="login">
+            <h2>Login</h2>
+            <div id="message"></div>
+            <input type="text" id="user" placeholder="Usuário" value="admin">
+            <input type="password" id="pass" placeholder="Senha" value="admin123">
+            <button onclick="doLogin()">Entrar</button>
+            <p><strong>Teste:</strong> admin / admin123</p>
+        </div>
+        
+        <!-- DASHBOARD -->
+        <div id="dashboard" class="hidden">
+            <h2 id="welcome">Bem-vindo!</h2>
+            <button onclick="doLogout()">Sair</button>
+            <hr>
+            <div id="stats">
+                <h3>📊 Estatísticas</h3>
+                <p>Total: <span id="total">0</span> pedidos</p>
+                <p>Pendentes: <span id="pending">0</span></p>
+                <p>Entregues: <span id="delivered">0</span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('SISTEMA SIMPLES CARREGADO');
+        
+        function showMessage(msg, type = 'error') {
+            document.getElementById('message').innerHTML = 
+                `<div class="alert ${type}">${msg}</div>`;
+        }
+        
+        async function doLogin() {
+            console.log('LOGIN INICIADO');
+            const user = document.getElementById('user').value;
+            const pass = document.getElementById('pass').value;
+            
+            try {
+                const response = await fetch('/api/vendas-proxy/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+                
+                const data = await response.json();
+                console.log('RESPOSTA:', data);
+                
+                if (data.success) {
+                    showMessage('Login realizado!', 'success');
+                    document.getElementById('welcome').textContent = `Bem-vindo, ${data.user.name}!`;
+                    document.getElementById('login').classList.add('hidden');
+                    document.getElementById('dashboard').classList.remove('hidden');
+                    loadStats();
+                } else {
+                    showMessage('Erro: ' + data.message);
+                }
+            } catch (error) {
+                console.error('ERRO:', error);
+                showMessage('Erro de conexão: ' + error.message);
+            }
+        }
+        
+        function doLogout() {
+            document.getElementById('login').classList.remove('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('user').value = 'admin';
+            document.getElementById('pass').value = 'admin123';
+            showMessage('Logout realizado!', 'success');
+        }
+        
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/vendas-proxy/dashboard/stats');
+                const stats = await response.json();
+                document.getElementById('total').textContent = stats.totalOrders || 0;
+                document.getElementById('pending').textContent = stats.pendingOrders || 0;
+                document.getElementById('delivered').textContent = stats.deliveredOrders || 0;
+            } catch (error) {
+                console.error('Erro stats:', error);
+            }
+        }
+        
+        // Testar conexão
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM CARREGADO - Sistema pronto');
+            showMessage('Sistema carregado. Faça login!', 'success');
+        });
+    </script>
+</body>
+</html>

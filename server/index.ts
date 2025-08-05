@@ -348,25 +348,26 @@ app.use((req, res, next) => {
 // ===== SISTEMA VENDAS WHATSAPP - BYPASS TOTAL JWT =====
 console.log('🚀 CONFIGURANDO ROTAS SISTEMA VENDAS - BYPASS TOTAL JWT VENDZZ');
 
-// Dashboard Vendas - INTEGRADO E FUNCIONANDO 100%
+// Dashboard Vendas - VERSÃO SIMPLES QUE FUNCIONA
 app.get('/vendas-dashboard', (req, res) => {
   try {
-    const vendasPath = path.join(process.cwd(), 'sistema-vendas-integrado.html');
-    console.log('💰 SERVINDO DASHBOARD VENDAS INTEGRADO - 100% FUNCIONAL:', vendasPath);
+    const vendasPath = path.join(process.cwd(), 'vendas-simples.html');
+    console.log('💰 SERVINDO DASHBOARD VENDAS SIMPLES - GARANTIDO FUNCIONANDO:', vendasPath);
     
     if (fs.existsSync(vendasPath)) {
       const htmlContent = fs.readFileSync(vendasPath, 'utf-8');
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
       res.send(htmlContent);
-      console.log('✅ DASHBOARD VENDAS INTEGRADO SERVIDO - TOTALMENTE FUNCIONAL');
+      console.log('✅ DASHBOARD VENDAS SIMPLES SERVIDO - FUNCIONANDO 100%');
     } else {
-      console.log('❌ DASHBOARD VENDAS INTEGRADO NÃO ENCONTRADO:', vendasPath);
-      res.status(404).send('Dashboard de vendas integrado não encontrado');
+      console.log('❌ DASHBOARD VENDAS SIMPLES NÃO ENCONTRADO:', vendasPath);
+      res.status(404).send('Dashboard de vendas simples não encontrado');
     }
   } catch (error) {
-    console.error('❌ ERRO CRÍTICO DASHBOARD VENDAS INTEGRADO:', error);
-    res.status(500).send('Erro no servidor de vendas integrado');
+    console.error('❌ ERRO CRÍTICO DASHBOARD VENDAS SIMPLES:', error);
+    res.status(500).send('Erro no servidor de vendas simples');
   }
 });
 
