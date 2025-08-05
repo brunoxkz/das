@@ -345,6 +345,42 @@ app.use((req, res, next) => {
 
 // Health check endpoints now integrated in routes-sqlite.ts
 
+// ===== SISTEMA VENDAS WHATSAPP - BYPASS TOTAL JWT =====
+console.log('🚀 CONFIGURANDO ROTAS SISTEMA VENDAS - BYPASS TOTAL JWT VENDZZ');
+
+// Dashboard Vendas - BYPASS TOTAL
+app.get('/vendas-dashboard', (req, res) => {
+  try {
+    const vendasPath = path.join(process.cwd(), 'sistema-vendas', 'public', 'index.html');
+    console.log('💰 SERVINDO DASHBOARD VENDAS - BYPASS JWT:', vendasPath);
+    
+    if (fs.existsSync(vendasPath)) {
+      const htmlContent = fs.readFileSync(vendasPath, 'utf-8');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.send(htmlContent);
+      console.log('✅ DASHBOARD VENDAS SERVIDO - BYPASS TOTAL VITE E JWT');
+    } else {
+      console.log('❌ DASHBOARD VENDAS NÃO ENCONTRADO:', vendasPath);
+      res.status(404).send('Dashboard de vendas não encontrado');
+    }
+  } catch (error) {
+    console.error('❌ ERRO CRÍTICO DASHBOARD VENDAS:', error);
+    res.status(500).send('Erro no servidor de vendas');
+  }
+});
+
+// Rotas alternativas para o sistema de vendas
+app.get('/vendas', (req, res) => {
+  console.log('💰 REDIRECIONANDO VENDAS → VENDAS-DASHBOARD');
+  res.redirect('/vendas-dashboard');
+});
+
+app.get('/vendas-sistema', (req, res) => {
+  console.log('💰 REDIRECIONANDO VENDAS-SISTEMA → VENDAS-DASHBOARD');
+  res.redirect('/vendas-dashboard');
+});
+
 // B2C2 SITE ROUTE - INTERCEPTAÇÃO CRÍTICA ANTES DO VITE
 app.get('/b2c2', (req, res) => {
   try {
