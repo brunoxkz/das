@@ -348,26 +348,187 @@ app.use((req, res, next) => {
 // ===== SISTEMA VENDAS WHATSAPP - BYPASS TOTAL JWT =====
 console.log('🚀 CONFIGURANDO ROTAS SISTEMA VENDAS - BYPASS TOTAL JWT VENDZZ');
 
-// Dashboard Vendas - VERSÃO ULTRA SIMPLES - GARANTIDO
+// Dashboard Vendas - ROTA PRIORITÁRIA ANTES DO VITE
 app.get('/vendas-dashboard', (req, res) => {
   try {
-    const vendasPath = path.join(process.cwd(), 'vendas-ultra-simples.html');
-    console.log('💰 SERVINDO DASHBOARD VENDAS ULTRA SIMPLES - GARANTIDO:', vendasPath);
+    console.log('💰 ACESSANDO VENDAS DASHBOARD - ANTES DO VITE');
     
-    if (fs.existsSync(vendasPath)) {
-      const htmlContent = fs.readFileSync(vendasPath, 'utf-8');
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('X-Content-Type-Options', 'nosniff');
-      res.send(htmlContent);
-      console.log('✅ DASHBOARD VENDAS ULTRA SIMPLES SERVIDO - 100% GARANTIDO');
-    } else {
-      console.log('❌ DASHBOARD VENDAS ULTRA SIMPLES NÃO ENCONTRADO:', vendasPath);
-      res.status(404).send('Dashboard não encontrado');
-    }
+    // HTML inline para garantir funcionamento
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sistema Vendas WhatsApp - FUNCIONANDO</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+        .container { background: white; padding: 30px; border-radius: 10px; max-width: 600px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; }
+        button { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #0056b3; }
+        .hidden { display: none !important; }
+        .msg { padding: 12px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px; }
+        .stat { text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+        .stat-number { font-size: 24px; font-weight: bold; color: #007bff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Sistema Vendas WhatsApp</h1>
+        
+        <div id="loginSection">
+            <h2>Login no Sistema</h2>
+            <div id="message"></div>
+            <input id="username" value="admin" placeholder="Usuário">
+            <input id="password" type="password" value="admin123" placeholder="Senha">
+            <button id="loginButton">ENTRAR</button>
+            <p style="margin-top: 15px; color: #666;"><strong>Credenciais:</strong> admin / admin123</p>
+        </div>
+        
+        <div id="dashboardSection" class="hidden">
+            <h2>Dashboard de Vendas</h2>
+            <p id="welcomeMsg">Bem-vindo!</p>
+            <button id="logoutButton" style="width: auto; background: #6c757d;">Sair</button>
+            
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-number" id="totalOrders">0</div>
+                    <div>Total Pedidos</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="pendingOrders">0</div>
+                    <div>Pendentes</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="deliveredOrders">0</div>
+                    <div>Entregues</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('🚀 SISTEMA VENDAS CARREGADO - INLINE HTML');
+        
+        function showMessage(text, type = 'error') {
+            console.log('📝 Mensagem:', text, type);
+            document.getElementById('message').innerHTML = 
+                '<div class="msg ' + type + '">' + text + '</div>';
+        }
+        
+        async function login() {
+            console.log('🔐 INICIANDO LOGIN');
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            console.log('📋 Dados:', { username, password: '***' });
+            showMessage('Processando login...', 'success');
+            
+            try {
+                console.log('📡 Fazendo requisição para:', '/api/vendas-proxy/auth/login');
+                
+                const response = await fetch('/api/vendas-proxy/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                console.log('📡 Status resposta:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error('Erro HTTP: ' + response.status);
+                }
+                
+                const data = await response.json();
+                console.log('📋 Dados recebidos:', data);
+                
+                if (data.success && data.user) {
+                    console.log('✅ LOGIN SUCESSO - Mostrando dashboard');
+                    showMessage('Login realizado com sucesso!', 'success');
+                    
+                    // Mostrar dashboard
+                    document.getElementById('loginSection').classList.add('hidden');
+                    document.getElementById('dashboardSection').classList.remove('hidden');
+                    document.getElementById('welcomeMsg').textContent = 'Bem-vindo, ' + data.user.name + '!';
+                    
+                    // Carregar estatísticas
+                    loadStats();
+                } else {
+                    console.log('❌ Login falhou:', data.message);
+                    showMessage('Erro: ' + (data.message || 'Login inválido'));
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro no login:', error);
+                showMessage('Erro de conexão: ' + error.message);
+            }
+        }
+        
+        async function loadStats() {
+            try {
+                console.log('📊 Carregando estatísticas...');
+                const response = await fetch('/api/vendas-proxy/dashboard/stats');
+                const stats = await response.json();
+                
+                console.log('📊 Stats recebidas:', stats);
+                
+                document.getElementById('totalOrders').textContent = stats.totalOrders || 0;
+                document.getElementById('pendingOrders').textContent = stats.pendingOrders || 0;
+                document.getElementById('deliveredOrders').textContent = stats.deliveredOrders || 0;
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar stats:', error);
+            }
+        }
+        
+        function logout() {
+            console.log('🚪 LOGOUT');
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('username').value = 'admin';
+            document.getElementById('password').value = 'admin123';
+            showMessage('Logout realizado!', 'success');
+        }
+        
+        // Configurar eventos
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📄 DOM PRONTO - Configurando eventos');
+            
+            const loginBtn = document.getElementById('loginButton');
+            const logoutBtn = document.getElementById('logoutButton');
+            
+            if (loginBtn) {
+                loginBtn.addEventListener('click', login);
+                console.log('✅ Evento login configurado');
+            }
+            
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', logout);
+                console.log('✅ Evento logout configurado');
+            }
+            
+            // Teste de conectividade
+            fetch('/api/vendas-proxy/auth/login', { method: 'OPTIONS' })
+                .then(() => showMessage('Sistema conectado e pronto!', 'success'))
+                .catch(() => showMessage('Aviso: Verifique conexão com servidor', 'error'));
+                
+            console.log('🚀 SISTEMA TOTALMENTE CONFIGURADO');
+        });
+    </script>
+</body>
+</html>`;
+    
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.send(html);
+    console.log('✅ DASHBOARD VENDAS SERVIDO - HTML INLINE GARANTIDO');
+    
   } catch (error) {
     console.error('❌ ERRO CRÍTICO DASHBOARD VENDAS:', error);
-    res.status(500).send('Erro no servidor');
+    res.status(500).send('Erro no servidor: ' + error.message);
   }
 });
 
