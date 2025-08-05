@@ -1,11 +1,12 @@
-# Dual Project: Browser Extension + WordPress Theme
+# Multi-Project Workspace
 
 ## Overview
-Two concurrent development projects: 
-1) **Chrome/Opera Browser Extension** - Screen-splitting sidebar with productivity tools (to-do list, Pomodoro timer, ambient sounds) with universal website compatibility
-2) **WordPress Theme** - Professional B2C2.com replica theme for fintech/blockchain companies with complete Elementor compatibility
+Three concurrent development projects: 
+1) **B2T Exchange Static Site** - HTML/CSS/JS replica of B2C2.com with mobile optimization and admin panel
+2) **Vendzz Marketing Platform** - Full-stack quiz/marketing automation system with SQLite
+3) **SQL Project Independent** - Standalone SQL project with SQLite + PostgreSQL migration capability
 
-## Recent Changes (February 4, 2025)
+## Recent Changes (February 5, 2025)
 - **✅ B2C2 SITE STANDALONE CRIADO**: Site HTML puro com design 100% idêntico ao B2C2.com original
 - **✅ Editor Visual B2C2**: Sistema completo de edição drag-and-drop com 3 painéis (Tools | Canvas | Properties)
 - **✅ Rota /b2c2-fixed Funcional**: Serve site B2C2 sem conflito com sistema JWT do Vendzz
@@ -38,6 +39,8 @@ Two concurrent development projects:
 - **✅ RESPONSIVO MOBILE CORRIGIDO**: Menu hamburger funcional + carrossel horizontal com scroll touch no mobile
 - **✅ CARROSSEL MOBILE ULTRA-CORRIGIDO**: CSS com seletores específicos (.hero-carousel .carousel-track) e !important forçado
 - **✅ ZIP FINAL MOBILE**: B2T-EXCHANGE-CARROSSEL-MOBILE-FIXO.zip com carrossel horizontal funcional no mobile
+- **✅ CARROSSEL MOBILE COM SETAS**: Sistema navegação com setas ‹ › - 1 card por vez no mobile com JavaScript
+- **✅ PROJETO SQL INDEPENDENTE CRIADO**: Nova pasta /sql-project com estrutura completa SQLite + PostgreSQL migration ready
 
 ## User Preferences
 Preferred communication style: Simple, everyday language (Portuguese).
@@ -56,6 +59,14 @@ The frontend is built with React 18 and TypeScript, utilizing Wouter for lightwe
 The backend runs on Express.js with TypeScript and Node.js (ES modules). The primary database is SQLite, managed via Drizzle ORM. Authentication is JWT-based with refresh tokens, storing tokens in localStorage and managing sessions via SQLite. Payment processing is integrated with Stripe. Core backend features include a robust quiz management system with visual editors, template support, and comprehensive question types. Lead data is automatically extracted and processed. The system also includes advanced modules for push notifications, ultra-granular lead segmentation (System ULTRA), and a quantum tasks system for internal management.
 
 ### Core Features
+
+#### B2T Exchange (Static Site)
+- **Pixel-Perfect Design**: 100% identical to B2C2.com original with B2T branding
+- **Mobile Optimization**: Carousel with arrow navigation (‹ ›) showing 1 card at a time
+- **Admin Panel**: Complete content management system with localStorage sync
+- **GoDaddy Ready**: Pure HTML/CSS/JS for shared hosting deployment
+
+#### Vendzz Platform (Main System)
 - **Quiz Management**: Visual, page-based editor supporting various question types, lead capture, and extensive customization options.
 - **Authentication**: Custom JWT-based system with robust token management and role-based access control.
 - **Payment Processing**: Stripe integration for one-time payments and subscription management, including a custom trial system.
@@ -65,7 +76,13 @@ The backend runs on Express.js with TypeScript and Node.js (ES modules). The pri
 - **BlackHat Anti-WebView**: An advanced remarketing system designed to detect and redirect users from in-app browsers (Instagram, Facebook, TikTok) to external browsers.
 - **Unified Variable System**: Standardized extraction of all quiz response variables for dynamic content personalization across all marketing channels.
 - **Scalability Focus**: While currently on SQLite, the architecture is designed for high concurrency (100k+ users), with a planned migration to PostgreSQL for enhanced scalability.
-- **Modularity (Ongoing)**: Efforts are in progress to modularize the backend's monolithic structure into more manageable components.
+
+#### SQL Project Independent
+- **Cross-Database Support**: SQLite for development, PostgreSQL migration ready
+- **Express API**: RESTful endpoints with Zod validation and error handling
+- **Services Architecture**: Modular service layer with UserService, ProductService, OrderService
+- **Migration Scripts**: Automated database setup, seed data, and reset functionality
+- **TypeScript Ready**: Full type safety with Drizzle ORM schema generation
 
 ## External Dependencies
 - **Database**: `better-sqlite3`
