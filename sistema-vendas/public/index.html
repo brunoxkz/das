@@ -315,6 +315,8 @@
         // Função para fazer requisições à API
         async function apiRequest(endpoint, options = {}) {
             const url = `${API_BASE}${endpoint}`;
+            console.log('🌐 API Request:', url, options);
+            
             const config = {
                 headers: {
                     'Content-Type': 'application/json',
@@ -325,15 +327,23 @@
             
             try {
                 const response = await fetch(url, config);
+                console.log('📡 Response status:', response.status);
+                
                 const data = await response.json();
+                console.log('📄 Response data:', data);
+                
+                // Para login, não verificar response.ok se success=true
+                if (endpoint === '/auth/login' && data.success) {
+                    return data;
+                }
                 
                 if (!response.ok) {
-                    throw new Error(data.error || 'Erro na requisição');
+                    throw new Error(data.error || data.message || 'Erro na requisição');
                 }
                 
                 return data;
             } catch (error) {
-                console.error('API Error:', error);
+                console.error('❌ API Error:', error);
                 throw error;
             }
         }
@@ -346,22 +356,32 @@
             const password = document.getElementById('password').value;
             
             try {
+                console.log('🔐 Tentando login...', { username });
                 const response = await apiRequest('/auth/login', {
                     method: 'POST',
                     body: JSON.stringify({ username, password })
                 });
                 
-                currentUser = response.user;
-                authToken = response.token;
+                console.log('📋 Resposta da API:', response);
                 
-                showAlert('Login realizado com sucesso!', 'success');
-                
-                setTimeout(() => {
+                // Verificar se o login foi bem-sucedido
+                if (response.success && response.user && response.token) {
+                    currentUser = response.user;
+                    authToken = response.token;
+                    
+                    console.log('✅ Login realizado! Usuário:', currentUser);
+                    showAlert('Login realizado com sucesso!', 'success');
+                    
+                    // Redirecionar para o dashboard imediatamente
                     showDashboard();
-                }, 1000);
+                } else {
+                    console.log('❌ Login falhou:', response);
+                    showAlert(response.message || 'Erro no login');
+                }
                 
             } catch (error) {
-                showAlert(error.message);
+                console.error('❌ Erro no login:', error);
+                showAlert('Erro ao fazer login: ' + error.message);
             }
         });
         
