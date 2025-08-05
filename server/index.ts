@@ -381,6 +381,107 @@ app.get('/vendas-sistema', (req, res) => {
   res.redirect('/vendas-dashboard');
 });
 
+// SISTEMA VENDAS INTEGRADO - Rotas de autenticação diretas
+app.post('/api/vendas-proxy/auth/login', async (req, res) => {
+  const { username, password } = req.body;
+  console.log(`💰 LOGIN VENDAS: Tentativa de login para ${username}`);
+  
+  try {
+    // Credenciais hardcoded para demonstração
+    const validUsers = {
+      'admin': { 
+        id: 1, 
+        name: 'Administrador', 
+        role: 'admin', 
+        password: 'admin123' 
+      },
+      'atendente1': { 
+        id: 2, 
+        name: 'Atendente 1', 
+        role: 'atendente', 
+        password: 'admin123' 
+      }
+    };
+    
+    const user = validUsers[username];
+    
+    if (!user || user.password !== password) {
+      console.log(`❌ LOGIN VENDAS: Credenciais inválidas para ${username}`);
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Credenciais inválidas' 
+      });
+    }
+    
+    // Gerar token simples para demonstração
+    const token = Buffer.from(`${user.id}:${username}:${Date.now()}`).toString('base64');
+    
+    console.log(`✅ LOGIN VENDAS: Sucesso para ${username} (${user.role})`);
+    
+    res.json({
+      success: true,
+      message: 'Login realizado com sucesso',
+      user: {
+        id: user.id,
+        name: user.name,
+        username: username,
+        role: user.role
+      },
+      token: token
+    });
+    
+  } catch (error) {
+    console.error(`❌ ERRO LOGIN VENDAS: ${error.message}`);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Erro interno do servidor' 
+    });
+  }
+});
+
+// Mock das outras rotas essenciais para o dashboard
+app.get('/api/vendas-proxy/dashboard/stats', (req, res) => {
+  console.log('📊 STATS VENDAS: Enviando estatísticas mock');
+  res.json({
+    totalOrders: 150,
+    pendingOrders: 12,
+    deliveredOrders: 138,
+    totalRevenue: 15750.00
+  });
+});
+
+app.get('/api/vendas-proxy/orders', (req, res) => {
+  console.log('📋 ORDERS VENDAS: Enviando pedidos mock');
+  res.json([
+    {
+      id: 1,
+      customerName: 'João Silva',
+      status: 'delivered',
+      totalAmount: 89.90,
+      deliveryDate: new Date().toISOString()
+    },
+    {
+      id: 2,
+      customerName: 'Maria Santos',
+      status: 'pending',
+      totalAmount: 125.50,
+      deliveryDate: new Date().toISOString()
+    }
+  ]);
+});
+
+app.get('/api/vendas-proxy/orders/awaiting-confirmation', (req, res) => {
+  console.log('⏳ CONFIRMAÇÕES VENDAS: Enviando confirmações pendentes mock');
+  res.json([
+    {
+      id: 3,
+      customerName: 'Pedro Costa',
+      deliveryDate: new Date().toISOString(),
+      totalAmount: 67.80
+    }
+  ]);
+});
+
 // B2C2 SITE ROUTE - INTERCEPTAÇÃO CRÍTICA ANTES DO VITE
 app.get('/b2c2', (req, res) => {
   try {
