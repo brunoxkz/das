@@ -546,4 +546,47 @@ function clickExportButton() {
   return false;
 }
 
+// Listener para mensagens do popup
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+  if (request.action === 'getStats') {
+    sendResponse(currentStats);
+  } else if (request.type === 'FORCE_EXPORT') {
+    // Forçar exportação manual
+    console.log('🔽 Exportação manual solicitada do popup');
+    triggerAutoExport();
+    sendResponse({ success: true });
+  } else if (request.type === 'SYNC_LEADS') {
+    // Sincronizar leads manualmente
+    console.log('📤 Sincronização manual solicitada do popup');
+    syncLeads();
+    sendResponse({ success: true });
+  } else if (request.type === 'CREATE_LOGZZ_ORDER') {
+    // Criar pedido na Logzz
+    try {
+      console.log('🛒 Criando pedido Logzz via background:', request.data);
+      
+      // Importar e usar integração Logzz
+      const { default: LogzzIntegration } = await import('./logzz-integration.js');
+      const logzz = new LogzzIntegration();
+      
+      const order = await logzz.createOrder(request.data);
+      
+      sendResponse({ 
+        success: true, 
+        order: order 
+      });
+      
+    } catch (error) {
+      console.error('❌ Erro ao criar pedido Logzz:', error);
+      sendResponse({ 
+        success: false, 
+        error: error.message 
+      });
+    }
+    
+    // Retornar true para indicar resposta assíncrona
+    return true;
+  }
+});
+
 console.log('✅ Background worker configurado com interceptação XLS e exportação automática');
