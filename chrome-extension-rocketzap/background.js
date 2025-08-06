@@ -3,7 +3,9 @@ console.log('🚀 RocketZap Lead Extractor Background iniciado');
 // Configurações
 const CONFIG = {
   API_BASE_URL: 'http://localhost:5000',
-  SYNC_INTERVAL: 30000 // 30 segundos
+  SYNC_INTERVAL: 30000, // 30 segundos
+  AUTO_EXPORT_INTERVAL: 60 * 60 * 1000, // 1 hora em ms
+  XLS_FILE_PATTERNS: ['Audiencia.xls', 'Audiencia.xlsx', 'audiencia']
 };
 
 // Estatísticas
@@ -23,10 +25,15 @@ chrome.runtime.onInstalled.addListener(() => {
     processedLeads: [],
     settings: {
       autoSync: true,
+      autoExport: true,
       syncInterval: 30000,
+      exportInterval: CONFIG.AUTO_EXPORT_INTERVAL,
       apiUrl: CONFIG.API_BASE_URL
     }
   });
+  
+  // Configurar alarme para exportação automática
+  setupAutoExportAlarm();
 });
 
 // Listener para mensagens dos content scripts
@@ -158,4 +165,274 @@ setInterval(async () => {
   }
 }, CONFIG.SYNC_INTERVAL);
 
-console.log('✅ Background worker configurado');
+// ===== INTERCEPTAÇÃO DE DOWNLOADS XLS =====
+
+// Interceptar downloads do arquivo Audiencia.xls
+chrome.webRequest.onBeforeRequest.addListener(
+  async (details) => {
+    const url = details.url.toLowerCase();
+    const isAudienciaFile = CONFIG.XLS_FILE_PATTERNS.some(pattern => 
+      url.includes(pattern.toLowerCase())
+    );
+    
+    if (isAudienciaFile && details.tabId > 0) {
+      console.log('📥 Interceptando download Audiencia.xls:', url);
+      
+      try {
+        // Buscar dados da tab
+        const tab = await chrome.tabs.get(details.tabId);
+        
+        if (tab.url && tab.url.includes('app.rocketzap.com.br')) {
+          // Processar arquivo XLS interceptado
+          await processInterceptedXLS(details.url, details.tabId);
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao interceptar XLS:', error);
+      }
+    }
+  },
+  {
+    urls: ["*://app.rocketzap.com.br/*"],
+    types: ["other", "xmlhttprequest"]
+  }
+);
+
+// Processar arquivo XLS interceptado
+async function processInterceptedXLS(fileUrl, tabId) {
+  try {
+    console.log('🔄 Processando arquivo XLS interceptado...');
+    
+    // Baixar arquivo internamente
+    const response = await fetch(fileUrl);
+    const arrayBuffer = await response.arrayBuffer();
+    
+    // Processar XLS (simulação - precisaria de biblioteca como SheetJS)
+    const leads = await parseXLSFile(arrayBuffer);
+    
+    if (leads && leads.length > 0) {
+      console.log(`📊 ${leads.length} leads encontrados no XLS`);
+      
+      // Filtrar duplicatas
+      const newLeads = await filterDuplicateLeads(leads);
+      
+      if (newLeads.length > 0) {
+        console.log(`📱 ${newLeads.length} novos leads únicos`);
+        
+        // Salvar leads processados
+        await saveProcessedLeads(newLeads);
+        
+        // Enviar para API
+        await syncNewLeads(newLeads);
+        
+        // Notificar popup
+        chrome.runtime.sendMessage({
+          type: 'XLS_PROCESSED',
+          newLeads: newLeads.length,
+          totalLeads: leads.length
+        });
+        
+      } else {
+        console.log('ℹ️ Nenhum lead novo encontrado no XLS');
+      }
+    }
+    
+  } catch (error) {
+    console.error('❌ Erro ao processar XLS:', error);
+  }
+}
+
+// Parser básico de XLS (placeholder - implementar com SheetJS)
+async function parseXLSFile(arrayBuffer) {
+  try {
+    // AQUI: Implementar parsing real com SheetJS ou similar
+    // Por enquanto, retorna exemplo
+    console.log('📋 Parsing XLS file... (implementar SheetJS)');
+    
+    // Simulação de dados extraídos do XLS
+    return [
+      { name: 'João Silva', phone: '11999999999' },
+      { name: 'Maria Santos', phone: '11888888888' }
+    ];
+    
+  } catch (error) {
+    console.error('❌ Erro no parsing XLS:', error);
+    return [];
+  }
+}
+
+// Filtrar leads duplicados
+async function filterDuplicateLeads(leads) {
+  try {
+    const result = await chrome.storage.local.get(['processedLeads']);
+    const processedPhones = new Set(result.processedLeads || []);
+    
+    return leads.filter(lead => {
+      const normalizedPhone = normalizePhone(lead.phone);
+      return normalizedPhone && !processedPhones.has(normalizedPhone);
+    });
+    
+  } catch (error) {
+    console.error('❌ Erro ao filtrar duplicatas:', error);
+    return leads;
+  }
+}
+
+// Normalizar telefone brasileiro
+function normalizePhone(phone) {
+  if (!phone) return null;
+  
+  const cleaned = phone.toString().replace(/\D/g, '');
+  
+  if (cleaned.length === 11 && cleaned.startsWith('9')) {
+    return '55' + cleaned;
+  } else if (cleaned.length === 10) {
+    return '559' + cleaned;
+  } else if (cleaned.length === 13 && cleaned.startsWith('55')) {
+    return cleaned;
+  }
+  
+  return cleaned.length >= 10 ? cleaned : null;
+}
+
+// Salvar leads processados
+async function saveProcessedLeads(newLeads) {
+  try {
+    const result = await chrome.storage.local.get(['processedLeads']);
+    const processedLeads = result.processedLeads || [];
+    
+    const newPhones = newLeads.map(lead => normalizePhone(lead.phone)).filter(Boolean);
+    const updatedLeads = [...new Set([...processedLeads, ...newPhones])];
+    
+    await chrome.storage.local.set({ processedLeads: updatedLeads });
+    
+  } catch (error) {
+    console.error('❌ Erro ao salvar leads:', error);
+  }
+}
+
+// Sincronizar novos leads
+async function syncNewLeads(leads) {
+  try {
+    for (const lead of leads) {
+      await fetch(`${CONFIG.API_BASE_URL}/api/leads`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: normalizePhone(lead.phone),
+          name: lead.name || 'Nome não informado',
+          source: 'rocketzap-xls',
+          timestamp: Date.now()
+        })
+      });
+    }
+    
+    console.log('✅ Leads sincronizados com sucesso');
+    
+  } catch (error) {
+    console.error('❌ Erro na sincronização:', error);
+  }
+}
+
+// ===== EXPORTAÇÃO AUTOMÁTICA =====
+
+// Configurar alarme para exportação automática
+function setupAutoExportAlarm() {
+  chrome.alarms.create('autoExport', {
+    delayInMinutes: 60, // 1 hora
+    periodInMinutes: 60
+  });
+  console.log('⏰ Alarme de exportação automática configurado');
+}
+
+// Listener para alarmes
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === 'autoExport') {
+    console.log('🔔 Executando exportação automática...');
+    await triggerAutoExport();
+  }
+});
+
+// Executar exportação automática
+async function triggerAutoExport() {
+  try {
+    const result = await chrome.storage.local.get(['settings']);
+    const settings = result.settings || {};
+    
+    if (!settings.autoExport) {
+      console.log('⏸️ Exportação automática desabilitada');
+      return;
+    }
+    
+    // Buscar aba do RocketZap ou abrir nova
+    const tabs = await chrome.tabs.query({
+      url: "*://app.rocketzap.com.br/contacts*"
+    });
+    
+    let contactsTab = tabs[0];
+    
+    if (!contactsTab) {
+      // Buscar qualquer aba do RocketZap
+      const rocketTabs = await chrome.tabs.query({
+        url: "*://app.rocketzap.com.br/*"
+      });
+      
+      if (rocketTabs.length > 0) {
+        // Navegar para /contacts
+        await chrome.tabs.update(rocketTabs[0].id, {
+          url: 'https://app.rocketzap.com.br/contacts'
+        });
+        contactsTab = rocketTabs[0];
+      } else {
+        console.log('ℹ️ Nenhuma aba do RocketZap encontrada para exportação automática');
+        return;
+      }
+    }
+    
+    // Aguardar página carregar
+    setTimeout(async () => {
+      try {
+        // Injetar script para clicar no botão Exportar
+        await chrome.scripting.executeScript({
+          target: { tabId: contactsTab.id },
+          func: clickExportButton
+        });
+        
+        console.log('✅ Exportação automática iniciada');
+        
+      } catch (error) {
+        console.error('❌ Erro na exportação automática:', error);
+      }
+    }, 3000);
+    
+  } catch (error) {
+    console.error('❌ Erro ao executar exportação automática:', error);
+  }
+}
+
+// Função injetada para clicar no botão exportar
+function clickExportButton() {
+  // Buscar botão com texto "Exportar"
+  const buttons = document.querySelectorAll('button');
+  
+  for (const button of buttons) {
+    if (button.textContent && button.textContent.toLowerCase().includes('exportar')) {
+      console.log('🔽 Clicando no botão Exportar automaticamente...');
+      button.click();
+      return true;
+    }
+  }
+  
+  // Fallback: buscar pelo seletor CSS específico
+  const exportButton = document.querySelector('button[class*="MuiButton"][class*="outlined"]:has(svg[data-testid="ImportExportIcon"])');
+  if (exportButton) {
+    console.log('🔽 Clicando no botão Exportar (seletor específico)...');
+    exportButton.click();
+    return true;
+  }
+  
+  console.log('❌ Botão Exportar não encontrado');
+  return false;
+}
+
+console.log('✅ Background worker configurado com interceptação XLS e exportação automática');

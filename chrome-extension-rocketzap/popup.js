@@ -6,6 +6,7 @@ const statusText = document.getElementById('statusText');
 const totalLeads = document.getElementById('totalLeads');
 const todayLeads = document.getElementById('todayLeads');
 const recentLeads = document.getElementById('recentLeads');
+const exportBtn = document.getElementById('exportBtn');
 const syncBtn = document.getElementById('syncBtn');
 const refreshBtn = document.getElementById('refreshBtn');
 const clearBtn = document.getElementById('clearBtn');
@@ -233,7 +234,72 @@ async function clearHistory() {
   }
 }
 
+// Forçar exportação manual
+async function forceExport() {
+  try {
+    exportBtn.disabled = true;
+    exportBtn.textContent = '📥 Exportando...';
+    
+    // Buscar aba do RocketZap contacts
+    const tabs = await chrome.tabs.query({
+      url: "*://app.rocketzap.com.br/contacts*"
+    });
+    
+    let contactsTab = tabs[0];
+    
+    if (!contactsTab) {
+      // Buscar qualquer aba do RocketZap
+      const rocketTabs = await chrome.tabs.query({
+        url: "*://app.rocketzap.com.br/*"
+      });
+      
+      if (rocketTabs.length > 0) {
+        await chrome.tabs.update(rocketTabs[0].id, {
+          url: 'https://app.rocketzap.com.br/contacts'
+        });
+        contactsTab = rocketTabs[0];
+        
+        // Aguardar página carregar
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      } else {
+        showMessage('Abra o RocketZap primeiro para exportar leads');
+        return;
+      }
+    }
+    
+    // Executar clique no botão exportar
+    const result = await chrome.scripting.executeScript({
+      target: { tabId: contactsTab.id },
+      func: () => {
+        // Buscar botão Exportar
+        const buttons = document.querySelectorAll('button');
+        for (const button of buttons) {
+          if (button.textContent && button.textContent.toLowerCase().includes('exportar')) {
+            button.click();
+            return true;
+          }
+        }
+        return false;
+      }
+    });
+    
+    if (result[0].result) {
+      showMessage('✅ Exportação iniciada! Aguarde o processamento...', 'success');
+    } else {
+      showMessage('❌ Botão Exportar não encontrado na página');
+    }
+    
+  } catch (error) {
+    console.error('❌ Erro na exportação:', error);
+    showMessage('Erro na exportação: ' + error.message);
+  } finally {
+    exportBtn.disabled = false;
+    exportBtn.textContent = '📥 Exportar Agora';
+  }
+}
+
 // Event listeners
+exportBtn.addEventListener('click', forceExport);
 syncBtn.addEventListener('click', syncLeads);
 refreshBtn.addEventListener('click', loadData);
 clearBtn.addEventListener('click', clearHistory);
@@ -251,6 +317,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     loadData();
     
     showMessage(`📱 Novo lead: ${formatPhone(message.lead.phone)}`, 'success');
+  } else if (message.type === 'XLS_PROCESSED') {
+    // XLS processado automaticamente
+    showMessage(`📊 XLS processado: ${message.newLeads} novos de ${message.totalLeads} total`, 'success');
+    loadData(); // Recarregar dados
   }
 });
 
