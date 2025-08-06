@@ -28,14 +28,19 @@
   "content_scripts": [
     {
       "matches": ["https://app.rocketzap.com.br/*"],
-      "js": ["content.js"],
+      "js": ["content.js", "sidebar-injection.js"],
+      "css": ["sidebar-styles.css"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": ["https://entrega.logzz.com.br/*"],
+      "js": ["logzz-field-by-field.js"],
       "run_at": "document_end"
     }
   ],
   
   "action": {
-    "default_popup": "popup-visual.html",
-    "default_title": "RocketZap Lead Manager",
+    "default_title": "RocketZap Lead Manager (Sidebar Ativa)",
     "default_icon": {
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png",
@@ -53,7 +58,7 @@
   
   "web_accessible_resources": [
     {
-      "resources": ["injected.js", "xls-parser.js", "logzz-real-integration.js"],
+      "resources": ["injected.js", "xls-parser.js", "logzz-real-integration.js", "sidebar-content.html", "sidebar-styles.css"],
       "matches": ["https://app.rocketzap.com.br/*", "https://entrega.logzz.com.br/*"]
     }
   ]

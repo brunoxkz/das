@@ -43,6 +43,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       handleLeadProcessed(message.lead);
       break;
       
+    case 'CREATE_LOGZZ_ORDER':
+      handleCreateLogzzOrder(message.data, sendResponse);
+      return true; // Keep message channel open
+      
+    case 'SYNC_LEADS':
+      handleSyncLeads(message.leads, sendResponse);
+      return true; // Keep message channel open
+      
     case 'GET_BACKGROUND_STATS':
       sendResponse(stats);
       break;
@@ -587,5 +595,92 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     return true;
   }
 });
+
+// Criar pedido na Logzz (campo a campo)
+async function handleCreateLogzzOrder(orderData, sendResponse) {
+  console.log('🚚 Criando pedido na Logzz:', orderData);
+  
+  try {
+    // Salvar dados para uso na página Logzz
+    await chrome.storage.local.set({
+      pendingLogzzOrder: orderData
+    });
+    
+    // Abrir nova aba com Logzz
+    const tab = await chrome.tabs.create({
+      url: 'https://entrega.logzz.com.br',
+      active: true
+    });
+    
+    // Aguardar tab carregar e injetar script
+    chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
+      if (tabId === tab.id && info.status === 'complete') {
+        chrome.tabs.onUpdated.removeListener(listener);
+        
+        // Enviar dados para script de preenchimento
+        setTimeout(() => {
+          chrome.tabs.sendMessage(tab.id, {
+            type: 'FILL_LOGZZ_FORM',
+            data: orderData
+          }).catch(console.error);
+        }, 2000);
+      }
+    });
+    
+    sendResponse({ success: true, message: 'Pedido enviado para Logzz' });
+    
+  } catch (error) {
+    console.error('❌ Erro ao criar pedido Logzz:', error);
+    sendResponse({ success: false, error: error.message });
+  }
+}
+
+// Sincronizar leads
+async function handleSyncLeads(leads, sendResponse) {
+  console.log('🔄 Sincronizando leads:', leads.length);
+  
+  try {
+    // Salvar no storage local
+    await chrome.storage.local.set({
+      rocketZapLeads: leads,
+      lastSync: new Date().toISOString(),
+      totalSyncs: stats.successfulSyncs + 1
+    });
+    
+    // Tentar enviar para API local se disponível
+    try {
+      const response = await fetch(CONFIG.API_BASE_URL + '/api/rocketzap/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          leads: leads,
+          timestamp: new Date().toISOString()
+        })
+      });
+      
+      if (response.ok) {
+        console.log('✅ Leads sincronizados com API');
+      }
+    } catch (apiError) {
+      console.log('ℹ️ API local não disponível, dados salvos localmente');
+    }
+    
+    stats.successfulSyncs++;
+    stats.totalLeads = leads.length;
+    stats.lastSync = new Date().toISOString();
+    
+    sendResponse({ 
+      success: true, 
+      message: 'Sincronização concluída',
+      stats: stats
+    });
+    
+  } catch (error) {
+    console.error('❌ Erro na sincronização:', error);
+    sendResponse({ success: false, error: error.message });
+  }
+}
 
 console.log('✅ Background worker configurado com interceptação XLS e exportação automática');
