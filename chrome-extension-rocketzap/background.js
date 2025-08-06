@@ -378,13 +378,44 @@ async function triggerAutoExport() {
       });
       
       if (rocketTabs.length > 0) {
+        // Verificar se está logado antes de navegar
+        const isLoggedIn = await checkIfLoggedIn(rocketTabs[0].id);
+        
+        if (!isLoggedIn) {
+          console.log('🚫 Usuário não está logado no RocketZap - exportação cancelada');
+          
+          // Notificar popup se estiver aberto
+          chrome.runtime.sendMessage({
+            type: 'LOGIN_REQUIRED',
+            message: 'Faça login no RocketZap para exportação automática'
+          }).catch(() => {}); // Ignorar se popup não estiver aberto
+          
+          return;
+        }
+        
         // Navegar para /contacts
         await chrome.tabs.update(rocketTabs[0].id, {
           url: 'https://app.rocketzap.com.br/contacts'
         });
         contactsTab = rocketTabs[0];
+        
       } else {
         console.log('ℹ️ Nenhuma aba do RocketZap encontrada para exportação automática');
+        
+        // Notificar popup
+        chrome.runtime.sendMessage({
+          type: 'NO_ROCKETZAP_TAB',
+          message: 'Abra o RocketZap em uma aba para exportação automática'
+        }).catch(() => {});
+        
+        return;
+      }
+    } else {
+      // Verificar se a aba existente está logada
+      const isLoggedIn = await checkIfLoggedIn(contactsTab.id);
+      
+      if (!isLoggedIn) {
+        console.log('🚫 Usuário não está logado na aba /contacts - exportação cancelada');
         return;
       }
     }
@@ -392,6 +423,14 @@ async function triggerAutoExport() {
     // Aguardar página carregar
     setTimeout(async () => {
       try {
+        // Verificar novamente se está logado antes de clicar
+        const stillLoggedIn = await checkIfLoggedIn(contactsTab.id);
+        
+        if (!stillLoggedIn) {
+          console.log('🚫 Usuário foi deslogado - cancelando exportação');
+          return;
+        }
+        
         // Injetar script para clicar no botão Exportar
         await chrome.scripting.executeScript({
           target: { tabId: contactsTab.id },
@@ -407,6 +446,78 @@ async function triggerAutoExport() {
     
   } catch (error) {
     console.error('❌ Erro ao executar exportação automática:', error);
+  }
+}
+
+// Verificar se usuário está logado no RocketZap
+async function checkIfLoggedIn(tabId) {
+  try {
+    const result = await chrome.scripting.executeScript({
+      target: { tabId: tabId },
+      func: () => {
+        // Verificar indicadores de usuário logado
+        const loginIndicators = [
+          // Botões/menus de usuário
+          'button[aria-label*="menu"]',
+          'button[aria-label*="perfil"]',
+          '[data-testid="user-menu"]',
+          '.user-menu',
+          '.profile-button',
+          
+          // Elementos específicos do RocketZap logado
+          'button:has(svg[data-testid="ImportExportIcon"])', // Botão exportar
+          'nav[role="navigation"]', // Navegação principal
+          '.MuiDrawer-root', // Drawer lateral
+          
+          // URLs que indicam login
+          // Se estiver em /login ou /auth, não está logado
+        ];
+        
+        // Verificar se está na página de login
+        if (window.location.pathname.includes('/login') || 
+            window.location.pathname.includes('/auth') ||
+            window.location.pathname.includes('/signin')) {
+          return false;
+        }
+        
+        // Verificar se encontra elementos de usuário logado
+        for (const selector of loginIndicators) {
+          if (document.querySelector(selector)) {
+            return true;
+          }
+        }
+        
+        // Verificar se existe token de autenticação
+        const hasAuthToken = localStorage.getItem('token') || 
+                            localStorage.getItem('authToken') ||
+                            localStorage.getItem('access_token') ||
+                            sessionStorage.getItem('token');
+        
+        if (hasAuthToken) {
+          return true;
+        }
+        
+        // Verificar se há cookies de autenticação
+        if (document.cookie.includes('auth') || 
+            document.cookie.includes('session') ||
+            document.cookie.includes('token')) {
+          return true;
+        }
+        
+        // Se chegou até aqui, provavelmente não está logado
+        return false;
+      }
+    });
+    
+    const isLoggedIn = result[0].result;
+    console.log(`🔍 Status de login verificado: ${isLoggedIn ? 'LOGADO' : 'NÃO LOGADO'}`);
+    
+    return isLoggedIn;
+    
+  } catch (error) {
+    console.error('❌ Erro ao verificar status de login:', error);
+    // Em caso de erro, assumir que não está logado por segurança
+    return false;
   }
 }
 

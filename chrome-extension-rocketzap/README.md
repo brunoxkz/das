@@ -48,12 +48,25 @@ Extensão Chrome/Opera para extrair automaticamente leads do app.rocketzap.com.b
 
 ## 🎯 Como Usar
 
+### ⚠️ Requisito Importante: Login Ativo
+
+**A extensão só funciona se você estiver logado no RocketZap!**
+
 ### Extração Automática
 
-1. **Faça login no RocketZap** (app.rocketzap.com.br)
-2. **A extensão inicia automaticamente** quando detecta a página
-3. **Novos leads são extraídos** em tempo real do chat
-4. **Números são salvos localmente** para evitar duplicatas
+1. **Faça login no RocketZap** (app.rocketzap.com.br) 
+2. **Mantenha uma aba** do RocketZap aberta (pode minimizar)
+3. **A extensão verifica automaticamente** se você está logado
+4. **Exporta a cada 1 hora** automaticamente
+5. **Processa XLS** e filtra duplicatas
+6. **Envia novos leads** para sistema SMS
+
+### Funcionamento Inteligente
+
+- **Verifica login** antes de cada exportação
+- **Cancela automaticamente** se não estiver logado  
+- **Notifica no popup** quando precisa fazer login
+- **Funciona em background** enquanto RocketZap estiver aberto
 
 ### Monitoramento
 

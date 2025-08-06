@@ -321,6 +321,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // XLS processado automaticamente
     showMessage(`📊 XLS processado: ${message.newLeads} novos de ${message.totalLeads} total`, 'success');
     loadData(); // Recarregar dados
+  } else if (message.type === 'LOGIN_REQUIRED') {
+    // Usuário precisa fazer login
+    showMessage('🚫 ' + message.message);
+    updateStatus(false); // Marcar como inativo
+  } else if (message.type === 'NO_ROCKETZAP_TAB') {
+    // Nenhuma aba do RocketZap encontrada
+    showMessage('ℹ️ ' + message.message);
+    updateStatus(false); // Marcar como inativo
   }
 });
 
