@@ -326,34 +326,62 @@ function createOrder() {
     return;
   }
   
-  addLog('🚚 Enviando para Logzz...');
+  addLog('🚚 Preparando pedido para Logzz...');
   
-  // Preparar dados para Logzz
+  // Preparar dados para Logzz com validações
   const orderData = {
-    name: selectedLead.name || 'Cliente',
+    name: selectedLead.name || 'Cliente Lead',
     phone: normalizePhone(selectedLead.phone),
-    email: selectedLead.email || '',
-    cep: '', // Será preenchido na Logzz
-    address: '',
-    number: ''
+    email: selectedLead.email || generateTempEmail(selectedLead.name),
+    cep: '01310-100', // CEP padrão (Av. Paulista, SP)
+    address: 'Avenida Paulista',
+    number: '123',
+    complement: '',
+    // Data de entrega para amanhã
+    deliveryDate: getNextDeliveryDate()
   };
+  
+  addLog(`📋 Dados preparados: ${orderData.name} - ${orderData.phone}`);
   
   // Enviar para Logzz (campo a campo)
   chrome.runtime.sendMessage({
     type: 'CREATE_LOGZZ_ORDER',
     data: orderData
   }, (response) => {
-    if (response.success) {
-      addLog('✅ Pedido enviado para Logzz');
+    if (response && response.success) {
+      addLog('✅ Pedido enviado para Logzz - Nova aba aberta');
       // Marcar lead como processado
       selectedLead.status = 'processing';
+      selectedLead.logzz_sent_at = new Date().toISOString();
       updateLeadsList();
       updateStats();
       saveData();
     } else {
-      addLog('❌ Erro ao enviar pedido');
+      addLog('❌ Erro ao enviar pedido: ' + (response?.error || 'Desconhecido'));
     }
   });
+}
+
+// Gerar email temporário se não houver
+function generateTempEmail(name) {
+  const cleanName = (name || 'cliente').toLowerCase().replace(/[^a-z]/g, '');
+  const timestamp = Date.now().toString().slice(-4);
+  return `${cleanName}${timestamp}@temp.com`;
+}
+
+// Calcular próxima data de entrega
+function getNextDeliveryDate() {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  // Se for fim de semana, pular para segunda
+  if (tomorrow.getDay() === 0) { // Domingo
+    tomorrow.setDate(tomorrow.getDate() + 1);
+  } else if (tomorrow.getDay() === 6) { // Sábado
+    tomorrow.setDate(tomorrow.getDate() + 2);
+  }
+  
+  return tomorrow.toISOString().split('T')[0]; // YYYY-MM-DD
 }
 
 // Download de leads

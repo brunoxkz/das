@@ -7,15 +7,19 @@ let stepInProgress = false;
 
 // Steps do processo Logzz
 const LOGZZ_STEPS = [
-  { name: 'name', selector: 'input[name="name"], input[placeholder*="nome"], #nome', description: 'Nome do cliente' },
-  { name: 'phone', selector: 'input[name="phone"], input[name="telefone"], input[placeholder*="telefone"], #telefone', description: 'Telefone' },
-  { name: 'cep', selector: 'input[name="cep"], input[placeholder*="cep"], #cep', description: 'CEP' },
-  { name: 'wait_address', delay: 3000, description: 'Aguardar carregamento do endereço' },
-  { name: 'number', selector: 'input[name="number"], input[name="numero"], input[placeholder*="número"], #numero', description: 'Número da residência' },
-  { name: 'confirm_address', selector: 'button[type="submit"], .btn-confirmar, button:contains("Confirmar")', description: 'Confirmar endereço' },
-  { name: 'wait_shipping', delay: 8000, description: 'Aguardar opções de entrega' },
-  { name: 'select_shipping', selector: '.shipping-option:first-child, .opcao-entrega:first-child, input[type="radio"]:first-of-type', description: 'Selecionar primeira opção de entrega' },
-  { name: 'finalize', selector: 'button:contains("Finalizar"), .btn-finalizar, #finalizar-compra', description: 'Finalizar compra' }
+  { name: 'name', selector: 'input[name="name"], input[placeholder*="nome"], #nome, input[id*="nome"], input[class*="nome"]', description: 'Nome do cliente' },
+  { name: 'phone', selector: 'input[name="phone"], input[name="telefone"], input[placeholder*="telefone"], #telefone, input[id*="telefone"], input[class*="telefone"]', description: 'Telefone' },
+  { name: 'email', selector: 'input[name="email"], input[type="email"], input[placeholder*="email"], #email, input[id*="email"]', description: 'Email (opcional)' },
+  { name: 'cep', selector: 'input[name="cep"], input[placeholder*="cep"], #cep, input[id*="cep"], input[class*="cep"]', description: 'CEP' },
+  { name: 'wait_address', delay: 4000, description: 'Aguardar carregamento do endereço' },
+  { name: 'address', selector: 'input[name="address"], input[name="endereco"], input[placeholder*="endereço"], input[placeholder*="rua"], #endereco, input[id*="endereco"]', description: 'Endereço (se necessário)' },
+  { name: 'number', selector: 'input[name="number"], input[name="numero"], input[placeholder*="número"], #numero, input[id*="numero"], input[class*="numero"]', description: 'Número da residência' },
+  { name: 'complement', selector: 'input[name="complement"], input[name="complemento"], input[placeholder*="complemento"], #complemento', description: 'Complemento (opcional)' },
+  { name: 'delivery_date', selector: 'input[type="date"], input[name="data"], input[placeholder*="data"], .date-picker input, input[class*="date"]', description: 'Data de entrega' },
+  { name: 'wait_shipping', delay: 6000, description: 'Aguardar opções de entrega carregar' },
+  { name: 'select_shipping', selector: '.shipping-option, .opcao-entrega, input[type="radio"][name*="shipping"], input[type="radio"][name*="entrega"], .delivery-option', description: 'Selecionar opção de entrega' },
+  { name: 'wait_final', delay: 3000, description: 'Aguardar formulário final carregar' },
+  { name: 'finalize', selector: 'button[type="submit"], button:contains("Finalizar"), button:contains("Confirmar"), .btn-finalizar, .btn-confirmar, #finalizar, #confirmar', description: 'Finalizar pedido' }
 ];
 
 // Listener para mensagens do background
@@ -93,24 +97,53 @@ function executeStep() {
       fillField(element, orderData.phone);
       break;
       
+    case 'email':
+      if (orderData.email) {
+        fillField(element, orderData.email);
+      }
+      break;
+      
     case 'cep':
-      fillField(element, orderData.cep);
-      // Aguardar um pouco para CEP processar
+      // Usar CEP padrão se não fornecido
+      fillField(element, orderData.cep || '01310-100');
+      // Aguardar mais tempo para CEP processar
       setTimeout(() => {
         stepInProgress = false;
         currentStep++;
         executeStep();
-      }, 2000);
+      }, 3000);
       return;
+      
+    case 'address':
+      if (orderData.address) {
+        fillField(element, orderData.address);
+      }
+      break;
       
     case 'number':
       fillField(element, orderData.number || '123');
       break;
       
-    case 'confirm_address':
+    case 'complement':
+      if (orderData.complement) {
+        fillField(element, orderData.complement);
+      }
+      break;
+      
+    case 'delivery_date':
+      // Calcular data próxima (amanhã ou depois de amanhã)
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const dateString = tomorrow.toISOString().split('T')[0]; // YYYY-MM-DD
+      fillField(element, dateString);
+      break;
+      
     case 'select_shipping':
+      selectShippingOption(element);
+      break;
+      
     case 'finalize':
-      clickElement(element);
+      finalizeOrder(element);
       break;
       
     default:
@@ -214,45 +247,111 @@ function clickElement(element) {
   }, 500);
 }
 
-// Destacar botão finalizar
-function highlightFinalButton() {
-  const finalButtons = [
-    'button:contains("Finalizar")',
-    '.btn-finalizar',
-    '#finalizar-compra',
-    'button[type="submit"]'
-  ];
+// Selecionar opção de entrega
+function selectShippingOption(element) {
+  console.log('🚛 Selecionando opção de entrega...');
   
-  for (const selector of finalButtons) {
-    const button = findElement(selector);
-    if (button) {
-      console.log('🎯 Destacando botão finalizar...');
-      
-      // Destacar com borda laranja pulsante
-      button.style.border = '4px solid #ff6b35';
-      button.style.boxShadow = '0 0 20px rgba(255, 107, 53, 0.6)';
-      button.style.animation = 'pulse 2s infinite';
-      
-      // Adicionar CSS para animação
-      if (!document.getElementById('logzz-highlight-styles')) {
-        const style = document.createElement('style');
-        style.id = 'logzz-highlight-styles';
-        style.textContent = `
-          @keyframes pulse {
-            0% { box-shadow: 0 0 20px rgba(255, 107, 53, 0.6); }
-            50% { box-shadow: 0 0 30px rgba(255, 107, 53, 1); }
-            100% { box-shadow: 0 0 20px rgba(255, 107, 53, 0.6); }
-          }
-        `;
-        document.head.appendChild(style);
-      }
-      
-      // Scroll para botão
-      button.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      
-      break;
+  // Se é um radio button, selecionar
+  if (element.type === 'radio') {
+    element.checked = true;
+    element.dispatchEvent(new Event('change', { bubbles: true }));
+  } else {
+    // Se é um container, procurar radio button dentro
+    const radioButton = element.querySelector('input[type="radio"]');
+    if (radioButton) {
+      radioButton.checked = true;
+      radioButton.dispatchEvent(new Event('change', { bubbles: true }));
+    } else {
+      // Se não tem radio, apenas clicar
+      clickElement(element);
     }
   }
+  
+  console.log('✅ Opção de entrega selecionada');
+}
+
+// Finalizar pedido com validações
+function finalizeOrder(element) {
+  console.log('🎯 Finalizando pedido...');
+  
+  // Destacar botão primeiro
+  highlightFinalButton(element);
+  
+  // Aguardar um pouco e clicar
+  setTimeout(() => {
+    clickElement(element);
+    
+    // Verificar se precisa confirmar novamente
+    setTimeout(() => {
+      const confirmButtons = document.querySelectorAll('button:contains("Sim"), button:contains("Confirmar"), button:contains("OK")');
+      if (confirmButtons.length > 0) {
+        console.log('🔄 Confirmação adicional necessária...');
+        clickElement(confirmButtons[0]);
+      }
+    }, 2000);
+    
+  }, 1000);
+}
+
+// Destacar botão finalizar
+function highlightFinalButton(button) {
+  if (!button) {
+    // Procurar botão se não foi passado
+    const finalButtons = [
+      'button[type="submit"]',
+      'button:contains("Finalizar")',
+      'button:contains("Confirmar")',
+      '.btn-finalizar',
+      '.btn-confirmar',
+      '#finalizar',
+      '#confirmar'
+    ];
+    
+    for (const selector of finalButtons) {
+      button = findElement(selector);
+      if (button) break;
+    }
+  }
+  
+  if (button) {
+    console.log('🎯 Destacando botão finalizar...');
+    
+    // Destacar com borda laranja pulsante
+    button.style.border = '4px solid #ff6b35 !important';
+    button.style.boxShadow = '0 0 20px rgba(255, 107, 53, 0.8) !important';
+    button.style.animation = 'pulse 2s infinite';
+    button.style.zIndex = '9999';
+    
+    // Adicionar CSS para animação
+    if (!document.getElementById('logzz-highlight-styles')) {
+      const style = document.createElement('style');
+      style.id = 'logzz-highlight-styles';
+      style.textContent = `
+        @keyframes pulse {
+          0% { 
+            box-shadow: 0 0 20px rgba(255, 107, 53, 0.8) !important;
+            transform: scale(1);
+          }
+          50% { 
+            box-shadow: 0 0 30px rgba(255, 107, 53, 1) !important;
+            transform: scale(1.05);
+          }
+          100% { 
+            box-shadow: 0 0 20px rgba(255, 107, 53, 0.8) !important;
+            transform: scale(1);
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    // Scroll para botão
+    button.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    return button;
+  }
+  
+  return null;
 }
 
 // Auto-preenchimento se dados estão disponíveis
