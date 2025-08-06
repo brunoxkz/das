@@ -7,7 +7,7 @@ Four concurrent development projects:
 3) **Vendzz Marketing Platform** - Full-stack quiz/marketing automation system with SQLite
 4) **SQL Project Independent** - Standalone SQL project with SQLite + PostgreSQL migration capability
 
-## Recent Changes (August 5, 2025)
+## Recent Changes (August 6, 2025)
 - **✅ SISTEMA VENDAS WHATSAPP COMPLETO**: Sistema 100% funcional com autenticação, gestão hierárquica e workflow pós-entrega
 - **✅ AUTENTICAÇÃO JWT FUNCIONANDO**: Login admin/atendente com tokens de acesso e refresh implementados
 - **✅ CONTROLE HIERÁRQUICO**: Admin vê todos pedidos, atendentes veem apenas os seus
@@ -22,6 +22,7 @@ Four concurrent development projects:
 - **✅ SISTEMA TESTE COMPLETO**: Script de teste automatizado validando todas as funcionalidades
 - **✅ B2C2 SITE STANDALONE**: Site HTML puro com design 100% idêntico ao B2C2.com original
 - **✅ PROJETO SQL INDEPENDENTE**: Nova pasta /sql-project com estrutura completa SQLite + PostgreSQL migration ready
+- **✅ CHROME EXTENSION FINALIZADA**: Extensão 100% funcional com ícones PNG/SVG criados, integração real Logzz implementada, normalização telefone automática, botões dinâmicos, interface visual 600x700px responsiva, automação completa com timer 1h, manifest V3 válido para Chrome/Opera
 
 ## User Preferences
 Preferred communication style: Simple, everyday language (Portuguese).
