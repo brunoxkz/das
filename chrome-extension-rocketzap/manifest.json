@@ -16,6 +16,8 @@
   
   "host_permissions": [
     "https://app.rocketzap.com.br/*",
+    "https://entrega.logzz.com.br/*",
+    "https://viacep.com.br/*",
     "http://localhost:5000/*"
   ],
   
@@ -51,8 +53,8 @@
   
   "web_accessible_resources": [
     {
-      "resources": ["injected.js", "xls-parser.js"],
-      "matches": ["https://app.rocketzap.com.br/*"]
+      "resources": ["injected.js", "xls-parser.js", "logzz-real-integration.js"],
+      "matches": ["https://app.rocketzap.com.br/*", "https://entrega.logzz.com.br/*"]
     }
   ]
 }

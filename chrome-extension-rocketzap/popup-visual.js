@@ -483,17 +483,29 @@ async function handleSubmitOrder() {
 
 async function submitToLogzz(orderData) {
   try {
-    console.log('📦 Enviando pedido para Logzz:', orderData);
+    console.log('📦 Enviando pedido para Logzz REAL:', orderData);
     
-    // Usar integração real com Logzz
+    // Usar integração real com Logzz (abre nova aba e preenche automaticamente)
     const response = await chrome.runtime.sendMessage({
       type: 'CREATE_LOGZZ_ORDER',
       data: orderData
     });
     
     if (response.success) {
-      console.log('✅ Pedido criado com sucesso:', response.order);
-      return response.order;
+      console.log('✅ Formulário Logzz preenchido com sucesso:', response.result);
+      
+      // Retornar dados da ordem simulada para histórico local
+      return {
+        id: 'LGZ-' + Date.now().toString(36).toUpperCase(),
+        status: 'form_filled',
+        customer: orderData.customer,
+        delivery: orderData.delivery,
+        product: orderData.product,
+        total: 197.00,
+        tabOpened: true,
+        createdAt: new Date().toISOString(),
+        logzzResult: response.result
+      };
     } else {
       throw new Error(response.error || 'Erro desconhecido');
     }

@@ -561,23 +561,22 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     syncLeads();
     sendResponse({ success: true });
   } else if (request.type === 'CREATE_LOGZZ_ORDER') {
-    // Criar pedido na Logzz
+    // Criar pedido na Logzz REAL
     try {
-      console.log('🛒 Criando pedido Logzz via background:', request.data);
+      console.log('🛒 Criando pedido Logzz REAL via background:', request.data);
       
-      // Importar e usar integração Logzz
-      const { default: LogzzIntegration } = await import('./logzz-integration.js');
-      const logzz = new LogzzIntegration();
+      // Importar e usar integração real Logzz
+      const { logzzRealIntegration } = await import('./logzz-real-integration.js');
       
-      const order = await logzz.createOrder(request.data);
+      const result = await logzzRealIntegration.createRealOrder(request.data);
       
       sendResponse({ 
         success: true, 
-        order: order 
+        result: result 
       });
       
     } catch (error) {
-      console.error('❌ Erro ao criar pedido Logzz:', error);
+      console.error('❌ Erro ao criar pedido Logzz real:', error);
       sendResponse({ 
         success: false, 
         error: error.message 
