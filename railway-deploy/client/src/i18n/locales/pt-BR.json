@@ -1,0 +1,123 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "quizzes": "Quizzes",
+    "myQuizzes": "Meus Quizzes",
+    "analytics": "Analytics",
+    "emailMarketing": "Email Marketing",
+    "smsMarketing": "SMS Marketing",
+    "whatsappMarketing": "WhatsApp Marketing",
+    "blackhatMarketing": "BlackHat Marketing",
+    "iaConversion": "I.A. Conversão +",
+    "settings": "Configurações",
+    "logout": "Sair"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Gerencie seus quizzes e campanhas de marketing",
+    "systemStatus": "Sistema em tempo real ativo",
+    "refresh": "Atualizar",
+    "tutorial": "Tutorial",
+    "createQuiz": "Criar Quiz",
+    "stats": {
+      "quizzes": "Quizzes",
+      "views": "Visualizações",
+      "responses": "Respostas",
+      "conversion": "Conversão",
+      "sms": "SMS",
+      "whatsapp": "WhatsApp",
+      "email": "Email"
+    },
+    "quickButtons": {
+      "title": "Botões Rápidos",
+      "subtitle": "Acesso rápido às principais funcionalidades",
+      "newQuiz": "Novo Quiz",
+      "templates": "Templates",
+      "analytics": "Ver Analytics",
+      "campaigns": "Campanhas"
+    },
+    "quickActions": {
+      "title": "Ações Rápidas",
+      "subtitle": "Ferramentas e utilidades",
+      "tutorials": "Tutoriais",
+      "plans": "Planos",
+      "support": "Suporte",
+      "documentation": "Documentação"
+    },
+    "yourQuizzes": {
+      "title": "Seus Quizzes",
+      "subtitle": "Gerencie e monitore o desempenho",
+      "count": "quizzes",
+      "startJourney": "Comece sua jornada",
+      "createFirstQuiz": "Crie seu primeiro quiz para começar a capturar leads qualificados e impulsionar seus negócios",
+      "createFirstButton": "Criar Primeiro Quiz",
+      "views": "Visualizações",
+      "leads": "Leads",
+      "published": "Publicado",
+      "draft": "Rascunho"
+    },
+    "currentPlan": "Plano Atual",
+    "upgradeAccount": "Atualizar Conta",
+    "viewAnalytics": "Ver Analytics",
+    "settings": "Configurações",
+    "totalQuizzes": "Total de Quizzes",
+    "totalLeads": "Total de Leads",
+    "totalViews": "Total de Visualizações",
+    "conversionRate": "Taxa de Conversão",
+    "smsCampaigns": "Campanhas SMS",
+    "emailCampaigns": "Campanhas de Email",
+    "whatsappCampaigns": "Campanhas WhatsApp",
+    "availableCredits": "Créditos Disponíveis",
+    "edit": "Editar",
+    "preview": "Visualizar",
+    "viewAll": "Ver Todos",
+    "noQuizzes": "Você ainda não criou nenhum quiz",
+    "welcome_back": "Bem-vindo de volta",
+    "create_quiz_btn": "Criar Quiz"
+  },
+  "quizIA": {
+    "title": "Quiz I.A. - Criação Inteligente",
+    "subtitle": "Crie funis de vendas completos com nossa I.A. avançada",
+    "generating": "Gerando...",
+    "generate": "Gerar Quiz I.A.",
+    "businessType": "Tipo de Negócio",
+    "targetAudience": "Público-Alvo",
+    "mainGoal": "Objetivo Principal",
+    "niche": "Nicho de Mercado",
+    "problem": "Problema Principal",
+    "transformation": "Transformação Desejada",
+    "customTitle": "Título Personalizado (Opcional)",
+    "customDescription": "Descrição Personalizada (Opcional)",
+    "backToDashboard": "← Voltar ao Dashboard",
+    "step": "Etapa",
+    "of": "de",
+    "stepTitles": {
+      "1": "Definir Nicho",
+      "2": "Identificar Problema", 
+      "3": "Transformação",
+      "4": "Personalização",
+      "5": "Revisão Final"
+    },
+    "placeholder": {
+      "niche": "Ex: Marketing Digital para Dentistas",
+      "problem": "Ex: Dificuldade em atrair novos pacientes",
+      "transformation": "Ex: Consultório sempre lotado com 50+ pacientes/mês",
+      "customTitle": "Ex: Descubra Como Atrair Mais Pacientes",
+      "customDescription": "Ex: Um quiz rápido para descobrir as melhores estratégias para seu consultório"
+    },
+    "validation": {
+      "requiredFields": "Campos Obrigatórios",
+      "requiredFieldsMessage": "Preencha pelo menos nicho, problema e transformação"
+    },
+    "success": "🎉 Quiz I.A. Criado com Sucesso!",
+    "successMessage": "Seu quiz foi criado e está pronto para ser editado",
+    "error": "Erro ao gerar Quiz I.A.",
+    "errorMessage": "Tente novamente em alguns instantes",
+    "redirecting": "Redirecionando para o editor...",
+    "processing": "Processando com I.A...",
+    "aiPowered": "Potencializado por I.A.",
+    "smartGeneration": "Geração Inteligente de Funis",
+    "professionalResults": "Resultados Profissionais",
+    "readyToEdit": "Pronto para Editar"
+  }
+}
