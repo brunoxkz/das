@@ -1,11 +1,30 @@
+# Nixpacks Configuration for Vendzz Platform Enterprise
+# Resolves "unable to generate build plan" error on Railway
+
+[variables]
+NODE_VERSION = "18"
+NODE_ENV = "production"
+NPM_CONFIG_PRODUCTION = "false"
+
 [phases.setup]
-nixPkgs = ['nodejs_20', 'npm-9_x']
+nixPkgs = ["nodejs-18_x", "npm-9_x", "python3"]
 
 [phases.install]
-cmds = ['npm ci']
+cmds = [
+  "npm install --include=dev",
+  "npm cache clean --force"
+]
 
 [phases.build]
-cmds = ['npm run build']
+cmds = [
+  "npm run build:client",
+  "npm run build:server", 
+  "cp -r public dist/ || true"
+]
 
 [start]
-cmd = 'npm start'
+cmd = "NODE_ENV=production node dist/server/index.js"
+
+[staticAssets]
+"public" = "./"
+"dist/public" = "./"

@@ -22,10 +22,12 @@ SESSION_SECRET = "${{ RAILWAY_GEN_SECRET }}"
 JWT_SECRET = "${{ RAILWAY_GEN_SECRET }}"
 REFRESH_JWT_SECRET = "${{ RAILWAY_GEN_SECRET_2 }}"
 VITE_API_URL = "${{ RAILWAY_PUBLIC_DOMAIN }}"
+NODE_VERSION = "18"
+NPM_CONFIG_PRODUCTION = "false"
 
 [services.build]
-buildCommand = "npm install && npm run build"
-startCommand = "npm start"
+buildCommand = "npm install --include=dev && npm run build:client && npm run build:server && cp -r public dist/ || true"
+startCommand = "NODE_ENV=production node dist/server/index.js"
 
 [services.healthcheck]
 path = "/api/health"
