@@ -5,7 +5,11 @@ import { registerSQLiteRoutes } from "./routes-sqlite";
 
 // Detecta automaticamente qual sistema usar
 const detectRouteSystem = () => {
-  // Forçar SQLite para desenvolvimento local independente
+  // Se DATABASE_URL estiver presente, usa PostgreSQL (Railway)
+  if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgresql://')) {
+    return 'postgresql';
+  }
+  // Caso contrário, usa SQLite local
   return 'sqlite';
 };
 
@@ -14,9 +18,9 @@ export function registerHybridRoutes(app: Express): Server {
   
   console.log(`🛣️ Configurando sistema de rotas: ${routeSystem.toUpperCase()}`);
   
-  if (routeSystem === 'sqlite') {
-    return registerSQLiteRoutes(app);
-  } else {
+  if (routeSystem === 'postgresql') {
     return registerRoutes(app);
+  } else {
+    return registerSQLiteRoutes(app);
   }
 }
