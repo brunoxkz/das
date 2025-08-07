@@ -10516,10 +10516,10 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
         success_url: `${process.env.BASE_URL || 'https://checkout.vendzz.com'}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.BASE_URL || 'https://checkout.vendzz.com'}/cancel`,
         metadata: {
-          planId: plan.id,
+          planId: (plan as any).id,
           customerEmail,
           customerName,
-          trial_price: plan.activation_fee.toString(),
+          trial_price: (plan as any).activation_fee?.toString() || '0',
           type: 'public_checkout'
         }
       });
@@ -10735,7 +10735,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
         return res.status(401).json({ error: "Token inválido" });
       }
       
-      const plans = db.prepare(`
+      const plans = (db as any).prepare(`
         SELECT * FROM stripe_plans 
         WHERE user_id = ? 
         ORDER BY created_at DESC
@@ -10873,7 +10873,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
             
             // Usar Stripe diretamente
             const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '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', {
-              apiVersion: '2024-09-30.acacia'
+              apiVersion: '2025-06-30.basil'
             });
             
             // Criar produto de assinatura
@@ -11067,7 +11067,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
       }
 
       // Calcular score final
-      const passCount = Object.values(testResults.results).filter(r => r.status === 'PASS').length;
+      const passCount = Object.values(testResults.results).filter((r: any) => r.status === 'PASS').length;
       const totalTests = Object.keys(testResults.results).length;
       const score = Math.round((passCount / totalTests) * 100);
 
@@ -11219,9 +11219,9 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
               req.headers['user-agent']
             );
 
-            if (debitResult.success) {
+            if ((debitResult as any).success) {
               successCount++;
-              console.log(`💳 CRÉDITO DEBITADO: Novo saldo: ${debitResult.remainingCredits}`);
+              console.log(`💳 CRÉDITO DEBITADO: Novo saldo: ${(debitResult as any).remainingCredits}`);
               
               results.push({
                 phone: phoneNumber,
@@ -11229,11 +11229,11 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
                 message: "SMS enviado com sucesso"
               });
             } else {
-              console.log(`🚫 ERRO NO DÉBITO: ${debitResult.error}`);
+              console.log(`🚫 ERRO NO DÉBITO: ${(debitResult as any).error}`);
               results.push({
                 phone: phoneNumber,
                 status: "warning",
-                message: "SMS enviado mas erro no débito: " + debitResult.error
+                message: "SMS enviado mas erro no débito: " + (debitResult as any).error
               });
             }
           } else {
