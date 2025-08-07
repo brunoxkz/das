@@ -1,464 +1,459 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.insertTelegramTemplateSchema = exports.insertTelegramLogSchema = exports.insertTelegramCampaignSchema = exports.telegramBotConfigs = exports.telegramTemplates = exports.telegramLogs = exports.telegramCampaigns = exports.insertWhatsappAutomationFileSchema = exports.insertWhatsappTemplateSchema = exports.insertWhatsappLogSchema = exports.insertWhatsappCampaignSchema = exports.whatsappAutomationFiles = exports.whatsappTemplates = exports.whatsappLogs = exports.whatsappCampaigns = exports.insertVoiceLogSchema = exports.insertVoiceCampaignSchema = exports.insertEmailSequenceSchema = exports.insertEmailAutomationSchema = exports.insertEmailLogSchema = exports.insertEmailTemplateSchema = exports.insertEmailCampaignSchema = exports.insertQuizAnalyticsSchema = exports.insertQuizResponseSchema = exports.insertQuizTemplateSchema = exports.insertQuizSchema = exports.insertUserSchema = exports.emailSequences = exports.emailAutomations = exports.emailLogs = exports.emailTemplates = exports.emailCampaigns = exports.voiceLogs = exports.voiceCampaigns = exports.smsLogs = exports.smsCampaigns = exports.smsTransactions = exports.quizAnalytics = exports.responseVariables = exports.quizResponses = exports.quizTemplates = exports.courseNotificationTemplates = exports.scheduledCourseNotifications = exports.coursePushSubscriptions = exports.lessonProgress = exports.enrollments = exports.lessons = exports.courses = exports.quizzes = exports.users = void 0;
-exports.creditTransactions = exports.subscriptionTransactions = exports.subscriptionPlans = exports.insertCheckoutAnalyticsSchema = exports.insertCheckoutTransactionSchema = exports.insertCheckoutPageSchema = exports.insertCheckoutProductSchema = exports.checkoutAnalytics = exports.stripeSubscriptions = exports.checkoutTransactions = exports.checkoutPages = exports.checkoutProducts = exports.insertTypebotIntegrationSchema = exports.insertTypebotWebhookSchema = exports.insertTypebotAnalyticsSchema = exports.insertTypebotMessageSchema = exports.insertTypebotConversationSchema = exports.insertTypebotProjectSchema = exports.typebotIntegrations = exports.typebotWebhooks = exports.typebotAnalytics = exports.typebotMessages = exports.typebotConversations = exports.typebotProjects = exports.insertIntegrationSchema = exports.insertWebhookLogSchema = exports.insertWebhookSchema = exports.insertAbTestViewSchema = exports.insertAbTestSchema = exports.integrations = exports.webhookLogs = exports.webhooks = exports.abTestViews = exports.abTests = exports.insertAffiliateSaleSchema = exports.insertSuperAffiliateSchema = exports.affiliateSales = exports.superAffiliates = exports.insertNotificationSchema = exports.notifications = exports.insertAiVideoGenerationSchema = exports.insertAiConversionCampaignSchema = exports.aiVideoGenerations = exports.aiConversionCampaigns = exports.insertResponseVariableSchema = exports.insertPushNotificationLogSchema = exports.insertPushSubscriptionSchema = exports.pushNotificationLogs = exports.pushSubscriptions = exports.insertTelegramBotConfigSchema = void 0;
-exports.insertCourseNotificationTemplateSchema = exports.insertScheduledCourseNotificationSchema = exports.insertCoursePushSubscriptionSchema = exports.insertLessonProgressSchema = exports.insertEnrollmentSchema = exports.insertLessonSchema = exports.insertCourseSchema = exports.insertForumLikeSchema = exports.insertForumReplySchema = exports.insertForumTopicSchema = exports.insertForumCategorySchema = exports.forumLikesTable = exports.forumRepliesTable = exports.forumTopicsTable = exports.forumCategoriesTable = exports.insertCreditTransactionSchema = exports.insertSubscriptionTransactionSchema = exports.insertSubscriptionPlanSchema = void 0;
-const sqlite_core_1 = require("drizzle-orm/sqlite-core");
-const drizzle_orm_1 = require("drizzle-orm");
-const drizzle_zod_1 = require("drizzle-zod");
-const zod_1 = require("zod");
-const nanoid_1 = require("nanoid");
-exports.users = (0, sqlite_core_1.sqliteTable)("users", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    email: (0, sqlite_core_1.text)("email").unique().notNull(),
-    password: (0, sqlite_core_1.text)("password"),
-    firstName: (0, sqlite_core_1.text)("firstName"),
-    lastName: (0, sqlite_core_1.text)("lastName"),
-    whatsapp: (0, sqlite_core_1.text)("whatsapp"),
-    profileImageUrl: (0, sqlite_core_1.text)("profileImageUrl"),
-    stripeCustomerId: (0, sqlite_core_1.text)("stripeCustomerId"),
-    stripeSubscriptionId: (0, sqlite_core_1.text)("stripeSubscriptionId"),
-    plan: (0, sqlite_core_1.text)("plan").default("trial"), // trial, basic, premium, enterprise
-    role: (0, sqlite_core_1.text)("role").default("user"),
-    refreshToken: (0, sqlite_core_1.text)("refreshToken"),
-    subscriptionStatus: (0, sqlite_core_1.text)("subscriptionStatus").default("active"), // active, canceled, expired, pending
+import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+import { nanoid } from "nanoid";
+export const users = sqliteTable("users", {
+    id: text("id").primaryKey(),
+    email: text("email").unique().notNull(),
+    password: text("password"),
+    firstName: text("firstName"),
+    lastName: text("lastName"),
+    whatsapp: text("whatsapp"),
+    profileImageUrl: text("profileImageUrl"),
+    stripeCustomerId: text("stripeCustomerId"),
+    stripeSubscriptionId: text("stripeSubscriptionId"),
+    plan: text("plan").default("trial"), // trial, basic, premium, enterprise
+    role: text("role").default("user"),
+    refreshToken: text("refreshToken"),
+    subscriptionStatus: text("subscriptionStatus").default("active"), // active, canceled, expired, pending
     // Campos para expiração de plano
-    planExpiresAt: (0, sqlite_core_1.integer)("planExpiresAt", { mode: 'timestamp' }),
-    planRenewalRequired: (0, sqlite_core_1.integer)("planRenewalRequired", { mode: 'boolean' }).default(false),
-    trialExpiresAt: (0, sqlite_core_1.integer)("trialExpiresAt", { mode: 'timestamp' }),
-    isBlocked: (0, sqlite_core_1.integer)("isBlocked", { mode: 'boolean' }).default(false),
-    blockReason: (0, sqlite_core_1.text)("blockReason"),
+    planExpiresAt: integer("planExpiresAt", { mode: 'timestamp' }),
+    planRenewalRequired: integer("planRenewalRequired", { mode: 'boolean' }).default(false),
+    trialExpiresAt: integer("trialExpiresAt", { mode: 'timestamp' }),
+    isBlocked: integer("isBlocked", { mode: 'boolean' }).default(false),
+    blockReason: text("blockReason"),
     // Campos para 2FA
-    twoFactorEnabled: (0, sqlite_core_1.integer)("twoFactorEnabled", { mode: 'boolean' }).default(false),
-    twoFactorSecret: (0, sqlite_core_1.text)("twoFactorSecret"),
-    twoFactorBackupCodes: (0, sqlite_core_1.text)("twoFactorBackupCodes", { mode: 'json' }),
-    smsCredits: (0, sqlite_core_1.integer)("smsCredits").default(0),
-    emailCredits: (0, sqlite_core_1.integer)("emailCredits").default(0),
-    whatsappCredits: (0, sqlite_core_1.integer)("whatsappCredits").default(0),
-    aiCredits: (0, sqlite_core_1.integer)("aiCredits").default(0),
-    videoCredits: (0, sqlite_core_1.integer)("videoCredits").default(0),
+    twoFactorEnabled: integer("twoFactorEnabled", { mode: 'boolean' }).default(false),
+    twoFactorSecret: text("twoFactorSecret"),
+    twoFactorBackupCodes: text("twoFactorBackupCodes", { mode: 'json' }),
+    smsCredits: integer("smsCredits").default(0),
+    emailCredits: integer("emailCredits").default(0),
+    whatsappCredits: integer("whatsappCredits").default(0),
+    aiCredits: integer("aiCredits").default(0),
+    videoCredits: integer("videoCredits").default(0),
     // Telegram Bot Integration
-    telegramBotToken: (0, sqlite_core_1.text)("telegramBotToken"),
-    telegramChatId: (0, sqlite_core_1.text)("telegramChatId"),
-    telegramCredits: (0, sqlite_core_1.integer)("telegramCredits").default(0),
-    createdAt: (0, sqlite_core_1.integer)("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-    updatedAt: (0, sqlite_core_1.integer)("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+    telegramBotToken: text("telegramBotToken"),
+    telegramChatId: text("telegramChatId"),
+    telegramCredits: integer("telegramCredits").default(0),
+    createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
-exports.quizzes = (0, sqlite_core_1.sqliteTable)("quizzes", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    title: (0, sqlite_core_1.text)("title").notNull(),
-    description: (0, sqlite_core_1.text)("description"),
-    structure: (0, sqlite_core_1.text)("structure", { mode: 'json' }).notNull(),
-    userId: (0, sqlite_core_1.text)("userId").notNull().references(() => exports.users.id),
-    isPublished: (0, sqlite_core_1.integer)("isPublished", { mode: 'boolean' }).default(false),
-    isSuperAffiliate: (0, sqlite_core_1.integer)("isSuperAffiliate", { mode: 'boolean' }).default(false),
-    settings: (0, sqlite_core_1.text)("settings", { mode: 'json' }),
-    design: (0, sqlite_core_1.text)("design", { mode: 'json' }),
-    designConfig: (0, sqlite_core_1.text)("designConfig", { mode: 'json' }),
-    logoUrl: (0, sqlite_core_1.text)("logoUrl"),
-    faviconUrl: (0, sqlite_core_1.text)("faviconUrl"),
-    facebookPixel: (0, sqlite_core_1.text)("facebookPixel"),
-    googlePixel: (0, sqlite_core_1.text)("googlePixel"),
-    ga4Pixel: (0, sqlite_core_1.text)("ga4Pixel"),
-    taboolaPixel: (0, sqlite_core_1.text)("taboolaPixel"),
-    pinterestPixel: (0, sqlite_core_1.text)("pinterestPixel"),
-    linkedinPixel: (0, sqlite_core_1.text)("linkedinPixel"),
-    outbrainPixel: (0, sqlite_core_1.text)("outbrainPixel"),
-    mgidPixel: (0, sqlite_core_1.text)("mgidPixel"),
-    customHeadScript: (0, sqlite_core_1.text)("customHeadScript"),
-    utmTrackingCode: (0, sqlite_core_1.text)("utmTrackingCode"),
-    pixelEmailMarketing: (0, sqlite_core_1.integer)("pixelEmailMarketing", { mode: 'boolean' }).default(false),
-    pixelSMS: (0, sqlite_core_1.integer)("pixelSMS", { mode: 'boolean' }).default(false),
-    pixelDelay: (0, sqlite_core_1.integer)("pixelDelay", { mode: 'boolean' }).default(false),
-    trackingPixels: (0, sqlite_core_1.text)("trackingPixels", { mode: 'json' }),
-    enableWhatsappAutomation: (0, sqlite_core_1.integer)("enableWhatsappAutomation", { mode: 'boolean' }).default(false),
+export const quizzes = sqliteTable("quizzes", {
+    id: text("id").primaryKey(),
+    title: text("title").notNull(),
+    description: text("description"),
+    structure: text("structure", { mode: 'json' }).notNull(),
+    userId: text("userId").notNull().references(() => users.id),
+    isPublished: integer("isPublished", { mode: 'boolean' }).default(false),
+    isSuperAffiliate: integer("isSuperAffiliate", { mode: 'boolean' }).default(false),
+    settings: text("settings", { mode: 'json' }),
+    design: text("design", { mode: 'json' }),
+    designConfig: text("designConfig", { mode: 'json' }),
+    logoUrl: text("logoUrl"),
+    faviconUrl: text("faviconUrl"),
+    facebookPixel: text("facebookPixel"),
+    googlePixel: text("googlePixel"),
+    ga4Pixel: text("ga4Pixel"),
+    taboolaPixel: text("taboolaPixel"),
+    pinterestPixel: text("pinterestPixel"),
+    linkedinPixel: text("linkedinPixel"),
+    outbrainPixel: text("outbrainPixel"),
+    mgidPixel: text("mgidPixel"),
+    customHeadScript: text("customHeadScript"),
+    utmTrackingCode: text("utmTrackingCode"),
+    pixelEmailMarketing: integer("pixelEmailMarketing", { mode: 'boolean' }).default(false),
+    pixelSMS: integer("pixelSMS", { mode: 'boolean' }).default(false),
+    pixelDelay: integer("pixelDelay", { mode: 'boolean' }).default(false),
+    trackingPixels: text("trackingPixels", { mode: 'json' }),
+    enableWhatsappAutomation: integer("enableWhatsappAutomation", { mode: 'boolean' }).default(false),
     // Sistema Anti-WebView (BlackHat) para redirecionamento inteligente
-    antiWebViewEnabled: (0, sqlite_core_1.integer)("antiWebViewEnabled", { mode: 'boolean' }).default(false),
-    detectInstagram: (0, sqlite_core_1.integer)("detectInstagram", { mode: 'boolean' }).default(true),
-    detectFacebook: (0, sqlite_core_1.integer)("detectFacebook", { mode: 'boolean' }).default(true),
-    detectTikTok: (0, sqlite_core_1.integer)("detectTikTok", { mode: 'boolean' }).default(false),
-    detectOthers: (0, sqlite_core_1.integer)("detectOthers", { mode: 'boolean' }).default(false),
-    enableIOS17: (0, sqlite_core_1.integer)("enableIOS17", { mode: 'boolean' }).default(true),
-    enableOlderIOS: (0, sqlite_core_1.integer)("enableOlderIOS", { mode: 'boolean' }).default(true),
-    enableAndroid: (0, sqlite_core_1.integer)("enableAndroid", { mode: 'boolean' }).default(true),
-    safeMode: (0, sqlite_core_1.integer)("safeMode", { mode: 'boolean' }).default(true),
-    redirectDelay: (0, sqlite_core_1.integer)("redirectDelay").default(0),
-    debugMode: (0, sqlite_core_1.integer)("debugMode", { mode: 'boolean' }).default(false),
+    antiWebViewEnabled: integer("antiWebViewEnabled", { mode: 'boolean' }).default(false),
+    detectInstagram: integer("detectInstagram", { mode: 'boolean' }).default(true),
+    detectFacebook: integer("detectFacebook", { mode: 'boolean' }).default(true),
+    detectTikTok: integer("detectTikTok", { mode: 'boolean' }).default(false),
+    detectOthers: integer("detectOthers", { mode: 'boolean' }).default(false),
+    enableIOS17: integer("enableIOS17", { mode: 'boolean' }).default(true),
+    enableOlderIOS: integer("enableOlderIOS", { mode: 'boolean' }).default(true),
+    enableAndroid: integer("enableAndroid", { mode: 'boolean' }).default(true),
+    safeMode: integer("safeMode", { mode: 'boolean' }).default(true),
+    redirectDelay: integer("redirectDelay").default(0),
+    debugMode: integer("debugMode", { mode: 'boolean' }).default(false),
     // Sistema BackRedirect - Redirecionamento universal
-    backRedirectEnabled: (0, sqlite_core_1.integer)("backRedirectEnabled", { mode: 'boolean' }).default(false),
-    backRedirectUrl: (0, sqlite_core_1.text)("backRedirectUrl"),
-    backRedirectDelay: (0, sqlite_core_1.integer)("backRedirectDelay").default(0),
+    backRedirectEnabled: integer("backRedirectEnabled", { mode: 'boolean' }).default(false),
+    backRedirectUrl: text("backRedirectUrl"),
+    backRedirectDelay: integer("backRedirectDelay").default(0),
     // Sistema Cloaker - Ocultação de conteúdo
-    cloakerEnabled: (0, sqlite_core_1.integer)("cloakerEnabled", { mode: 'boolean' }).default(false),
-    cloakerMode: (0, sqlite_core_1.text)("cloakerMode").default("simple"), // simple, advanced, smart
-    cloakerFallbackUrl: (0, sqlite_core_1.text)("cloakerFallbackUrl"),
-    cloakerWhitelistIps: (0, sqlite_core_1.text)("cloakerWhitelistIps"),
-    cloakerBlacklistUserAgents: (0, sqlite_core_1.text)("cloakerBlacklistUserAgents"),
-    resultTitle: (0, sqlite_core_1.text)("resultTitle"),
-    resultDescription: (0, sqlite_core_1.text)("resultDescription"),
-    embedCode: (0, sqlite_core_1.text)("embedCode"),
-    createdAt: (0, sqlite_core_1.integer)("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
-    updatedAt: (0, sqlite_core_1.integer)("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+    cloakerEnabled: integer("cloakerEnabled", { mode: 'boolean' }).default(false),
+    cloakerMode: text("cloakerMode").default("simple"), // simple, advanced, smart
+    cloakerFallbackUrl: text("cloakerFallbackUrl"),
+    cloakerWhitelistIps: text("cloakerWhitelistIps"),
+    cloakerBlacklistUserAgents: text("cloakerBlacklistUserAgents"),
+    resultTitle: text("resultTitle"),
+    resultDescription: text("resultDescription"),
+    embedCode: text("embedCode"),
+    createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+    updatedAt: integer("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
 // ÁREA DE MEMBROS - SISTEMA DE CURSOS
-exports.courses = (0, sqlite_core_1.sqliteTable)("courses", {
-    id: (0, sqlite_core_1.text)("id").primaryKey().$defaultFn(() => (0, nanoid_1.nanoid)()),
-    title: (0, sqlite_core_1.text)("title").notNull(),
-    description: (0, sqlite_core_1.text)("description"),
-    thumbnail: (0, sqlite_core_1.text)("thumbnail"),
-    creatorId: (0, sqlite_core_1.text)("creatorId").notNull().references(() => exports.users.id),
-    category: (0, sqlite_core_1.text)("category"),
-    price: (0, sqlite_core_1.real)("price").default(0),
-    currency: (0, sqlite_core_1.text)("currency").default("BRL"),
-    isPublished: (0, sqlite_core_1.integer)("isPublished", { mode: 'boolean' }).default(false),
-    isPWA: (0, sqlite_core_1.integer)("isPWA", { mode: 'boolean' }).default(false), // Se foi transformado em App
-    pwaConfig: (0, sqlite_core_1.text)("pwaConfig", { mode: 'json' }), // Configurações PWA (logo, cores, manifest)
-    pushConfig: (0, sqlite_core_1.text)("pushConfig", { mode: 'json' }), // Configurações de push notifications
-    branding: (0, sqlite_core_1.text)("branding", { mode: 'json' }), // Logo, cores, estilo
-    settings: (0, sqlite_core_1.text)("settings", { mode: 'json' }), // Configurações gerais
-    domain: (0, sqlite_core_1.text)("domain"), // Domínio personalizado quando é PWA
-    totalLessons: (0, sqlite_core_1.integer)("totalLessons").default(0),
-    totalDuration: (0, sqlite_core_1.integer)("totalDuration").default(0), // Em minutos
-    enrollmentCount: (0, sqlite_core_1.integer)("enrollmentCount").default(0),
-    rating: (0, sqlite_core_1.real)("rating").default(0),
-    status: (0, sqlite_core_1.text)("status").default("draft"), // draft, published, archived
-    createdAt: (0, sqlite_core_1.integer)("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-    updatedAt: (0, sqlite_core_1.integer)("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+export const courses = sqliteTable("courses", {
+    id: text("id").primaryKey().$defaultFn(() => nanoid()),
+    title: text("title").notNull(),
+    description: text("description"),
+    thumbnail: text("thumbnail"),
+    creatorId: text("creatorId").notNull().references(() => users.id),
+    category: text("category"),
+    price: real("price").default(0),
+    currency: text("currency").default("BRL"),
+    isPublished: integer("isPublished", { mode: 'boolean' }).default(false),
+    isPWA: integer("isPWA", { mode: 'boolean' }).default(false), // Se foi transformado em App
+    pwaConfig: text("pwaConfig", { mode: 'json' }), // Configurações PWA (logo, cores, manifest)
+    pushConfig: text("pushConfig", { mode: 'json' }), // Configurações de push notifications
+    branding: text("branding", { mode: 'json' }), // Logo, cores, estilo
+    settings: text("settings", { mode: 'json' }), // Configurações gerais
+    domain: text("domain"), // Domínio personalizado quando é PWA
+    totalLessons: integer("totalLessons").default(0),
+    totalDuration: integer("totalDuration").default(0), // Em minutos
+    enrollmentCount: integer("enrollmentCount").default(0),
+    rating: real("rating").default(0),
+    status: text("status").default("draft"), // draft, published, archived
+    createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
-exports.lessons = (0, sqlite_core_1.sqliteTable)("lessons", {
-    id: (0, sqlite_core_1.text)("id").primaryKey().$defaultFn(() => (0, nanoid_1.nanoid)()),
-    courseId: (0, sqlite_core_1.text)("courseId").notNull().references(() => exports.courses.id),
-    title: (0, sqlite_core_1.text)("title").notNull(),
-    description: (0, sqlite_core_1.text)("description"),
-    videoUrl: (0, sqlite_core_1.text)("videoUrl"),
-    videoId: (0, sqlite_core_1.text)("videoId"), // ID do vídeo se hospedado externamente
-    videoProvider: (0, sqlite_core_1.text)("videoProvider").default("upload"), // upload, youtube, vimeo
-    duration: (0, sqlite_core_1.integer)("duration").default(0), // Em segundos
-    order: (0, sqlite_core_1.integer)("order").notNull(),
-    isFree: (0, sqlite_core_1.integer)("isFree", { mode: 'boolean' }).default(false),
-    resources: (0, sqlite_core_1.text)("resources", { mode: 'json' }), // Links, arquivos adicionais
-    quiz: (0, sqlite_core_1.text)("quiz", { mode: 'json' }), // Quiz opcional da aula
-    notes: (0, sqlite_core_1.text)("notes"), // Anotações da aula
-    isPublished: (0, sqlite_core_1.integer)("isPublished", { mode: 'boolean' }).default(false),
-    createdAt: (0, sqlite_core_1.integer)("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-    updatedAt: (0, sqlite_core_1.integer)("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+export const lessons = sqliteTable("lessons", {
+    id: text("id").primaryKey().$defaultFn(() => nanoid()),
+    courseId: text("courseId").notNull().references(() => courses.id),
+    title: text("title").notNull(),
+    description: text("description"),
+    videoUrl: text("videoUrl"),
+    videoId: text("videoId"), // ID do vídeo se hospedado externamente
+    videoProvider: text("videoProvider").default("upload"), // upload, youtube, vimeo
+    duration: integer("duration").default(0), // Em segundos
+    order: integer("order").notNull(),
+    isFree: integer("isFree", { mode: 'boolean' }).default(false),
+    resources: text("resources", { mode: 'json' }), // Links, arquivos adicionais
+    quiz: text("quiz", { mode: 'json' }), // Quiz opcional da aula
+    notes: text("notes"), // Anotações da aula
+    isPublished: integer("isPublished", { mode: 'boolean' }).default(false),
+    createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
-exports.enrollments = (0, sqlite_core_1.sqliteTable)("enrollments", {
-    id: (0, sqlite_core_1.text)("id").primaryKey().$defaultFn(() => (0, nanoid_1.nanoid)()),
-    courseId: (0, sqlite_core_1.text)("courseId").notNull().references(() => exports.courses.id),
-    userId: (0, sqlite_core_1.text)("userId").notNull().references(() => exports.users.id),
-    progress: (0, sqlite_core_1.real)("progress").default(0), // 0-100%
-    currentLessonId: (0, sqlite_core_1.text)("currentLessonId").references(() => exports.lessons.id),
-    completedLessons: (0, sqlite_core_1.text)("completedLessons", { mode: 'json' }).default("[]"), // Array de IDs das aulas concluídas
-    enrolledAt: (0, sqlite_core_1.integer)("enrolledAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-    lastAccessedAt: (0, sqlite_core_1.integer)("lastAccessedAt", { mode: 'timestamp' }),
-    completedAt: (0, sqlite_core_1.integer)("completedAt", { mode: 'timestamp' }),
-    status: (0, sqlite_core_1.text)("status").default("active"), // active, paused, completed, expired
-    paymentId: (0, sqlite_core_1.text)("paymentId"), // ID do pagamento se aplicável
-    notes: (0, sqlite_core_1.text)("notes", { mode: 'json' }), // Anotações do aluno
+export const enrollments = sqliteTable("enrollments", {
+    id: text("id").primaryKey().$defaultFn(() => nanoid()),
+    courseId: text("courseId").notNull().references(() => courses.id),
+    userId: text("userId").notNull().references(() => users.id),
+    progress: real("progress").default(0), // 0-100%
+    currentLessonId: text("currentLessonId").references(() => lessons.id),
+    completedLessons: text("completedLessons", { mode: 'json' }).default("[]"), // Array de IDs das aulas concluídas
+    enrolledAt: integer("enrolledAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+    lastAccessedAt: integer("lastAccessedAt", { mode: 'timestamp' }),
+    completedAt: integer("completedAt", { mode: 'timestamp' }),
+    status: text("status").default("active"), // active, paused, completed, expired
+    paymentId: text("paymentId"), // ID do pagamento se aplicável
+    notes: text("notes", { mode: 'json' }), // Anotações do aluno
 });
-exports.lessonProgress = (0, sqlite_core_1.sqliteTable)("lesson_progress", {
-    id: (0, sqlite_core_1.text)("id").primaryKey().$defaultFn(() => (0, nanoid_1.nanoid)()),
-    enrollmentId: (0, sqlite_core_1.text)("enrollmentId").notNull().references(() => exports.enrollments.id),
-    lessonId: (0, sqlite_core_1.text)("lessonId").notNull().references(() => exports.lessons.id),
-    progress: (0, sqlite_core_1.real)("progress").default(0), // 0-100%
-    timeWatched: (0, sqlite_core_1.integer)("timeWatched").default(0), // Em segundos
-    isCompleted: (0, sqlite_core_1.integer)("isCompleted", { mode: 'boolean' }).default(false),
-    lastPosition: (0, sqlite_core_1.integer)("lastPosition").default(0), // Posição em segundos onde parou
-    watchedAt: (0, sqlite_core_1.integer)("watchedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-    completedAt: (0, sqlite_core_1.integer)("completedAt", { mode: 'timestamp' }),
+export const lessonProgress = sqliteTable("lesson_progress", {
+    id: text("id").primaryKey().$defaultFn(() => nanoid()),
+    enrollmentId: text("enrollmentId").notNull().references(() => enrollments.id),
+    lessonId: text("lessonId").notNull().references(() => lessons.id),
+    progress: real("progress").default(0), // 0-100%
+    timeWatched: integer("timeWatched").default(0), // Em segundos
+    isCompleted: integer("isCompleted", { mode: 'boolean' }).default(false),
+    lastPosition: integer("lastPosition").default(0), // Posição em segundos onde parou
+    watchedAt: integer("watchedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+    completedAt: integer("completedAt", { mode: 'timestamp' }),
 });
 // PUSH NOTIFICATIONS ESPECÍFICAS PARA CURSOS
-exports.coursePushSubscriptions = (0, sqlite_core_1.sqliteTable)("course_push_subscriptions", {
-    id: (0, sqlite_core_1.text)("id").primaryKey().$defaultFn(() => (0, nanoid_1.nanoid)()),
-    courseId: (0, sqlite_core_1.text)("courseId").notNull().references(() => exports.courses.id),
-    userId: (0, sqlite_core_1.text)("userId").notNull().references(() => exports.users.id),
-    subscription: (0, sqlite_core_1.text)("subscription", { mode: 'json' }).notNull(), // PushSubscription object
-    isActive: (0, sqlite_core_1.integer)("isActive", { mode: 'boolean' }).default(true),
-    createdAt: (0, sqlite_core_1.integer)("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-    lastNotificationAt: (0, sqlite_core_1.integer)("lastNotificationAt", { mode: 'timestamp' }),
+export const coursePushSubscriptions = sqliteTable("course_push_subscriptions", {
+    id: text("id").primaryKey().$defaultFn(() => nanoid()),
+    courseId: text("courseId").notNull().references(() => courses.id),
+    userId: text("userId").notNull().references(() => users.id),
+    subscription: text("subscription", { mode: 'json' }).notNull(), // PushSubscription object
+    isActive: integer("isActive", { mode: 'boolean' }).default(true),
+    createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+    lastNotificationAt: integer("lastNotificationAt", { mode: 'timestamp' }),
 });
-exports.scheduledCourseNotifications = (0, sqlite_core_1.sqliteTable)("scheduled_course_notifications", {
-    id: (0, sqlite_core_1.text)("id").primaryKey().$defaultFn(() => (0, nanoid_1.nanoid)()),
-    courseId: (0, sqlite_core_1.text)("courseId").notNull().references(() => exports.courses.id),
-    creatorId: (0, sqlite_core_1.text)("creatorId").notNull().references(() => exports.users.id),
-    title: (0, sqlite_core_1.text)("title").notNull(),
-    message: (0, sqlite_core_1.text)("message").notNull(),
-    icon: (0, sqlite_core_1.text)("icon"),
-    url: (0, sqlite_core_1.text)("url"),
-    targetAudience: (0, sqlite_core_1.text)("targetAudience").default("all"), // all, specific_users, progress_based
-    targetUserIds: (0, sqlite_core_1.text)("targetUserIds", { mode: 'json' }), // Array de IDs específicos
-    progressFilter: (0, sqlite_core_1.text)("progressFilter", { mode: 'json' }), // Filtros por progresso
-    scheduledFor: (0, sqlite_core_1.integer)("scheduledFor", { mode: 'timestamp' }).notNull(),
-    status: (0, sqlite_core_1.text)("status").default("scheduled"), // scheduled, sent, failed, cancelled
-    sentAt: (0, sqlite_core_1.integer)("sentAt", { mode: 'timestamp' }),
-    sentCount: (0, sqlite_core_1.integer)("sentCount").default(0),
-    failedCount: (0, sqlite_core_1.integer)("failedCount").default(0),
-    createdAt: (0, sqlite_core_1.integer)("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+export const scheduledCourseNotifications = sqliteTable("scheduled_course_notifications", {
+    id: text("id").primaryKey().$defaultFn(() => nanoid()),
+    courseId: text("courseId").notNull().references(() => courses.id),
+    creatorId: text("creatorId").notNull().references(() => users.id),
+    title: text("title").notNull(),
+    message: text("message").notNull(),
+    icon: text("icon"),
+    url: text("url"),
+    targetAudience: text("targetAudience").default("all"), // all, specific_users, progress_based
+    targetUserIds: text("targetUserIds", { mode: 'json' }), // Array de IDs específicos
+    progressFilter: text("progressFilter", { mode: 'json' }), // Filtros por progresso
+    scheduledFor: integer("scheduledFor", { mode: 'timestamp' }).notNull(),
+    status: text("status").default("scheduled"), // scheduled, sent, failed, cancelled
+    sentAt: integer("sentAt", { mode: 'timestamp' }),
+    sentCount: integer("sentCount").default(0),
+    failedCount: integer("failedCount").default(0),
+    createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
-exports.courseNotificationTemplates = (0, sqlite_core_1.sqliteTable)("course_notification_templates", {
-    id: (0, sqlite_core_1.text)("id").primaryKey().$defaultFn(() => (0, nanoid_1.nanoid)()),
-    courseId: (0, sqlite_core_1.text)("courseId").notNull().references(() => exports.courses.id),
-    name: (0, sqlite_core_1.text)("name").notNull(),
-    title: (0, sqlite_core_1.text)("title").notNull(),
-    message: (0, sqlite_core_1.text)("message").notNull(),
-    icon: (0, sqlite_core_1.text)("icon"),
-    url: (0, sqlite_core_1.text)("url"),
-    type: (0, sqlite_core_1.text)("type").notNull(), // welcome, reminder, new_lesson, completion, custom
-    isActive: (0, sqlite_core_1.integer)("isActive", { mode: 'boolean' }).default(true),
-    triggerCondition: (0, sqlite_core_1.text)("triggerCondition", { mode: 'json' }), // Condições para disparo automático
-    createdAt: (0, sqlite_core_1.integer)("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+export const courseNotificationTemplates = sqliteTable("course_notification_templates", {
+    id: text("id").primaryKey().$defaultFn(() => nanoid()),
+    courseId: text("courseId").notNull().references(() => courses.id),
+    name: text("name").notNull(),
+    title: text("title").notNull(),
+    message: text("message").notNull(),
+    icon: text("icon"),
+    url: text("url"),
+    type: text("type").notNull(), // welcome, reminder, new_lesson, completion, custom
+    isActive: integer("isActive", { mode: 'boolean' }).default(true),
+    triggerCondition: text("triggerCondition", { mode: 'json' }), // Condições para disparo automático
+    createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
-exports.quizTemplates = (0, sqlite_core_1.sqliteTable)("quiz_templates", {
-    id: (0, sqlite_core_1.integer)("id").primaryKey({ autoIncrement: true }),
-    name: (0, sqlite_core_1.text)("name").notNull(),
-    description: (0, sqlite_core_1.text)("description"),
-    structure: (0, sqlite_core_1.text)("structure", { mode: 'json' }).notNull(),
-    category: (0, sqlite_core_1.text)("category"),
-    createdAt: (0, sqlite_core_1.integer)("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-    updatedAt: (0, sqlite_core_1.integer)("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+export const quizTemplates = sqliteTable("quiz_templates", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name").notNull(),
+    description: text("description"),
+    structure: text("structure", { mode: 'json' }).notNull(),
+    category: text("category"),
+    createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
-exports.quizResponses = (0, sqlite_core_1.sqliteTable)("quiz_responses", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    quizId: (0, sqlite_core_1.text)("quizId").notNull().references(() => exports.quizzes.id),
-    userId: (0, sqlite_core_1.text)("userId").references(() => exports.users.id), // Campo opcional para respostas de usuários logados
-    responses: (0, sqlite_core_1.text)("responses", { mode: 'json' }).notNull(),
-    metadata: (0, sqlite_core_1.text)("metadata", { mode: 'json' }),
-    submittedAt: (0, sqlite_core_1.integer)("submittedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-    country: (0, sqlite_core_1.text)("country"),
-    phoneCountryCode: (0, sqlite_core_1.text)("phoneCountryCode"),
-    affiliateId: (0, sqlite_core_1.text)("affiliateId"),
+export const quizResponses = sqliteTable("quiz_responses", {
+    id: text("id").primaryKey(),
+    quizId: text("quizId").notNull().references(() => quizzes.id),
+    userId: text("userId").references(() => users.id), // Campo opcional para respostas de usuários logados
+    responses: text("responses", { mode: 'json' }).notNull(),
+    metadata: text("metadata", { mode: 'json' }),
+    submittedAt: integer("submittedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+    country: text("country"),
+    phoneCountryCode: text("phoneCountryCode"),
+    affiliateId: text("affiliateId"),
 });
 // Nova tabela para indexar todas as variáveis de resposta para remarketing ultra-personalizado
-exports.responseVariables = (0, sqlite_core_1.sqliteTable)("response_variables", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    responseId: (0, sqlite_core_1.text)("responseId").notNull().references(() => exports.quizResponses.id, { onDelete: "cascade" }),
-    quizId: (0, sqlite_core_1.text)("quizId").notNull().references(() => exports.quizzes.id, { onDelete: "cascade" }),
-    variableName: (0, sqlite_core_1.text)("variableName").notNull(), // Ex: "produto_interesse", "nome_completo", "idade"
-    variableValue: (0, sqlite_core_1.text)("variableValue").notNull(), // Ex: "Whey Protein", "João Silva", "28"
-    elementType: (0, sqlite_core_1.text)("elementType").notNull(), // Ex: "multiple_choice", "text", "number"
-    pageId: (0, sqlite_core_1.text)("pageId").notNull(), // Ex: "page_1", "page_2"
-    elementId: (0, sqlite_core_1.text)("elementId").notNull(), // Ex: "element_multiple_choice_1"
-    pageOrder: (0, sqlite_core_1.integer)("pageOrder").notNull(), // Ordem da página no funil
-    question: (0, sqlite_core_1.text)("question"), // Pergunta original para contexto
-    createdAt: (0, sqlite_core_1.integer)("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+export const responseVariables = sqliteTable("response_variables", {
+    id: text("id").primaryKey(),
+    responseId: text("responseId").notNull().references(() => quizResponses.id, { onDelete: "cascade" }),
+    quizId: text("quizId").notNull().references(() => quizzes.id, { onDelete: "cascade" }),
+    variableName: text("variableName").notNull(), // Ex: "produto_interesse", "nome_completo", "idade"
+    variableValue: text("variableValue").notNull(), // Ex: "Whey Protein", "João Silva", "28"
+    elementType: text("elementType").notNull(), // Ex: "multiple_choice", "text", "number"
+    pageId: text("pageId").notNull(), // Ex: "page_1", "page_2"
+    elementId: text("elementId").notNull(), // Ex: "element_multiple_choice_1"
+    pageOrder: integer("pageOrder").notNull(), // Ordem da página no funil
+    question: text("question"), // Pergunta original para contexto
+    createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
-exports.quizAnalytics = (0, sqlite_core_1.sqliteTable)("quiz_analytics", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    quizId: (0, sqlite_core_1.text)("quizId").notNull().references(() => exports.quizzes.id),
-    date: (0, sqlite_core_1.text)("date").notNull(),
-    views: (0, sqlite_core_1.integer)("views").default(0),
-    completions: (0, sqlite_core_1.integer)("completions").default(0),
-    conversionRate: (0, sqlite_core_1.real)("conversionRate").default(0),
-    metadata: (0, sqlite_core_1.text)("metadata", { mode: 'json' }),
+export const quizAnalytics = sqliteTable("quiz_analytics", {
+    id: text("id").primaryKey(),
+    quizId: text("quizId").notNull().references(() => quizzes.id),
+    date: text("date").notNull(),
+    views: integer("views").default(0),
+    completions: integer("completions").default(0),
+    conversionRate: real("conversionRate").default(0),
+    metadata: text("metadata", { mode: 'json' }),
 });
-exports.smsTransactions = (0, sqlite_core_1.sqliteTable)("sms_transactions", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    userId: (0, sqlite_core_1.text)("userId").notNull().references(() => exports.users.id),
-    type: (0, sqlite_core_1.text)("type").notNull(), // 'purchase' | 'usage' | 'bonus'
-    amount: (0, sqlite_core_1.integer)("amount").notNull(),
-    description: (0, sqlite_core_1.text)("description"),
-    createdAt: (0, sqlite_core_1.integer)("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+export const smsTransactions = sqliteTable("sms_transactions", {
+    id: text("id").primaryKey(),
+    userId: text("userId").notNull().references(() => users.id),
+    type: text("type").notNull(), // 'purchase' | 'usage' | 'bonus'
+    amount: integer("amount").notNull(),
+    description: text("description"),
+    createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
-exports.smsCampaigns = (0, sqlite_core_1.sqliteTable)("sms_campaigns", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    name: (0, sqlite_core_1.text)("name").notNull(),
-    quizId: (0, sqlite_core_1.text)("quizId").notNull().references(() => exports.quizzes.id, { onDelete: "cascade" }),
-    userId: (0, sqlite_core_1.text)("userId").notNull().references(() => exports.users.id, { onDelete: "cascade" }),
-    message: (0, sqlite_core_1.text)("message").notNull(),
-    phones: (0, sqlite_core_1.text)("phones", { mode: 'json' }).notNull(), // Array of phone numbers stored as JSON
-    status: (0, sqlite_core_1.text)("status").default("pending"), // pending, active, paused, completed
-    sent: (0, sqlite_core_1.integer)("sent").default(0),
-    delivered: (0, sqlite_core_1.integer)("delivered").default(0),
-    opened: (0, sqlite_core_1.integer)("opened").default(0),
-    clicked: (0, sqlite_core_1.integer)("clicked").default(0),
-    replies: (0, sqlite_core_1.integer)("replies").default(0),
-    scheduledAt: (0, sqlite_core_1.integer)("scheduledAt"), // Para campanhas agendadas
-    targetAudience: (0, sqlite_core_1.text)("targetAudience").default("all"), // all, completed, abandoned
-    campaignMode: (0, sqlite_core_1.text)("campaignMode").default("leads_ja_na_base"), // "modo_ao_vivo" ou "leads_ja_na_base"
-    triggerDelay: (0, sqlite_core_1.integer)("triggerDelay").default(10),
-    triggerUnit: (0, sqlite_core_1.text)("triggerUnit").default("minutes"),
+export const smsCampaigns = sqliteTable("sms_campaigns", {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    quizId: text("quizId").notNull().references(() => quizzes.id, { onDelete: "cascade" }),
+    userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    message: text("message").notNull(),
+    phones: text("phones", { mode: 'json' }).notNull(), // Array of phone numbers stored as JSON
+    status: text("status").default("pending"), // pending, active, paused, completed
+    sent: integer("sent").default(0),
+    delivered: integer("delivered").default(0),
+    opened: integer("opened").default(0),
+    clicked: integer("clicked").default(0),
+    replies: integer("replies").default(0),
+    scheduledAt: integer("scheduledAt"), // Para campanhas agendadas
+    targetAudience: text("targetAudience").default("all"), // all, completed, abandoned
+    campaignMode: text("campaignMode").default("leads_ja_na_base"), // "modo_ao_vivo" ou "leads_ja_na_base"
+    triggerDelay: integer("triggerDelay").default(10),
+    triggerUnit: text("triggerUnit").default("minutes"),
     // 🚀 CAMPOS PARA CAMPANHAS ULTRA PERSONALIZADAS
-    campaignType: (0, sqlite_core_1.text)("campaignType").default("standard"), // "standard" ou "ultra_personalized"
-    conditionalRules: (0, sqlite_core_1.text)("conditionalRules", { mode: 'json' }), // JSON com regras SE > ENTÃO
+    campaignType: text("campaignType").default("standard"), // "standard" ou "ultra_personalized"
+    conditionalRules: text("conditionalRules", { mode: 'json' }), // JSON com regras SE > ENTÃO
     // 🔥 CAMPOS QUANTUM - EVOLUÇÃO DO SISTEMA ULTRA
-    quantumType: (0, sqlite_core_1.text)("quantumType").default("standard"), // "standard", "remarketing", "live"
-    quantumConfig: (0, sqlite_core_1.text)("quantumConfig", { mode: 'json' }), // Configurações avançadas Quantum
-    quantumFilters: (0, sqlite_core_1.text)("quantumFilters", { mode: 'json' }), // Filtros Ultra granulares
-    triggerConditions: (0, sqlite_core_1.text)("triggerConditions", { mode: 'json' }), // Condições de disparo automático
-    createdAt: (0, sqlite_core_1.integer)("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
-    updatedAt: (0, sqlite_core_1.integer)("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+    quantumType: text("quantumType").default("standard"), // "standard", "remarketing", "live"
+    quantumConfig: text("quantumConfig", { mode: 'json' }), // Configurações avançadas Quantum
+    quantumFilters: text("quantumFilters", { mode: 'json' }), // Filtros Ultra granulares
+    triggerConditions: text("triggerConditions", { mode: 'json' }), // Condições de disparo automático
+    createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+    updatedAt: integer("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
-exports.smsLogs = (0, sqlite_core_1.sqliteTable)("sms_logs", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    campaignId: (0, sqlite_core_1.text)("campaignId").notNull().references(() => exports.smsCampaigns.id, { onDelete: "cascade" }),
-    phone: (0, sqlite_core_1.text)("phone").notNull(),
-    message: (0, sqlite_core_1.text)("message").notNull(),
-    status: (0, sqlite_core_1.text)("status").notNull(), // pending, sent, delivered, failed, scheduled
-    twilioSid: (0, sqlite_core_1.text)("twilioSid"),
-    errorMessage: (0, sqlite_core_1.text)("errorMessage"),
-    sentAt: (0, sqlite_core_1.integer)("sentAt"),
-    deliveredAt: (0, sqlite_core_1.integer)("deliveredAt"),
-    scheduledAt: (0, sqlite_core_1.integer)("scheduledAt"), // Agendamento individual para cada SMS
-    country: (0, sqlite_core_1.text)("country"), // País detectado do telefone
-    countryCode: (0, sqlite_core_1.text)("countryCode"), // Código do país (+55, +1, etc.)
-    createdAt: (0, sqlite_core_1.integer)("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+export const smsLogs = sqliteTable("sms_logs", {
+    id: text("id").primaryKey(),
+    campaignId: text("campaignId").notNull().references(() => smsCampaigns.id, { onDelete: "cascade" }),
+    phone: text("phone").notNull(),
+    message: text("message").notNull(),
+    status: text("status").notNull(), // pending, sent, delivered, failed, scheduled
+    twilioSid: text("twilioSid"),
+    errorMessage: text("errorMessage"),
+    sentAt: integer("sentAt"),
+    deliveredAt: integer("deliveredAt"),
+    scheduledAt: integer("scheduledAt"), // Agendamento individual para cada SMS
+    country: text("country"), // País detectado do telefone
+    countryCode: text("countryCode"), // Código do país (+55, +1, etc.)
+    createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
 // Voice Calling Campaign System
-exports.voiceCampaigns = (0, sqlite_core_1.sqliteTable)("voice_campaigns", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    name: (0, sqlite_core_1.text)("name").notNull(),
-    quizId: (0, sqlite_core_1.text)("quizId").notNull().references(() => exports.quizzes.id, { onDelete: "cascade" }),
-    userId: (0, sqlite_core_1.text)("userId").notNull().references(() => exports.users.id, { onDelete: "cascade" }),
-    voiceMessage: (0, sqlite_core_1.text)("voiceMessage").notNull(), // Mensagem para TTS (Text-to-Speech)
-    voiceFile: (0, sqlite_core_1.text)("voiceFile"), // URL do arquivo de áudio (opcional)
-    voiceType: (0, sqlite_core_1.text)("voiceType").default("tts"), // "tts" para texto-para-fala, "audio" para arquivo de áudio
-    voiceSettings: (0, sqlite_core_1.text)("voiceSettings", { mode: 'json' }).default("{}"), // Configurações de voz (velocidade, tom, etc.)
-    phones: (0, sqlite_core_1.text)("phones", { mode: 'json' }).notNull(), // Array of phone numbers stored as JSON
-    status: (0, sqlite_core_1.text)("status").default("pending"), // pending, active, paused, completed
-    sent: (0, sqlite_core_1.integer)("sent").default(0),
-    answered: (0, sqlite_core_1.integer)("answered").default(0),
-    voicemail: (0, sqlite_core_1.integer)("voicemail").default(0),
-    busy: (0, sqlite_core_1.integer)("busy").default(0),
-    failed: (0, sqlite_core_1.integer)("failed").default(0),
-    duration: (0, sqlite_core_1.integer)("duration").default(0), // Duração total em segundos
-    scheduledAt: (0, sqlite_core_1.integer)("scheduledAt"), // Para campanhas agendadas
-    targetAudience: (0, sqlite_core_1.text)("targetAudience").default("all"), // all, completed, abandoned
-    campaignMode: (0, sqlite_core_1.text)("campaignMode").default("leads_ja_na_base"), // "modo_ao_vivo" ou "leads_ja_na_base"
-    triggerDelay: (0, sqlite_core_1.integer)("triggerDelay").default(10),
-    triggerUnit: (0, sqlite_core_1.text)("triggerUnit").default("minutes"),
-    maxRetries: (0, sqlite_core_1.integer)("maxRetries").default(3), // Tentativas máximas para cada número
-    retryDelay: (0, sqlite_core_1.integer)("retryDelay").default(60), // Delay entre tentativas (minutos)
-    callTimeout: (0, sqlite_core_1.integer)("callTimeout").default(30), // Timeout da chamada (segundos)
-    createdAt: (0, sqlite_core_1.integer)("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
-    updatedAt: (0, sqlite_core_1.integer)("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+export const voiceCampaigns = sqliteTable("voice_campaigns", {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    quizId: text("quizId").notNull().references(() => quizzes.id, { onDelete: "cascade" }),
+    userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    voiceMessage: text("voiceMessage").notNull(), // Mensagem para TTS (Text-to-Speech)
+    voiceFile: text("voiceFile"), // URL do arquivo de áudio (opcional)
+    voiceType: text("voiceType").default("tts"), // "tts" para texto-para-fala, "audio" para arquivo de áudio
+    voiceSettings: text("voiceSettings", { mode: 'json' }).default("{}"), // Configurações de voz (velocidade, tom, etc.)
+    phones: text("phones", { mode: 'json' }).notNull(), // Array of phone numbers stored as JSON
+    status: text("status").default("pending"), // pending, active, paused, completed
+    sent: integer("sent").default(0),
+    answered: integer("answered").default(0),
+    voicemail: integer("voicemail").default(0),
+    busy: integer("busy").default(0),
+    failed: integer("failed").default(0),
+    duration: integer("duration").default(0), // Duração total em segundos
+    scheduledAt: integer("scheduledAt"), // Para campanhas agendadas
+    targetAudience: text("targetAudience").default("all"), // all, completed, abandoned
+    campaignMode: text("campaignMode").default("leads_ja_na_base"), // "modo_ao_vivo" ou "leads_ja_na_base"
+    triggerDelay: integer("triggerDelay").default(10),
+    triggerUnit: text("triggerUnit").default("minutes"),
+    maxRetries: integer("maxRetries").default(3), // Tentativas máximas para cada número
+    retryDelay: integer("retryDelay").default(60), // Delay entre tentativas (minutos)
+    callTimeout: integer("callTimeout").default(30), // Timeout da chamada (segundos)
+    createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+    updatedAt: integer("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
-exports.voiceLogs = (0, sqlite_core_1.sqliteTable)("voice_logs", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    campaignId: (0, sqlite_core_1.text)("campaignId").notNull().references(() => exports.voiceCampaigns.id, { onDelete: "cascade" }),
-    phone: (0, sqlite_core_1.text)("phone").notNull(),
-    voiceMessage: (0, sqlite_core_1.text)("voiceMessage").notNull(),
-    voiceFile: (0, sqlite_core_1.text)("voiceFile"), // URL do arquivo de áudio usado
-    status: (0, sqlite_core_1.text)("status").notNull(), // pending, calling, answered, voicemail, busy, failed, scheduled, completed
-    twilioSid: (0, sqlite_core_1.text)("twilioSid"), // ID da chamada no Twilio
-    callDuration: (0, sqlite_core_1.integer)("callDuration").default(0), // Duração da chamada em segundos
-    callPrice: (0, sqlite_core_1.text)("callPrice"), // Preço da chamada
-    errorMessage: (0, sqlite_core_1.text)("errorMessage"),
-    retryCount: (0, sqlite_core_1.integer)("retryCount").default(0), // Número de tentativas
-    scheduledAt: (0, sqlite_core_1.integer)("scheduledAt"), // Agendamento individual para cada chamada
-    calledAt: (0, sqlite_core_1.integer)("calledAt"), // Timestamp da chamada
-    answeredAt: (0, sqlite_core_1.integer)("answeredAt"), // Timestamp quando atendeu
-    completedAt: (0, sqlite_core_1.integer)("completedAt"), // Timestamp quando terminou
-    country: (0, sqlite_core_1.text)("country"), // País detectado do telefone
-    countryCode: (0, sqlite_core_1.text)("countryCode"), // Código do país (+55, +1, etc.)
-    recordingUrl: (0, sqlite_core_1.text)("recordingUrl"), // URL da gravação da chamada (se habilitada)
-    createdAt: (0, sqlite_core_1.integer)("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+export const voiceLogs = sqliteTable("voice_logs", {
+    id: text("id").primaryKey(),
+    campaignId: text("campaignId").notNull().references(() => voiceCampaigns.id, { onDelete: "cascade" }),
+    phone: text("phone").notNull(),
+    voiceMessage: text("voiceMessage").notNull(),
+    voiceFile: text("voiceFile"), // URL do arquivo de áudio usado
+    status: text("status").notNull(), // pending, calling, answered, voicemail, busy, failed, scheduled, completed
+    twilioSid: text("twilioSid"), // ID da chamada no Twilio
+    callDuration: integer("callDuration").default(0), // Duração da chamada em segundos
+    callPrice: text("callPrice"), // Preço da chamada
+    errorMessage: text("errorMessage"),
+    retryCount: integer("retryCount").default(0), // Número de tentativas
+    scheduledAt: integer("scheduledAt"), // Agendamento individual para cada chamada
+    calledAt: integer("calledAt"), // Timestamp da chamada
+    answeredAt: integer("answeredAt"), // Timestamp quando atendeu
+    completedAt: integer("completedAt"), // Timestamp quando terminou
+    country: text("country"), // País detectado do telefone
+    countryCode: text("countryCode"), // Código do país (+55, +1, etc.)
+    recordingUrl: text("recordingUrl"), // URL da gravação da chamada (se habilitada)
+    createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
-exports.emailCampaigns = (0, sqlite_core_1.sqliteTable)("email_campaigns", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    name: (0, sqlite_core_1.text)("name").notNull(),
-    subject: (0, sqlite_core_1.text)("subject").notNull(),
-    content: (0, sqlite_core_1.text)("content").notNull(),
-    quizId: (0, sqlite_core_1.text)("quizId").notNull().references(() => exports.quizzes.id, { onDelete: "cascade" }),
-    userId: (0, sqlite_core_1.text)("userId").notNull().references(() => exports.users.id, { onDelete: "cascade" }),
-    status: (0, sqlite_core_1.text)("status").default("draft"), // draft, active, paused, completed
-    campaignType: (0, sqlite_core_1.text)("campaignType").default("remarketing"), // "live" (tempo real) ou "remarketing" (leads antigos)
-    triggerType: (0, sqlite_core_1.text)("triggerType").default("immediate"), // immediate, delayed, scheduled
-    triggerDelay: (0, sqlite_core_1.integer)("triggerDelay").default(0),
-    triggerUnit: (0, sqlite_core_1.text)("triggerUnit").default("hours"), // minutes, hours, days
-    targetAudience: (0, sqlite_core_1.text)("targetAudience").default("completed"), // all, completed, abandoned
-    dateFilter: (0, sqlite_core_1.integer)("dateFilter"), // Unix timestamp para filtrar leads por data
-    variables: (0, sqlite_core_1.text)("variables", { mode: 'json' }).default("[]"),
-    sent: (0, sqlite_core_1.integer)("sent").default(0),
-    delivered: (0, sqlite_core_1.integer)("delivered").default(0),
-    opened: (0, sqlite_core_1.integer)("opened").default(0),
-    clicked: (0, sqlite_core_1.integer)("clicked").default(0),
-    createdAt: (0, sqlite_core_1.integer)("createdAt").default(0),
-    updatedAt: (0, sqlite_core_1.integer)("updatedAt").default(0),
+export const emailCampaigns = sqliteTable("email_campaigns", {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    subject: text("subject").notNull(),
+    content: text("content").notNull(),
+    quizId: text("quizId").notNull().references(() => quizzes.id, { onDelete: "cascade" }),
+    userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    status: text("status").default("draft"), // draft, active, paused, completed
+    campaignType: text("campaignType").default("remarketing"), // "live" (tempo real) ou "remarketing" (leads antigos)
+    triggerType: text("triggerType").default("immediate"), // immediate, delayed, scheduled
+    triggerDelay: integer("triggerDelay").default(0),
+    triggerUnit: text("triggerUnit").default("hours"), // minutes, hours, days
+    targetAudience: text("targetAudience").default("completed"), // all, completed, abandoned
+    dateFilter: integer("dateFilter"), // Unix timestamp para filtrar leads por data
+    variables: text("variables", { mode: 'json' }).default("[]"),
+    sent: integer("sent").default(0),
+    delivered: integer("delivered").default(0),
+    opened: integer("opened").default(0),
+    clicked: integer("clicked").default(0),
+    createdAt: integer("createdAt").default(0),
+    updatedAt: integer("updatedAt").default(0),
 });
-exports.emailTemplates = (0, sqlite_core_1.sqliteTable)("email_templates", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    name: (0, sqlite_core_1.text)("name").notNull(),
-    subject: (0, sqlite_core_1.text)("subject").notNull(),
-    content: (0, sqlite_core_1.text)("content").notNull(),
-    category: (0, sqlite_core_1.text)("category").notNull(),
-    variables: (0, sqlite_core_1.text)("variables", { mode: 'json' }).default("[]"),
-    userId: (0, sqlite_core_1.text)("userId").notNull().references(() => exports.users.id, { onDelete: "cascade" }),
-    createdAt: (0, sqlite_core_1.integer)("createdAt").default(0),
-    updatedAt: (0, sqlite_core_1.integer)("updatedAt").default(0),
+export const emailTemplates = sqliteTable("email_templates", {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    subject: text("subject").notNull(),
+    content: text("content").notNull(),
+    category: text("category").notNull(),
+    variables: text("variables", { mode: 'json' }).default("[]"),
+    userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    createdAt: integer("createdAt").default(0),
+    updatedAt: integer("updatedAt").default(0),
 });
-exports.emailLogs = (0, sqlite_core_1.sqliteTable)("email_logs", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    campaignId: (0, sqlite_core_1.text)("campaignId").notNull().references(() => exports.emailCampaigns.id, { onDelete: "cascade" }),
-    email: (0, sqlite_core_1.text)("email").notNull(),
-    personalizedSubject: (0, sqlite_core_1.text)("personalizedSubject").notNull(),
-    personalizedContent: (0, sqlite_core_1.text)("personalizedContent").notNull(),
-    leadData: (0, sqlite_core_1.text)("leadData", { mode: 'json' }),
-    status: (0, sqlite_core_1.text)("status").notNull(), // sent, delivered, bounced, opened, clicked, complained, unsubscribed
-    sendgridId: (0, sqlite_core_1.text)("sendgridId"),
-    errorMessage: (0, sqlite_core_1.text)("errorMessage"),
-    sentAt: (0, sqlite_core_1.integer)("sentAt"),
-    deliveredAt: (0, sqlite_core_1.integer)("deliveredAt"),
-    openedAt: (0, sqlite_core_1.integer)("openedAt"),
-    clickedAt: (0, sqlite_core_1.integer)("clickedAt"),
-    scheduledAt: (0, sqlite_core_1.integer)("scheduledAt"),
-    createdAt: (0, sqlite_core_1.integer)("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+export const emailLogs = sqliteTable("email_logs", {
+    id: text("id").primaryKey(),
+    campaignId: text("campaignId").notNull().references(() => emailCampaigns.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    personalizedSubject: text("personalizedSubject").notNull(),
+    personalizedContent: text("personalizedContent").notNull(),
+    leadData: text("leadData", { mode: 'json' }),
+    status: text("status").notNull(), // sent, delivered, bounced, opened, clicked, complained, unsubscribed
+    sendgridId: text("sendgridId"),
+    errorMessage: text("errorMessage"),
+    sentAt: integer("sentAt"),
+    deliveredAt: integer("deliveredAt"),
+    openedAt: integer("openedAt"),
+    clickedAt: integer("clickedAt"),
+    scheduledAt: integer("scheduledAt"),
+    createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
-exports.emailAutomations = (0, sqlite_core_1.sqliteTable)("email_automations", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    name: (0, sqlite_core_1.text)("name").notNull(),
-    description: (0, sqlite_core_1.text)("description"),
-    userId: (0, sqlite_core_1.text)("userId").notNull().references(() => exports.users.id, { onDelete: "cascade" }),
-    quizId: (0, sqlite_core_1.text)("quizId").notNull().references(() => exports.quizzes.id, { onDelete: "cascade" }),
-    trigger: (0, sqlite_core_1.text)("trigger").notNull(), // quiz_completed, quiz_abandoned, time_based, score_based
-    conditions: (0, sqlite_core_1.text)("conditions", { mode: 'json' }),
-    sequence: (0, sqlite_core_1.text)("sequence", { mode: 'json' }).notNull(),
-    isActive: (0, sqlite_core_1.integer)("isActive", { mode: 'boolean' }).default(true),
-    createdAt: (0, sqlite_core_1.integer)("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
-    updatedAt: (0, sqlite_core_1.integer)("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+export const emailAutomations = sqliteTable("email_automations", {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    description: text("description"),
+    userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    quizId: text("quizId").notNull().references(() => quizzes.id, { onDelete: "cascade" }),
+    trigger: text("trigger").notNull(), // quiz_completed, quiz_abandoned, time_based, score_based
+    conditions: text("conditions", { mode: 'json' }),
+    sequence: text("sequence", { mode: 'json' }).notNull(),
+    isActive: integer("isActive", { mode: 'boolean' }).default(true),
+    createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+    updatedAt: integer("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
-exports.emailSequences = (0, sqlite_core_1.sqliteTable)("email_sequences", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    automationId: (0, sqlite_core_1.text)("automationId").notNull().references(() => exports.emailAutomations.id, { onDelete: "cascade" }),
-    leadEmail: (0, sqlite_core_1.text)("leadEmail").notNull(),
-    leadData: (0, sqlite_core_1.text)("leadData", { mode: 'json' }),
-    currentStep: (0, sqlite_core_1.integer)("currentStep").default(0),
-    status: (0, sqlite_core_1.text)("status").default("active"), // active, paused, completed, stopped
-    nextEmailAt: (0, sqlite_core_1.integer)("nextEmailAt"),
-    createdAt: (0, sqlite_core_1.integer)("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
-    updatedAt: (0, sqlite_core_1.integer)("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+export const emailSequences = sqliteTable("email_sequences", {
+    id: text("id").primaryKey(),
+    automationId: text("automationId").notNull().references(() => emailAutomations.id, { onDelete: "cascade" }),
+    leadEmail: text("leadEmail").notNull(),
+    leadData: text("leadData", { mode: 'json' }),
+    currentStep: integer("currentStep").default(0),
+    status: text("status").default("active"), // active, paused, completed, stopped
+    nextEmailAt: integer("nextEmailAt"),
+    createdAt: integer("createdAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
+    updatedAt: integer("updatedAt").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });
 // Schemas para validação
-exports.insertUserSchema = (0, drizzle_zod_1.createInsertSchema)(exports.users).omit({
+export const insertUserSchema = createInsertSchema(users).omit({
     id: true,
     createdAt: true,
     updatedAt: true,
 });
-exports.insertQuizSchema = (0, drizzle_zod_1.createInsertSchema)(exports.quizzes).omit({
+export const insertQuizSchema = createInsertSchema(quizzes).omit({
     id: true,
     createdAt: true,
     updatedAt: true,
 }).extend({
     // Validação adicional da estrutura do quiz
-    structure: zod_1.z.object({
-        pages: zod_1.z.array(zod_1.z.object({
-            id: zod_1.z.union([zod_1.z.string(), zod_1.z.number()]),
-            title: zod_1.z.string().optional(),
-            elements: zod_1.z.array(zod_1.z.object({
-                type: zod_1.z.string().min(1, "Tipo do elemento é obrigatório"),
-                content: zod_1.z.string().optional(),
-                fieldId: zod_1.z.string().optional(),
-                required: zod_1.z.boolean().optional(),
-                options: zod_1.z.array(zod_1.z.string()).optional(),
-                placeholder: zod_1.z.string().optional(),
-                minValue: zod_1.z.number().optional(),
-                maxValue: zod_1.z.number().optional()
+    structure: z.object({
+        pages: z.array(z.object({
+            id: z.union([z.string(), z.number()]),
+            title: z.string().optional(),
+            elements: z.array(z.object({
+                type: z.string().min(1, "Tipo do elemento é obrigatório"),
+                content: z.string().optional(),
+                fieldId: z.string().optional(),
+                required: z.boolean().optional(),
+                options: z.array(z.string()).optional(),
+                placeholder: z.string().optional(),
+                minValue: z.number().optional(),
+                maxValue: z.number().optional()
             }).passthrough()) // Permitir propriedades adicionais
         })).min(0, "Quiz deve ter pelo menos 0 páginas"),
-        globalStyles: zod_1.z.object({
-            backgroundColor: zod_1.z.string().optional(),
-            fontFamily: zod_1.z.string().optional(),
-            primaryColor: zod_1.z.string().optional()
+        globalStyles: z.object({
+            backgroundColor: z.string().optional(),
+            fontFamily: z.string().optional(),
+            primaryColor: z.string().optional()
         }).optional()
     }).optional() // Estrutura é opcional durante criação
 }).refine((data) => {
@@ -478,664 +473,664 @@ exports.insertQuizSchema = (0, drizzle_zod_1.createInsertSchema)(exports.quizzes
     message: "Estrutura do quiz é inválida",
     path: ["structure"]
 });
-exports.insertQuizTemplateSchema = (0, drizzle_zod_1.createInsertSchema)(exports.quizTemplates).omit({
+export const insertQuizTemplateSchema = createInsertSchema(quizTemplates).omit({
     id: true,
     createdAt: true,
     updatedAt: true,
 });
-exports.insertQuizResponseSchema = (0, drizzle_zod_1.createInsertSchema)(exports.quizResponses).omit({
+export const insertQuizResponseSchema = createInsertSchema(quizResponses).omit({
     id: true,
     submittedAt: true,
 });
-exports.insertQuizAnalyticsSchema = (0, drizzle_zod_1.createInsertSchema)(exports.quizAnalytics).omit({
+export const insertQuizAnalyticsSchema = createInsertSchema(quizAnalytics).omit({
     id: true,
 });
-exports.insertEmailCampaignSchema = (0, drizzle_zod_1.createInsertSchema)(exports.emailCampaigns).omit({
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-});
-exports.insertEmailTemplateSchema = (0, drizzle_zod_1.createInsertSchema)(exports.emailTemplates).omit({
+export const insertEmailCampaignSchema = createInsertSchema(emailCampaigns).omit({
     id: true,
     createdAt: true,
     updatedAt: true,
 });
-exports.insertEmailLogSchema = (0, drizzle_zod_1.createInsertSchema)(exports.emailLogs).omit({
-    id: true,
-    createdAt: true,
-});
-exports.insertEmailAutomationSchema = (0, drizzle_zod_1.createInsertSchema)(exports.emailAutomations).omit({
+export const insertEmailTemplateSchema = createInsertSchema(emailTemplates).omit({
     id: true,
     createdAt: true,
     updatedAt: true,
 });
-exports.insertEmailSequenceSchema = (0, drizzle_zod_1.createInsertSchema)(exports.emailSequences).omit({
+export const insertEmailLogSchema = createInsertSchema(emailLogs).omit({
+    id: true,
+    createdAt: true,
+});
+export const insertEmailAutomationSchema = createInsertSchema(emailAutomations).omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+});
+export const insertEmailSequenceSchema = createInsertSchema(emailSequences).omit({
     id: true,
     createdAt: true,
     updatedAt: true,
 });
 // Voice Calling Schemas
-exports.insertVoiceCampaignSchema = (0, drizzle_zod_1.createInsertSchema)(exports.voiceCampaigns).omit({
+export const insertVoiceCampaignSchema = createInsertSchema(voiceCampaigns).omit({
     id: true,
     createdAt: true,
     updatedAt: true,
 });
-exports.insertVoiceLogSchema = (0, drizzle_zod_1.createInsertSchema)(exports.voiceLogs).omit({
+export const insertVoiceLogSchema = createInsertSchema(voiceLogs).omit({
     id: true,
     createdAt: true,
 });
 // WhatsApp Campaigns Schema
-exports.whatsappCampaigns = (0, sqlite_core_1.sqliteTable)('whatsapp_campaigns', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    name: (0, sqlite_core_1.text)('name').notNull(),
-    quizId: (0, sqlite_core_1.text)('quiz_id').notNull(),
-    messages: (0, sqlite_core_1.text)('messages', { mode: 'json' }).notNull().$type(), // Array de mensagens rotativas
-    userId: (0, sqlite_core_1.text)('user_id').notNull().references(() => exports.users.id),
-    phones: (0, sqlite_core_1.text)('phones', { mode: 'json' }).notNull().$type(),
-    status: (0, sqlite_core_1.text)('status').notNull().default('active'),
-    scheduledAt: (0, sqlite_core_1.integer)('scheduled_at'),
-    triggerDelay: (0, sqlite_core_1.integer)('trigger_delay').default(10),
-    triggerUnit: (0, sqlite_core_1.text)('trigger_unit').default('minutes'),
-    targetAudience: (0, sqlite_core_1.text)('target_audience').notNull().default('all'),
-    campaignMode: (0, sqlite_core_1.text)('campaign_mode').default('leads_ja_na_base'), // "modo_ao_vivo" ou "leads_ja_na_base"
-    dateFilter: (0, sqlite_core_1.text)('date_filter'), // Filtro de data para frente
-    extensionSettings: (0, sqlite_core_1.text)('extension_settings', { mode: 'json' }).$type(),
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull(),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp' }).notNull()
+export const whatsappCampaigns = sqliteTable('whatsapp_campaigns', {
+    id: text('id').primaryKey().notNull(),
+    name: text('name').notNull(),
+    quizId: text('quiz_id').notNull(),
+    messages: text('messages', { mode: 'json' }).notNull().$type(), // Array de mensagens rotativas
+    userId: text('user_id').notNull().references(() => users.id),
+    phones: text('phones', { mode: 'json' }).notNull().$type(),
+    status: text('status').notNull().default('active'),
+    scheduledAt: integer('scheduled_at'),
+    triggerDelay: integer('trigger_delay').default(10),
+    triggerUnit: text('trigger_unit').default('minutes'),
+    targetAudience: text('target_audience').notNull().default('all'),
+    campaignMode: text('campaign_mode').default('leads_ja_na_base'), // "modo_ao_vivo" ou "leads_ja_na_base"
+    dateFilter: text('date_filter'), // Filtro de data para frente
+    extensionSettings: text('extension_settings', { mode: 'json' }).$type(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
 });
 // WhatsApp Logs Schema
-exports.whatsappLogs = (0, sqlite_core_1.sqliteTable)('whatsapp_logs', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    campaignId: (0, sqlite_core_1.text)('campaign_id').notNull().references(() => exports.whatsappCampaigns.id, { onDelete: 'cascade' }),
-    phone: (0, sqlite_core_1.text)('phone').notNull(),
-    message: (0, sqlite_core_1.text)('message').notNull(),
-    status: (0, sqlite_core_1.text)('status').notNull().default('pending'),
-    scheduledAt: (0, sqlite_core_1.integer)('scheduled_at'),
-    sentAt: (0, sqlite_core_1.integer)('sent_at'),
-    extensionStatus: (0, sqlite_core_1.text)('extension_status'),
-    error: (0, sqlite_core_1.text)('error'),
-    country: (0, sqlite_core_1.text)('country'), // País detectado do telefone
-    countryCode: (0, sqlite_core_1.text)('country_code'), // Código do país (+55, +1, etc.)
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const whatsappLogs = sqliteTable('whatsapp_logs', {
+    id: text('id').primaryKey().notNull(),
+    campaignId: text('campaign_id').notNull().references(() => whatsappCampaigns.id, { onDelete: 'cascade' }),
+    phone: text('phone').notNull(),
+    message: text('message').notNull(),
+    status: text('status').notNull().default('pending'),
+    scheduledAt: integer('scheduled_at'),
+    sentAt: integer('sent_at'),
+    extensionStatus: text('extension_status'),
+    error: text('error'),
+    country: text('country'), // País detectado do telefone
+    countryCode: text('country_code'), // Código do país (+55, +1, etc.)
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // WhatsApp Templates Schema
-exports.whatsappTemplates = (0, sqlite_core_1.sqliteTable)('whatsapp_templates', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    name: (0, sqlite_core_1.text)('name').notNull(),
-    message: (0, sqlite_core_1.text)('message').notNull(),
-    category: (0, sqlite_core_1.text)('category').notNull(),
-    variables: (0, sqlite_core_1.text)('variables', { mode: 'json' }).notNull().$type(),
-    userId: (0, sqlite_core_1.text)('user_id').notNull().references(() => exports.users.id),
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const whatsappTemplates = sqliteTable('whatsapp_templates', {
+    id: text('id').primaryKey().notNull(),
+    name: text('name').notNull(),
+    message: text('message').notNull(),
+    category: text('category').notNull(),
+    variables: text('variables', { mode: 'json' }).notNull().$type(),
+    userId: text('user_id').notNull().references(() => users.id),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // WhatsApp Automation Files Schema
-exports.whatsappAutomationFiles = (0, sqlite_core_1.sqliteTable)('whatsapp_automation_files', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    userId: (0, sqlite_core_1.text)('user_id').notNull().references(() => exports.users.id),
-    quizId: (0, sqlite_core_1.text)('quiz_id').notNull(),
-    quizTitle: (0, sqlite_core_1.text)('quiz_title').notNull(),
-    targetAudience: (0, sqlite_core_1.text)('target_audience').notNull(),
-    dateFilter: (0, sqlite_core_1.text)('date_filter'),
-    phones: (0, sqlite_core_1.text)('phones', { mode: 'json' }).notNull().$type(),
-    totalPhones: (0, sqlite_core_1.integer)('total_phones').notNull(),
-    createdAt: (0, sqlite_core_1.text)('created_at').notNull(),
-    lastUpdated: (0, sqlite_core_1.text)('last_updated').notNull()
+export const whatsappAutomationFiles = sqliteTable('whatsapp_automation_files', {
+    id: text('id').primaryKey().notNull(),
+    userId: text('user_id').notNull().references(() => users.id),
+    quizId: text('quiz_id').notNull(),
+    quizTitle: text('quiz_title').notNull(),
+    targetAudience: text('target_audience').notNull(),
+    dateFilter: text('date_filter'),
+    phones: text('phones', { mode: 'json' }).notNull().$type(),
+    totalPhones: integer('total_phones').notNull(),
+    createdAt: text('created_at').notNull(),
+    lastUpdated: text('last_updated').notNull()
 });
 // WhatsApp Zod Schemas
-exports.insertWhatsappCampaignSchema = (0, drizzle_zod_1.createInsertSchema)(exports.whatsappCampaigns);
-exports.insertWhatsappLogSchema = (0, drizzle_zod_1.createInsertSchema)(exports.whatsappLogs);
-exports.insertWhatsappTemplateSchema = (0, drizzle_zod_1.createInsertSchema)(exports.whatsappTemplates);
-exports.insertWhatsappAutomationFileSchema = (0, drizzle_zod_1.createInsertSchema)(exports.whatsappAutomationFiles);
+export const insertWhatsappCampaignSchema = createInsertSchema(whatsappCampaigns);
+export const insertWhatsappLogSchema = createInsertSchema(whatsappLogs);
+export const insertWhatsappTemplateSchema = createInsertSchema(whatsappTemplates);
+export const insertWhatsappAutomationFileSchema = createInsertSchema(whatsappAutomationFiles);
 // Telegram Campaigns Schema
-exports.telegramCampaigns = (0, sqlite_core_1.sqliteTable)('telegram_campaigns', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    name: (0, sqlite_core_1.text)('name').notNull(),
-    quizId: (0, sqlite_core_1.text)('quiz_id').notNull(),
-    messages: (0, sqlite_core_1.text)('messages', { mode: 'json' }).notNull().$type(), // Array de mensagens rotativas
-    userId: (0, sqlite_core_1.text)('user_id').notNull().references(() => exports.users.id),
-    phones: (0, sqlite_core_1.text)('phones', { mode: 'json' }).notNull().$type(),
-    status: (0, sqlite_core_1.text)('status').notNull().default('active'),
-    scheduledAt: (0, sqlite_core_1.integer)('scheduled_at'),
-    triggerDelay: (0, sqlite_core_1.integer)('trigger_delay').default(10),
-    triggerUnit: (0, sqlite_core_1.text)('trigger_unit').default('minutes'),
-    targetAudience: (0, sqlite_core_1.text)('target_audience').notNull().default('all'),
-    campaignMode: (0, sqlite_core_1.text)('campaign_mode').default('leads_ja_na_base'), // "modo_ao_vivo" ou "leads_ja_na_base"
-    dateFilter: (0, sqlite_core_1.text)('date_filter'), // Filtro de data para frente
-    extensionSettings: (0, sqlite_core_1.text)('extension_settings', { mode: 'json' }).$type(),
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull(),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp' }).notNull()
+export const telegramCampaigns = sqliteTable('telegram_campaigns', {
+    id: text('id').primaryKey().notNull(),
+    name: text('name').notNull(),
+    quizId: text('quiz_id').notNull(),
+    messages: text('messages', { mode: 'json' }).notNull().$type(), // Array de mensagens rotativas
+    userId: text('user_id').notNull().references(() => users.id),
+    phones: text('phones', { mode: 'json' }).notNull().$type(),
+    status: text('status').notNull().default('active'),
+    scheduledAt: integer('scheduled_at'),
+    triggerDelay: integer('trigger_delay').default(10),
+    triggerUnit: text('trigger_unit').default('minutes'),
+    targetAudience: text('target_audience').notNull().default('all'),
+    campaignMode: text('campaign_mode').default('leads_ja_na_base'), // "modo_ao_vivo" ou "leads_ja_na_base"
+    dateFilter: text('date_filter'), // Filtro de data para frente
+    extensionSettings: text('extension_settings', { mode: 'json' }).$type(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
 });
 // Telegram Logs Schema
-exports.telegramLogs = (0, sqlite_core_1.sqliteTable)('telegram_logs', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    campaignId: (0, sqlite_core_1.text)('campaign_id').notNull().references(() => exports.telegramCampaigns.id, { onDelete: 'cascade' }),
-    phone: (0, sqlite_core_1.text)('phone').notNull(),
-    message: (0, sqlite_core_1.text)('message').notNull(),
-    status: (0, sqlite_core_1.text)('status').notNull().default('pending'),
-    scheduledAt: (0, sqlite_core_1.integer)('scheduled_at'),
-    sentAt: (0, sqlite_core_1.integer)('sent_at'),
-    extensionStatus: (0, sqlite_core_1.text)('extension_status'),
-    error: (0, sqlite_core_1.text)('error'),
-    country: (0, sqlite_core_1.text)('country'), // País detectado do telefone
-    countryCode: (0, sqlite_core_1.text)('country_code'), // Código do país (+55, +1, etc.)
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const telegramLogs = sqliteTable('telegram_logs', {
+    id: text('id').primaryKey().notNull(),
+    campaignId: text('campaign_id').notNull().references(() => telegramCampaigns.id, { onDelete: 'cascade' }),
+    phone: text('phone').notNull(),
+    message: text('message').notNull(),
+    status: text('status').notNull().default('pending'),
+    scheduledAt: integer('scheduled_at'),
+    sentAt: integer('sent_at'),
+    extensionStatus: text('extension_status'),
+    error: text('error'),
+    country: text('country'), // País detectado do telefone
+    countryCode: text('country_code'), // Código do país (+55, +1, etc.)
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // Telegram Templates Schema
-exports.telegramTemplates = (0, sqlite_core_1.sqliteTable)('telegram_templates', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    name: (0, sqlite_core_1.text)('name').notNull(),
-    message: (0, sqlite_core_1.text)('message').notNull(),
-    category: (0, sqlite_core_1.text)('category').notNull(),
-    variables: (0, sqlite_core_1.text)('variables', { mode: 'json' }).notNull().$type(),
-    userId: (0, sqlite_core_1.text)('user_id').notNull().references(() => exports.users.id),
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const telegramTemplates = sqliteTable('telegram_templates', {
+    id: text('id').primaryKey().notNull(),
+    name: text('name').notNull(),
+    message: text('message').notNull(),
+    category: text('category').notNull(),
+    variables: text('variables', { mode: 'json' }).notNull().$type(),
+    userId: text('user_id').notNull().references(() => users.id),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // Telegram Bot Configurations Schema
-exports.telegramBotConfigs = (0, sqlite_core_1.sqliteTable)('telegram_bot_configs', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    userId: (0, sqlite_core_1.text)('user_id').notNull().references(() => exports.users.id),
-    botToken: (0, sqlite_core_1.text)('bot_token').notNull(),
-    botName: (0, sqlite_core_1.text)('bot_name'),
-    botUsername: (0, sqlite_core_1.text)('bot_username'),
-    webhookUrl: (0, sqlite_core_1.text)('webhook_url'),
-    isActive: (0, sqlite_core_1.integer)('is_active', { mode: 'boolean' }).default(true),
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const telegramBotConfigs = sqliteTable('telegram_bot_configs', {
+    id: text('id').primaryKey().notNull(),
+    userId: text('user_id').notNull().references(() => users.id),
+    botToken: text('bot_token').notNull(),
+    botName: text('bot_name'),
+    botUsername: text('bot_username'),
+    webhookUrl: text('webhook_url'),
+    isActive: integer('is_active', { mode: 'boolean' }).default(true),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // Telegram Zod Schemas
-exports.insertTelegramCampaignSchema = (0, drizzle_zod_1.createInsertSchema)(exports.telegramCampaigns);
-exports.insertTelegramLogSchema = (0, drizzle_zod_1.createInsertSchema)(exports.telegramLogs);
-exports.insertTelegramTemplateSchema = (0, drizzle_zod_1.createInsertSchema)(exports.telegramTemplates);
-exports.insertTelegramBotConfigSchema = (0, drizzle_zod_1.createInsertSchema)(exports.telegramBotConfigs);
+export const insertTelegramCampaignSchema = createInsertSchema(telegramCampaigns);
+export const insertTelegramLogSchema = createInsertSchema(telegramLogs);
+export const insertTelegramTemplateSchema = createInsertSchema(telegramTemplates);
+export const insertTelegramBotConfigSchema = createInsertSchema(telegramBotConfigs);
 // Push Notifications Schema
-exports.pushSubscriptions = (0, sqlite_core_1.sqliteTable)('push_subscriptions', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    user_id: (0, sqlite_core_1.text)('user_id').notNull().references(() => exports.users.id),
-    endpoint: (0, sqlite_core_1.text)('endpoint').notNull(),
-    keys_p256dh: (0, sqlite_core_1.text)('keys_p256dh').notNull(),
-    keys_auth: (0, sqlite_core_1.text)('keys_auth').notNull(),
-    user_agent: (0, sqlite_core_1.text)('user_agent'),
-    device_type: (0, sqlite_core_1.text)('device_type'),
-    is_active: (0, sqlite_core_1.integer)('is_active', { mode: 'boolean' }).default(true),
-    created_at: (0, sqlite_core_1.text)('created_at').notNull().default((0, drizzle_orm_1.sql) `datetime('now')`),
-    updated_at: (0, sqlite_core_1.text)('updated_at').notNull().default((0, drizzle_orm_1.sql) `datetime('now')`)
+export const pushSubscriptions = sqliteTable('push_subscriptions', {
+    id: text('id').primaryKey().notNull(),
+    user_id: text('user_id').notNull().references(() => users.id),
+    endpoint: text('endpoint').notNull(),
+    keys_p256dh: text('keys_p256dh').notNull(),
+    keys_auth: text('keys_auth').notNull(),
+    user_agent: text('user_agent'),
+    device_type: text('device_type'),
+    is_active: integer('is_active', { mode: 'boolean' }).default(true),
+    created_at: text('created_at').notNull().default(sql `datetime('now')`),
+    updated_at: text('updated_at').notNull().default(sql `datetime('now')`)
 });
-exports.pushNotificationLogs = (0, sqlite_core_1.sqliteTable)('push_notification_logs', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    user_id: (0, sqlite_core_1.text)('user_id').notNull().references(() => exports.users.id),
-    title: (0, sqlite_core_1.text)('title').notNull(),
-    body: (0, sqlite_core_1.text)('body').notNull(),
-    status: (0, sqlite_core_1.text)('status').notNull().default('pending'), // 'pending', 'sent', 'failed', 'delivered'
-    sent_at: (0, sqlite_core_1.text)('sent_at'),
-    delivered_at: (0, sqlite_core_1.text)('delivered_at'),
-    error_message: (0, sqlite_core_1.text)('error_message'),
-    notification_data: (0, sqlite_core_1.text)('notification_data', { mode: 'json' }),
-    created_at: (0, sqlite_core_1.text)('created_at').notNull().default((0, drizzle_orm_1.sql) `datetime('now')`)
+export const pushNotificationLogs = sqliteTable('push_notification_logs', {
+    id: text('id').primaryKey().notNull(),
+    user_id: text('user_id').notNull().references(() => users.id),
+    title: text('title').notNull(),
+    body: text('body').notNull(),
+    status: text('status').notNull().default('pending'), // 'pending', 'sent', 'failed', 'delivered'
+    sent_at: text('sent_at'),
+    delivered_at: text('delivered_at'),
+    error_message: text('error_message'),
+    notification_data: text('notification_data', { mode: 'json' }),
+    created_at: text('created_at').notNull().default(sql `datetime('now')`)
 });
 // Push Notifications Zod Schemas
-exports.insertPushSubscriptionSchema = (0, drizzle_zod_1.createInsertSchema)(exports.pushSubscriptions);
-exports.insertPushNotificationLogSchema = (0, drizzle_zod_1.createInsertSchema)(exports.pushNotificationLogs);
+export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions);
+export const insertPushNotificationLogSchema = createInsertSchema(pushNotificationLogs);
 // Response Variables Schema e Types
-exports.insertResponseVariableSchema = (0, drizzle_zod_1.createInsertSchema)(exports.responseVariables);
+export const insertResponseVariableSchema = createInsertSchema(responseVariables);
 // AI Conversion Campaigns Schema
-exports.aiConversionCampaigns = (0, sqlite_core_1.sqliteTable)('ai_conversion_campaigns', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    userId: (0, sqlite_core_1.text)('user_id').notNull().references(() => exports.users.id),
-    name: (0, sqlite_core_1.text)('name').notNull(),
-    quizId: (0, sqlite_core_1.text)('quiz_id').notNull().references(() => exports.quizzes.id),
-    quizTitle: (0, sqlite_core_1.text)('quiz_title').notNull(),
-    scriptTemplate: (0, sqlite_core_1.text)('script_template').notNull(),
-    heygenAvatar: (0, sqlite_core_1.text)('heygen_avatar').notNull(),
-    heygenVoice: (0, sqlite_core_1.text)('heygen_voice').notNull(),
-    isActive: (0, sqlite_core_1.integer)('is_active', { mode: 'boolean' }).default(true),
-    totalGenerated: (0, sqlite_core_1.integer)('total_generated').default(0),
-    totalViews: (0, sqlite_core_1.integer)('total_views').default(0),
-    totalConversions: (0, sqlite_core_1.integer)('total_conversions').default(0),
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const aiConversionCampaigns = sqliteTable('ai_conversion_campaigns', {
+    id: text('id').primaryKey().notNull(),
+    userId: text('user_id').notNull().references(() => users.id),
+    name: text('name').notNull(),
+    quizId: text('quiz_id').notNull().references(() => quizzes.id),
+    quizTitle: text('quiz_title').notNull(),
+    scriptTemplate: text('script_template').notNull(),
+    heygenAvatar: text('heygen_avatar').notNull(),
+    heygenVoice: text('heygen_voice').notNull(),
+    isActive: integer('is_active', { mode: 'boolean' }).default(true),
+    totalGenerated: integer('total_generated').default(0),
+    totalViews: integer('total_views').default(0),
+    totalConversions: integer('total_conversions').default(0),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // AI Video Generations Schema
-exports.aiVideoGenerations = (0, sqlite_core_1.sqliteTable)('ai_video_generations', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    userId: (0, sqlite_core_1.text)('user_id').notNull().references(() => exports.users.id),
-    title: (0, sqlite_core_1.text)('title').notNull(),
-    topic: (0, sqlite_core_1.text)('topic').notNull(),
-    script: (0, sqlite_core_1.text)('script'),
-    duration: (0, sqlite_core_1.integer)('duration').default(60),
-    style: (0, sqlite_core_1.text)('style').default('viral'),
-    voice: (0, sqlite_core_1.text)('voice').default('masculina'),
-    videoUrl: (0, sqlite_core_1.text)('video_url'),
-    thumbnailUrl: (0, sqlite_core_1.text)('thumbnail_url'),
-    status: (0, sqlite_core_1.text)('status').notNull().default('pending'), // pending, generating, completed, failed
-    views: (0, sqlite_core_1.integer)('views').default(0),
-    likes: (0, sqlite_core_1.integer)('likes').default(0),
-    shares: (0, sqlite_core_1.integer)('shares').default(0),
-    error: (0, sqlite_core_1.text)('error'),
-    createdAt: (0, sqlite_core_1.integer)('created_at').notNull(),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at').notNull()
+export const aiVideoGenerations = sqliteTable('ai_video_generations', {
+    id: text('id').primaryKey().notNull(),
+    userId: text('user_id').notNull().references(() => users.id),
+    title: text('title').notNull(),
+    topic: text('topic').notNull(),
+    script: text('script'),
+    duration: integer('duration').default(60),
+    style: text('style').default('viral'),
+    voice: text('voice').default('masculina'),
+    videoUrl: text('video_url'),
+    thumbnailUrl: text('thumbnail_url'),
+    status: text('status').notNull().default('pending'), // pending, generating, completed, failed
+    views: integer('views').default(0),
+    likes: integer('likes').default(0),
+    shares: integer('shares').default(0),
+    error: text('error'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull()
 });
 // AI Conversion Zod Schemas
-exports.insertAiConversionCampaignSchema = (0, drizzle_zod_1.createInsertSchema)(exports.aiConversionCampaigns);
-exports.insertAiVideoGenerationSchema = (0, drizzle_zod_1.createInsertSchema)(exports.aiVideoGenerations);
+export const insertAiConversionCampaignSchema = createInsertSchema(aiConversionCampaigns);
+export const insertAiVideoGenerationSchema = createInsertSchema(aiVideoGenerations);
 // Notifications Schema
-exports.notifications = (0, sqlite_core_1.sqliteTable)('notifications', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    title: (0, sqlite_core_1.text)('title').notNull(),
-    message: (0, sqlite_core_1.text)('message').notNull(),
-    type: (0, sqlite_core_1.text)('type').notNull().default('info'), // info, success, warning, error
-    userId: (0, sqlite_core_1.text)('user_id').references(() => exports.users.id), // null for global notifications
-    isRead: (0, sqlite_core_1.integer)('is_read', { mode: 'boolean' }).default(false),
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const notifications = sqliteTable('notifications', {
+    id: text('id').primaryKey().notNull(),
+    title: text('title').notNull(),
+    message: text('message').notNull(),
+    type: text('type').notNull().default('info'), // info, success, warning, error
+    userId: text('user_id').references(() => users.id), // null for global notifications
+    isRead: integer('is_read', { mode: 'boolean' }).default(false),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // Notifications Zod Schemas
-exports.insertNotificationSchema = (0, drizzle_zod_1.createInsertSchema)(exports.notifications);
+export const insertNotificationSchema = createInsertSchema(notifications);
 // Super Affiliates Schema
-exports.superAffiliates = (0, sqlite_core_1.sqliteTable)('super_affiliates', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    userId: (0, sqlite_core_1.text)('user_id').notNull().references(() => exports.users.id),
-    quizId: (0, sqlite_core_1.text)('quiz_id').notNull().references(() => exports.quizzes.id),
-    affiliateCode: (0, sqlite_core_1.text)('affiliate_code').unique().notNull(),
-    commissionRate: (0, sqlite_core_1.real)('commission_rate').default(0.1), // 10% padrão
-    totalViews: (0, sqlite_core_1.integer)('total_views').default(0),
-    totalLeads: (0, sqlite_core_1.integer)('total_leads').default(0),
-    totalSales: (0, sqlite_core_1.integer)('total_sales').default(0),
-    totalCommission: (0, sqlite_core_1.real)('total_commission').default(0),
-    status: (0, sqlite_core_1.text)('status').notNull().default('active'), // active, inactive, suspended
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const superAffiliates = sqliteTable('super_affiliates', {
+    id: text('id').primaryKey().notNull(),
+    userId: text('user_id').notNull().references(() => users.id),
+    quizId: text('quiz_id').notNull().references(() => quizzes.id),
+    affiliateCode: text('affiliate_code').unique().notNull(),
+    commissionRate: real('commission_rate').default(0.1), // 10% padrão
+    totalViews: integer('total_views').default(0),
+    totalLeads: integer('total_leads').default(0),
+    totalSales: integer('total_sales').default(0),
+    totalCommission: real('total_commission').default(0),
+    status: text('status').notNull().default('active'), // active, inactive, suspended
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // Affiliate Sales Schema
-exports.affiliateSales = (0, sqlite_core_1.sqliteTable)('affiliate_sales', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    affiliateId: (0, sqlite_core_1.text)('affiliate_id').notNull().references(() => exports.superAffiliates.id),
-    responseId: (0, sqlite_core_1.text)('response_id').notNull().references(() => exports.quizResponses.id),
-    saleAmount: (0, sqlite_core_1.real)('sale_amount').notNull(),
-    commissionAmount: (0, sqlite_core_1.real)('commission_amount').notNull(),
-    status: (0, sqlite_core_1.text)('status').notNull().default('pending'), // pending, approved, paid
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const affiliateSales = sqliteTable('affiliate_sales', {
+    id: text('id').primaryKey().notNull(),
+    affiliateId: text('affiliate_id').notNull().references(() => superAffiliates.id),
+    responseId: text('response_id').notNull().references(() => quizResponses.id),
+    saleAmount: real('sale_amount').notNull(),
+    commissionAmount: real('commission_amount').notNull(),
+    status: text('status').notNull().default('pending'), // pending, approved, paid
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // Super Affiliates Zod Schemas
-exports.insertSuperAffiliateSchema = (0, drizzle_zod_1.createInsertSchema)(exports.superAffiliates);
-exports.insertAffiliateSaleSchema = (0, drizzle_zod_1.createInsertSchema)(exports.affiliateSales);
+export const insertSuperAffiliateSchema = createInsertSchema(superAffiliates);
+export const insertAffiliateSaleSchema = createInsertSchema(affiliateSales);
 // A/B Testing Schema
-exports.abTests = (0, sqlite_core_1.sqliteTable)('ab_tests', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    userId: (0, sqlite_core_1.text)('user_id').notNull().references(() => exports.users.id),
-    name: (0, sqlite_core_1.text)('name').notNull(),
-    description: (0, sqlite_core_1.text)('description'),
-    funnelIds: (0, sqlite_core_1.text)('funnel_ids', { mode: 'json' }).notNull().$type(),
-    funnelNames: (0, sqlite_core_1.text)('funnel_names', { mode: 'json' }).notNull().$type(),
-    trafficSplit: (0, sqlite_core_1.text)('traffic_split', { mode: 'json' }).notNull().$type(),
-    status: (0, sqlite_core_1.text)('status').notNull().default('active'), // active, paused, completed
-    duration: (0, sqlite_core_1.integer)('duration').default(14), // days
-    views: (0, sqlite_core_1.integer)('views').default(0),
-    conversions: (0, sqlite_core_1.integer)('conversions').default(0),
-    conversionRate: (0, sqlite_core_1.real)('conversion_rate').default(0),
-    endDate: (0, sqlite_core_1.integer)('end_date', { mode: 'timestamp' }),
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const abTests = sqliteTable('ab_tests', {
+    id: text('id').primaryKey().notNull(),
+    userId: text('user_id').notNull().references(() => users.id),
+    name: text('name').notNull(),
+    description: text('description'),
+    funnelIds: text('funnel_ids', { mode: 'json' }).notNull().$type(),
+    funnelNames: text('funnel_names', { mode: 'json' }).notNull().$type(),
+    trafficSplit: text('traffic_split', { mode: 'json' }).notNull().$type(),
+    status: text('status').notNull().default('active'), // active, paused, completed
+    duration: integer('duration').default(14), // days
+    views: integer('views').default(0),
+    conversions: integer('conversions').default(0),
+    conversionRate: real('conversion_rate').default(0),
+    endDate: integer('end_date', { mode: 'timestamp' }),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // A/B Test Views Schema
-exports.abTestViews = (0, sqlite_core_1.sqliteTable)('ab_test_views', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    testId: (0, sqlite_core_1.text)('test_id').notNull().references(() => exports.abTests.id, { onDelete: 'cascade' }),
-    quizId: (0, sqlite_core_1.text)('quiz_id').notNull().references(() => exports.quizzes.id),
-    visitorId: (0, sqlite_core_1.text)('visitor_id').notNull(),
-    ipAddress: (0, sqlite_core_1.text)('ip_address'),
-    userAgent: (0, sqlite_core_1.text)('user_agent'),
-    completed: (0, sqlite_core_1.integer)('completed', { mode: 'boolean' }).default(false),
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const abTestViews = sqliteTable('ab_test_views', {
+    id: text('id').primaryKey().notNull(),
+    testId: text('test_id').notNull().references(() => abTests.id, { onDelete: 'cascade' }),
+    quizId: text('quiz_id').notNull().references(() => quizzes.id),
+    visitorId: text('visitor_id').notNull(),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+    completed: integer('completed', { mode: 'boolean' }).default(false),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // Webhooks Schema
-exports.webhooks = (0, sqlite_core_1.sqliteTable)('webhooks', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    userId: (0, sqlite_core_1.text)('user_id').notNull().references(() => exports.users.id),
-    name: (0, sqlite_core_1.text)('name').notNull(),
-    url: (0, sqlite_core_1.text)('url').notNull(),
-    events: (0, sqlite_core_1.text)('events', { mode: 'json' }).notNull().$type(),
-    secret: (0, sqlite_core_1.text)('secret'),
-    isActive: (0, sqlite_core_1.integer)('is_active', { mode: 'boolean' }).default(true),
-    lastTriggered: (0, sqlite_core_1.integer)('last_triggered', { mode: 'timestamp' }),
-    totalTriggers: (0, sqlite_core_1.integer)('total_triggers').default(0),
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const webhooks = sqliteTable('webhooks', {
+    id: text('id').primaryKey().notNull(),
+    userId: text('user_id').notNull().references(() => users.id),
+    name: text('name').notNull(),
+    url: text('url').notNull(),
+    events: text('events', { mode: 'json' }).notNull().$type(),
+    secret: text('secret'),
+    isActive: integer('is_active', { mode: 'boolean' }).default(true),
+    lastTriggered: integer('last_triggered', { mode: 'timestamp' }),
+    totalTriggers: integer('total_triggers').default(0),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // Webhook Logs Schema
-exports.webhookLogs = (0, sqlite_core_1.sqliteTable)('webhook_logs', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    webhookId: (0, sqlite_core_1.text)('webhook_id').notNull().references(() => exports.webhooks.id, { onDelete: 'cascade' }),
-    event: (0, sqlite_core_1.text)('event').notNull(),
-    payload: (0, sqlite_core_1.text)('payload', { mode: 'json' }).notNull(),
-    response: (0, sqlite_core_1.text)('response'),
-    statusCode: (0, sqlite_core_1.integer)('status_code'),
-    success: (0, sqlite_core_1.integer)('success', { mode: 'boolean' }).default(false),
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const webhookLogs = sqliteTable('webhook_logs', {
+    id: text('id').primaryKey().notNull(),
+    webhookId: text('webhook_id').notNull().references(() => webhooks.id, { onDelete: 'cascade' }),
+    event: text('event').notNull(),
+    payload: text('payload', { mode: 'json' }).notNull(),
+    response: text('response'),
+    statusCode: integer('status_code'),
+    success: integer('success', { mode: 'boolean' }).default(false),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // Integrations Schema
-exports.integrations = (0, sqlite_core_1.sqliteTable)('integrations', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    userId: (0, sqlite_core_1.text)('user_id').notNull().references(() => exports.users.id),
-    type: (0, sqlite_core_1.text)('type').notNull(), // shopify, woocommerce, zapier, etc.
-    name: (0, sqlite_core_1.text)('name').notNull(),
-    config: (0, sqlite_core_1.text)('config', { mode: 'json' }).notNull().$type(),
-    isActive: (0, sqlite_core_1.integer)('is_active', { mode: 'boolean' }).default(true),
-    lastSync: (0, sqlite_core_1.integer)('last_sync', { mode: 'timestamp' }),
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const integrations = sqliteTable('integrations', {
+    id: text('id').primaryKey().notNull(),
+    userId: text('user_id').notNull().references(() => users.id),
+    type: text('type').notNull(), // shopify, woocommerce, zapier, etc.
+    name: text('name').notNull(),
+    config: text('config', { mode: 'json' }).notNull().$type(),
+    isActive: integer('is_active', { mode: 'boolean' }).default(true),
+    lastSync: integer('last_sync', { mode: 'timestamp' }),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // A/B Testing Zod Schemas
-exports.insertAbTestSchema = (0, drizzle_zod_1.createInsertSchema)(exports.abTests);
-exports.insertAbTestViewSchema = (0, drizzle_zod_1.createInsertSchema)(exports.abTestViews);
+export const insertAbTestSchema = createInsertSchema(abTests);
+export const insertAbTestViewSchema = createInsertSchema(abTestViews);
 // Webhooks Zod Schemas
-exports.insertWebhookSchema = (0, drizzle_zod_1.createInsertSchema)(exports.webhooks);
-exports.insertWebhookLogSchema = (0, drizzle_zod_1.createInsertSchema)(exports.webhookLogs);
+export const insertWebhookSchema = createInsertSchema(webhooks);
+export const insertWebhookLogSchema = createInsertSchema(webhookLogs);
 // Integrations Zod Schemas
-exports.insertIntegrationSchema = (0, drizzle_zod_1.createInsertSchema)(exports.integrations);
+export const insertIntegrationSchema = createInsertSchema(integrations);
 // ===============================================
 // TYPEBOT AUTO-HOSPEDADO - SISTEMA COMPLETO
 // ===============================================
 // TypeBot Projects Schema
-exports.typebotProjects = (0, sqlite_core_1.sqliteTable)('typebot_projects', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    userId: (0, sqlite_core_1.text)('user_id').notNull().references(() => exports.users.id),
-    name: (0, sqlite_core_1.text)('name').notNull(),
-    description: (0, sqlite_core_1.text)('description'),
-    sourceQuizId: (0, sqlite_core_1.text)('source_quiz_id').references(() => exports.quizzes.id), // Quiz origem da conversão
-    typebotData: (0, sqlite_core_1.text)('typebot_data', { mode: 'json' }).notNull().$type(),
-    isPublished: (0, sqlite_core_1.integer)('is_published', { mode: 'boolean' }).default(false),
-    publicId: (0, sqlite_core_1.text)('public_id').unique(), // ID público para acessar o chatbot
-    theme: (0, sqlite_core_1.text)('theme', { mode: 'json' }).$type(),
-    settings: (0, sqlite_core_1.text)('settings', { mode: 'json' }).$type(),
-    totalViews: (0, sqlite_core_1.integer)('total_views').default(0),
-    totalConversations: (0, sqlite_core_1.integer)('total_conversations').default(0),
-    totalCompletions: (0, sqlite_core_1.integer)('total_completions').default(0),
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const typebotProjects = sqliteTable('typebot_projects', {
+    id: text('id').primaryKey().notNull(),
+    userId: text('user_id').notNull().references(() => users.id),
+    name: text('name').notNull(),
+    description: text('description'),
+    sourceQuizId: text('source_quiz_id').references(() => quizzes.id), // Quiz origem da conversão
+    typebotData: text('typebot_data', { mode: 'json' }).notNull().$type(),
+    isPublished: integer('is_published', { mode: 'boolean' }).default(false),
+    publicId: text('public_id').unique(), // ID público para acessar o chatbot
+    theme: text('theme', { mode: 'json' }).$type(),
+    settings: text('settings', { mode: 'json' }).$type(),
+    totalViews: integer('total_views').default(0),
+    totalConversations: integer('total_conversations').default(0),
+    totalCompletions: integer('total_completions').default(0),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // TypeBot Conversations Schema
-exports.typebotConversations = (0, sqlite_core_1.sqliteTable)('typebot_conversations', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    projectId: (0, sqlite_core_1.text)('project_id').notNull().references(() => exports.typebotProjects.id, { onDelete: 'cascade' }),
-    visitorId: (0, sqlite_core_1.text)('visitor_id').notNull(),
-    sessionId: (0, sqlite_core_1.text)('session_id').notNull(),
-    isCompleted: (0, sqlite_core_1.integer)('is_completed', { mode: 'boolean' }).default(false),
-    variables: (0, sqlite_core_1.text)('variables', { mode: 'json' }).$type(),
-    results: (0, sqlite_core_1.text)('results', { mode: 'json' }).$type(),
-    currentBlockId: (0, sqlite_core_1.text)('current_block_id'),
-    ipAddress: (0, sqlite_core_1.text)('ip_address'),
-    userAgent: (0, sqlite_core_1.text)('user_agent'),
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const typebotConversations = sqliteTable('typebot_conversations', {
+    id: text('id').primaryKey().notNull(),
+    projectId: text('project_id').notNull().references(() => typebotProjects.id, { onDelete: 'cascade' }),
+    visitorId: text('visitor_id').notNull(),
+    sessionId: text('session_id').notNull(),
+    isCompleted: integer('is_completed', { mode: 'boolean' }).default(false),
+    variables: text('variables', { mode: 'json' }).$type(),
+    results: text('results', { mode: 'json' }).$type(),
+    currentBlockId: text('current_block_id'),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // TypeBot Messages Schema
-exports.typebotMessages = (0, sqlite_core_1.sqliteTable)('typebot_messages', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    conversationId: (0, sqlite_core_1.text)('conversation_id').notNull().references(() => exports.typebotConversations.id, { onDelete: 'cascade' }),
-    blockId: (0, sqlite_core_1.text)('block_id').notNull(),
-    type: (0, sqlite_core_1.text)('type').notNull(), // text, image, video, input, etc.
-    content: (0, sqlite_core_1.text)('content', { mode: 'json' }).notNull().$type(),
-    isFromBot: (0, sqlite_core_1.integer)('is_from_bot', { mode: 'boolean' }).default(true),
-    timestamp: (0, sqlite_core_1.integer)('timestamp', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const typebotMessages = sqliteTable('typebot_messages', {
+    id: text('id').primaryKey().notNull(),
+    conversationId: text('conversation_id').notNull().references(() => typebotConversations.id, { onDelete: 'cascade' }),
+    blockId: text('block_id').notNull(),
+    type: text('type').notNull(), // text, image, video, input, etc.
+    content: text('content', { mode: 'json' }).notNull().$type(),
+    isFromBot: integer('is_from_bot', { mode: 'boolean' }).default(true),
+    timestamp: integer('timestamp', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // TypeBot Analytics Schema
-exports.typebotAnalytics = (0, sqlite_core_1.sqliteTable)('typebot_analytics', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    projectId: (0, sqlite_core_1.text)('project_id').notNull().references(() => exports.typebotProjects.id, { onDelete: 'cascade' }),
-    date: (0, sqlite_core_1.text)('date').notNull(), // YYYY-MM-DD
-    views: (0, sqlite_core_1.integer)('views').default(0),
-    conversations: (0, sqlite_core_1.integer)('conversations').default(0),
-    completions: (0, sqlite_core_1.integer)('completions').default(0),
-    completionRate: (0, sqlite_core_1.real)('completion_rate').default(0),
-    avgSessionTime: (0, sqlite_core_1.real)('avg_session_time').default(0),
-    dropOffBlocks: (0, sqlite_core_1.text)('drop_off_blocks', { mode: 'json' }).$type(),
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const typebotAnalytics = sqliteTable('typebot_analytics', {
+    id: text('id').primaryKey().notNull(),
+    projectId: text('project_id').notNull().references(() => typebotProjects.id, { onDelete: 'cascade' }),
+    date: text('date').notNull(), // YYYY-MM-DD
+    views: integer('views').default(0),
+    conversations: integer('conversations').default(0),
+    completions: integer('completions').default(0),
+    completionRate: real('completion_rate').default(0),
+    avgSessionTime: real('avg_session_time').default(0),
+    dropOffBlocks: text('drop_off_blocks', { mode: 'json' }).$type(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // TypeBot Webhooks Schema
-exports.typebotWebhooks = (0, sqlite_core_1.sqliteTable)('typebot_webhooks', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    projectId: (0, sqlite_core_1.text)('project_id').notNull().references(() => exports.typebotProjects.id, { onDelete: 'cascade' }),
-    name: (0, sqlite_core_1.text)('name').notNull(),
-    url: (0, sqlite_core_1.text)('url').notNull(),
-    events: (0, sqlite_core_1.text)('events', { mode: 'json' }).notNull().$type(),
-    headers: (0, sqlite_core_1.text)('headers', { mode: 'json' }).$type(),
-    isActive: (0, sqlite_core_1.integer)('is_active', { mode: 'boolean' }).default(true),
-    lastTriggered: (0, sqlite_core_1.integer)('last_triggered', { mode: 'timestamp' }),
-    totalTriggers: (0, sqlite_core_1.integer)('total_triggers').default(0),
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const typebotWebhooks = sqliteTable('typebot_webhooks', {
+    id: text('id').primaryKey().notNull(),
+    projectId: text('project_id').notNull().references(() => typebotProjects.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    url: text('url').notNull(),
+    events: text('events', { mode: 'json' }).notNull().$type(),
+    headers: text('headers', { mode: 'json' }).$type(),
+    isActive: integer('is_active', { mode: 'boolean' }).default(true),
+    lastTriggered: integer('last_triggered', { mode: 'timestamp' }),
+    totalTriggers: integer('total_triggers').default(0),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // TypeBot Integrations Schema
-exports.typebotIntegrations = (0, sqlite_core_1.sqliteTable)('typebot_integrations', {
-    id: (0, sqlite_core_1.text)('id').primaryKey().notNull(),
-    projectId: (0, sqlite_core_1.text)('project_id').notNull().references(() => exports.typebotProjects.id, { onDelete: 'cascade' }),
-    type: (0, sqlite_core_1.text)('type').notNull(), // email, google-sheets, openai, etc.
-    name: (0, sqlite_core_1.text)('name').notNull(),
-    config: (0, sqlite_core_1.text)('config', { mode: 'json' }).notNull().$type(),
-    isActive: (0, sqlite_core_1.integer)('is_active', { mode: 'boolean' }).default(true),
-    lastUsed: (0, sqlite_core_1.integer)('last_used', { mode: 'timestamp' }),
-    totalUses: (0, sqlite_core_1.integer)('total_uses').default(0),
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp' }).notNull().default((0, drizzle_orm_1.sql) `(unixepoch())`)
+export const typebotIntegrations = sqliteTable('typebot_integrations', {
+    id: text('id').primaryKey().notNull(),
+    projectId: text('project_id').notNull().references(() => typebotProjects.id, { onDelete: 'cascade' }),
+    type: text('type').notNull(), // email, google-sheets, openai, etc.
+    name: text('name').notNull(),
+    config: text('config', { mode: 'json' }).notNull().$type(),
+    isActive: integer('is_active', { mode: 'boolean' }).default(true),
+    lastUsed: integer('last_used', { mode: 'timestamp' }),
+    totalUses: integer('total_uses').default(0),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql `(unixepoch())`)
 });
 // TypeBot Zod Schemas
-exports.insertTypebotProjectSchema = (0, drizzle_zod_1.createInsertSchema)(exports.typebotProjects);
-exports.insertTypebotConversationSchema = (0, drizzle_zod_1.createInsertSchema)(exports.typebotConversations);
-exports.insertTypebotMessageSchema = (0, drizzle_zod_1.createInsertSchema)(exports.typebotMessages);
-exports.insertTypebotAnalyticsSchema = (0, drizzle_zod_1.createInsertSchema)(exports.typebotAnalytics);
-exports.insertTypebotWebhookSchema = (0, drizzle_zod_1.createInsertSchema)(exports.typebotWebhooks);
-exports.insertTypebotIntegrationSchema = (0, drizzle_zod_1.createInsertSchema)(exports.typebotIntegrations);
+export const insertTypebotProjectSchema = createInsertSchema(typebotProjects);
+export const insertTypebotConversationSchema = createInsertSchema(typebotConversations);
+export const insertTypebotMessageSchema = createInsertSchema(typebotMessages);
+export const insertTypebotAnalyticsSchema = createInsertSchema(typebotAnalytics);
+export const insertTypebotWebhookSchema = createInsertSchema(typebotWebhooks);
+export const insertTypebotIntegrationSchema = createInsertSchema(typebotIntegrations);
 // =============================================
 // CHECKOUT BUILDER SYSTEM TABLES
 // =============================================
 // Produtos do Checkout Builder
-exports.checkoutProducts = (0, sqlite_core_1.sqliteTable)("checkout_products", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    user_id: (0, sqlite_core_1.text)("user_id").notNull().references(() => exports.users.id),
-    name: (0, sqlite_core_1.text)("name").notNull(),
-    description: (0, sqlite_core_1.text)("description"),
-    price: (0, sqlite_core_1.real)("price").notNull(),
-    currency: (0, sqlite_core_1.text)("currency").notNull().default("BRL"),
-    category: (0, sqlite_core_1.text)("category"),
-    features: (0, sqlite_core_1.text)("features").default(""),
-    payment_mode: (0, sqlite_core_1.text)("payment_mode").default("one_time"),
-    recurring_interval: (0, sqlite_core_1.text)("recurring_interval"),
-    trial_period: (0, sqlite_core_1.integer)("trial_period"),
-    trial_price: (0, sqlite_core_1.real)("trial_price"),
-    status: (0, sqlite_core_1.text)("status").default("active"),
-    created_at: (0, sqlite_core_1.text)("created_at").notNull(),
-    updated_at: (0, sqlite_core_1.text)("updated_at").notNull(),
+export const checkoutProducts = sqliteTable("checkout_products", {
+    id: text("id").primaryKey(),
+    user_id: text("user_id").notNull().references(() => users.id),
+    name: text("name").notNull(),
+    description: text("description"),
+    price: real("price").notNull(),
+    currency: text("currency").notNull().default("BRL"),
+    category: text("category"),
+    features: text("features").default(""),
+    payment_mode: text("payment_mode").default("one_time"),
+    recurring_interval: text("recurring_interval"),
+    trial_period: integer("trial_period"),
+    trial_price: real("trial_price"),
+    status: text("status").default("active"),
+    created_at: text("created_at").notNull(),
+    updated_at: text("updated_at").notNull(),
 });
 // Páginas de Checkout customizadas
-exports.checkoutPages = (0, sqlite_core_1.sqliteTable)("checkout_pages", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    user_id: (0, sqlite_core_1.text)("user_id").notNull().references(() => exports.users.id),
-    product_id: (0, sqlite_core_1.text)("product_id").notNull().references(() => exports.checkoutProducts.id),
-    name: (0, sqlite_core_1.text)("name").notNull(),
-    slug: (0, sqlite_core_1.text)("slug").notNull(),
-    template: (0, sqlite_core_1.text)("template").default("default"),
-    custom_css: (0, sqlite_core_1.text)("custom_css"),
-    custom_js: (0, sqlite_core_1.text)("custom_js"),
-    seo_title: (0, sqlite_core_1.text)("seo_title"),
-    seo_description: (0, sqlite_core_1.text)("seo_description"),
-    status: (0, sqlite_core_1.text)("status").default("active"),
-    created_at: (0, sqlite_core_1.text)("created_at").notNull(),
-    updated_at: (0, sqlite_core_1.text)("updated_at").notNull(),
+export const checkoutPages = sqliteTable("checkout_pages", {
+    id: text("id").primaryKey(),
+    user_id: text("user_id").notNull().references(() => users.id),
+    product_id: text("product_id").notNull().references(() => checkoutProducts.id),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    template: text("template").default("default"),
+    custom_css: text("custom_css"),
+    custom_js: text("custom_js"),
+    seo_title: text("seo_title"),
+    seo_description: text("seo_description"),
+    status: text("status").default("active"),
+    created_at: text("created_at").notNull(),
+    updated_at: text("updated_at").notNull(),
 });
 // Transações de Checkout
-exports.checkoutTransactions = (0, sqlite_core_1.sqliteTable)("checkout_transactions", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    user_id: (0, sqlite_core_1.text)("user_id").notNull().references(() => exports.users.id),
-    product_id: (0, sqlite_core_1.text)("product_id").notNull().references(() => exports.checkoutProducts.id),
-    checkout_id: (0, sqlite_core_1.text)("checkout_id"),
-    customer_data: (0, sqlite_core_1.text)("customer_data").notNull(),
-    total_amount: (0, sqlite_core_1.real)("total_amount").notNull(),
-    currency: (0, sqlite_core_1.text)("currency").notNull().default("BRL"),
-    payment_status: (0, sqlite_core_1.text)("payment_status").default("pending"),
-    payment_method: (0, sqlite_core_1.text)("payment_method"),
-    gateway: (0, sqlite_core_1.text)("gateway").default("stripe"),
-    gateway_transaction_id: (0, sqlite_core_1.text)("gateway_transaction_id"),
-    accepted_upsells: (0, sqlite_core_1.text)("accepted_upsells").default("[]"),
-    created_at: (0, sqlite_core_1.text)("created_at").notNull(),
-    paid_at: (0, sqlite_core_1.text)("paid_at"),
+export const checkoutTransactions = sqliteTable("checkout_transactions", {
+    id: text("id").primaryKey(),
+    user_id: text("user_id").notNull().references(() => users.id),
+    product_id: text("product_id").notNull().references(() => checkoutProducts.id),
+    checkout_id: text("checkout_id"),
+    customer_data: text("customer_data").notNull(),
+    total_amount: real("total_amount").notNull(),
+    currency: text("currency").notNull().default("BRL"),
+    payment_status: text("payment_status").default("pending"),
+    payment_method: text("payment_method"),
+    gateway: text("gateway").default("stripe"),
+    gateway_transaction_id: text("gateway_transaction_id"),
+    accepted_upsells: text("accepted_upsells").default("[]"),
+    created_at: text("created_at").notNull(),
+    paid_at: text("paid_at"),
 });
 // Assinaturas Stripe com Trial + Recorrência
-exports.stripeSubscriptions = (0, sqlite_core_1.sqliteTable)("stripe_subscriptions", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    userId: (0, sqlite_core_1.text)("userId").notNull().references(() => exports.users.id),
-    stripeSubscriptionId: (0, sqlite_core_1.text)("stripeSubscriptionId").notNull().unique(),
-    stripeCustomerId: (0, sqlite_core_1.text)("stripeCustomerId").notNull(),
-    stripePaymentMethodId: (0, sqlite_core_1.text)("stripePaymentMethodId"),
-    status: (0, sqlite_core_1.text)("status").notNull(), // trialing, active, past_due, canceled, unpaid
-    planName: (0, sqlite_core_1.text)("planName").notNull(),
-    planDescription: (0, sqlite_core_1.text)("planDescription"),
-    activationFee: (0, sqlite_core_1.real)("activationFee").notNull(),
-    monthlyPrice: (0, sqlite_core_1.real)("monthlyPrice").notNull(),
-    trialDays: (0, sqlite_core_1.integer)("trialDays").notNull(),
-    trialStartDate: (0, sqlite_core_1.integer)("trialStartDate", { mode: 'timestamp' }),
-    trialEndDate: (0, sqlite_core_1.integer)("trialEndDate", { mode: 'timestamp' }),
-    currentPeriodStart: (0, sqlite_core_1.integer)("currentPeriodStart", { mode: 'timestamp' }),
-    currentPeriodEnd: (0, sqlite_core_1.integer)("currentPeriodEnd", { mode: 'timestamp' }),
-    nextBillingDate: (0, sqlite_core_1.integer)("nextBillingDate", { mode: 'timestamp' }),
-    canceledAt: (0, sqlite_core_1.integer)("canceledAt", { mode: 'timestamp' }),
-    cancelAtPeriodEnd: (0, sqlite_core_1.integer)("cancelAtPeriodEnd", { mode: 'boolean' }).default(false),
-    customerName: (0, sqlite_core_1.text)("customerName"),
-    customerEmail: (0, sqlite_core_1.text)("customerEmail"),
-    activationInvoiceId: (0, sqlite_core_1.text)("activationInvoiceId"),
-    metadata: (0, sqlite_core_1.text)("metadata", { mode: 'json' }),
-    createdAt: (0, sqlite_core_1.integer)("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-    updatedAt: (0, sqlite_core_1.integer)("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+export const stripeSubscriptions = sqliteTable("stripe_subscriptions", {
+    id: text("id").primaryKey(),
+    userId: text("userId").notNull().references(() => users.id),
+    stripeSubscriptionId: text("stripeSubscriptionId").notNull().unique(),
+    stripeCustomerId: text("stripeCustomerId").notNull(),
+    stripePaymentMethodId: text("stripePaymentMethodId"),
+    status: text("status").notNull(), // trialing, active, past_due, canceled, unpaid
+    planName: text("planName").notNull(),
+    planDescription: text("planDescription"),
+    activationFee: real("activationFee").notNull(),
+    monthlyPrice: real("monthlyPrice").notNull(),
+    trialDays: integer("trialDays").notNull(),
+    trialStartDate: integer("trialStartDate", { mode: 'timestamp' }),
+    trialEndDate: integer("trialEndDate", { mode: 'timestamp' }),
+    currentPeriodStart: integer("currentPeriodStart", { mode: 'timestamp' }),
+    currentPeriodEnd: integer("currentPeriodEnd", { mode: 'timestamp' }),
+    nextBillingDate: integer("nextBillingDate", { mode: 'timestamp' }),
+    canceledAt: integer("canceledAt", { mode: 'timestamp' }),
+    cancelAtPeriodEnd: integer("cancelAtPeriodEnd", { mode: 'boolean' }).default(false),
+    customerName: text("customerName"),
+    customerEmail: text("customerEmail"),
+    activationInvoiceId: text("activationInvoiceId"),
+    metadata: text("metadata", { mode: 'json' }),
+    createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 // Analytics de Checkout
-exports.checkoutAnalytics = (0, sqlite_core_1.sqliteTable)("checkout_analytics", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    user_id: (0, sqlite_core_1.text)("user_id").notNull().references(() => exports.users.id),
-    product_id: (0, sqlite_core_1.text)("product_id").notNull().references(() => exports.checkoutProducts.id),
-    page_id: (0, sqlite_core_1.text)("page_id").references(() => exports.checkoutPages.id),
-    event_type: (0, sqlite_core_1.text)("event_type").notNull(),
-    event_data: (0, sqlite_core_1.text)("event_data"),
-    ip_address: (0, sqlite_core_1.text)("ip_address"),
-    user_agent: (0, sqlite_core_1.text)("user_agent"),
-    referrer: (0, sqlite_core_1.text)("referrer"),
-    created_at: (0, sqlite_core_1.text)("created_at").notNull(),
+export const checkoutAnalytics = sqliteTable("checkout_analytics", {
+    id: text("id").primaryKey(),
+    user_id: text("user_id").notNull().references(() => users.id),
+    product_id: text("product_id").notNull().references(() => checkoutProducts.id),
+    page_id: text("page_id").references(() => checkoutPages.id),
+    event_type: text("event_type").notNull(),
+    event_data: text("event_data"),
+    ip_address: text("ip_address"),
+    user_agent: text("user_agent"),
+    referrer: text("referrer"),
+    created_at: text("created_at").notNull(),
 });
 // Checkout Builder Zod Schemas
-exports.insertCheckoutProductSchema = (0, drizzle_zod_1.createInsertSchema)(exports.checkoutProducts);
-exports.insertCheckoutPageSchema = (0, drizzle_zod_1.createInsertSchema)(exports.checkoutPages);
-exports.insertCheckoutTransactionSchema = (0, drizzle_zod_1.createInsertSchema)(exports.checkoutTransactions);
-exports.insertCheckoutAnalyticsSchema = (0, drizzle_zod_1.createInsertSchema)(exports.checkoutAnalytics);
+export const insertCheckoutProductSchema = createInsertSchema(checkoutProducts);
+export const insertCheckoutPageSchema = createInsertSchema(checkoutPages);
+export const insertCheckoutTransactionSchema = createInsertSchema(checkoutTransactions);
+export const insertCheckoutAnalyticsSchema = createInsertSchema(checkoutAnalytics);
 // Subscription Plans Schema
-exports.subscriptionPlans = (0, sqlite_core_1.sqliteTable)("subscription_plans", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    name: (0, sqlite_core_1.text)("name").notNull(),
-    price: (0, sqlite_core_1.real)("price").notNull(),
-    currency: (0, sqlite_core_1.text)("currency").default("BRL"),
-    billingInterval: (0, sqlite_core_1.text)("billingInterval").notNull(), // monthly, yearly
-    features: (0, sqlite_core_1.text)("features", { mode: 'json' }).notNull(),
-    limits: (0, sqlite_core_1.text)("limits", { mode: 'json' }).notNull(),
-    stripePriceId: (0, sqlite_core_1.text)("stripePriceId"),
-    isActive: (0, sqlite_core_1.integer)("isActive", { mode: 'boolean' }).default(true),
-    createdAt: (0, sqlite_core_1.integer)("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-    updatedAt: (0, sqlite_core_1.integer)("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+export const subscriptionPlans = sqliteTable("subscription_plans", {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    price: real("price").notNull(),
+    currency: text("currency").default("BRL"),
+    billingInterval: text("billingInterval").notNull(), // monthly, yearly
+    features: text("features", { mode: 'json' }).notNull(),
+    limits: text("limits", { mode: 'json' }).notNull(),
+    stripePriceId: text("stripePriceId"),
+    isActive: integer("isActive", { mode: 'boolean' }).default(true),
+    createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 // Subscription Transactions Schema
-exports.subscriptionTransactions = (0, sqlite_core_1.sqliteTable)("subscription_transactions", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    userId: (0, sqlite_core_1.text)("userId").notNull().references(() => exports.users.id),
-    planId: (0, sqlite_core_1.text)("planId").notNull().references(() => exports.subscriptionPlans.id),
-    stripePaymentIntentId: (0, sqlite_core_1.text)("stripePaymentIntentId"),
-    stripeSubscriptionId: (0, sqlite_core_1.text)("stripeSubscriptionId"),
-    amount: (0, sqlite_core_1.real)("amount").notNull(),
-    currency: (0, sqlite_core_1.text)("currency").default("BRL"),
-    status: (0, sqlite_core_1.text)("status").notNull(), // pending, completed, failed, refunded
-    paymentMethod: (0, sqlite_core_1.text)("paymentMethod").default("stripe"),
-    metadata: (0, sqlite_core_1.text)("metadata", { mode: 'json' }),
-    createdAt: (0, sqlite_core_1.integer)("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-    updatedAt: (0, sqlite_core_1.integer)("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+export const subscriptionTransactions = sqliteTable("subscription_transactions", {
+    id: text("id").primaryKey(),
+    userId: text("userId").notNull().references(() => users.id),
+    planId: text("planId").notNull().references(() => subscriptionPlans.id),
+    stripePaymentIntentId: text("stripePaymentIntentId"),
+    stripeSubscriptionId: text("stripeSubscriptionId"),
+    amount: real("amount").notNull(),
+    currency: text("currency").default("BRL"),
+    status: text("status").notNull(), // pending, completed, failed, refunded
+    paymentMethod: text("paymentMethod").default("stripe"),
+    metadata: text("metadata", { mode: 'json' }),
+    createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updatedAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 // Credit Transactions Schema
-exports.creditTransactions = (0, sqlite_core_1.sqliteTable)("credit_transactions", {
-    id: (0, sqlite_core_1.text)("id").primaryKey(),
-    userId: (0, sqlite_core_1.text)("userId").notNull().references(() => exports.users.id),
-    type: (0, sqlite_core_1.text)("type").notNull(), // sms, email, whatsapp, ai
-    amount: (0, sqlite_core_1.integer)("amount").notNull(),
-    operation: (0, sqlite_core_1.text)("operation").notNull(), // add, subtract
-    reason: (0, sqlite_core_1.text)("reason").notNull(),
-    metadata: (0, sqlite_core_1.text)("metadata", { mode: 'json' }),
-    createdAt: (0, sqlite_core_1.integer)("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+export const creditTransactions = sqliteTable("credit_transactions", {
+    id: text("id").primaryKey(),
+    userId: text("userId").notNull().references(() => users.id),
+    type: text("type").notNull(), // sms, email, whatsapp, ai
+    amount: integer("amount").notNull(),
+    operation: text("operation").notNull(), // add, subtract
+    reason: text("reason").notNull(),
+    metadata: text("metadata", { mode: 'json' }),
+    createdAt: integer("createdAt", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 // Subscription Plans Zod Schemas
-exports.insertSubscriptionPlanSchema = (0, drizzle_zod_1.createInsertSchema)(exports.subscriptionPlans);
-exports.insertSubscriptionTransactionSchema = (0, drizzle_zod_1.createInsertSchema)(exports.subscriptionTransactions);
-exports.insertCreditTransactionSchema = (0, drizzle_zod_1.createInsertSchema)(exports.creditTransactions);
+export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans);
+export const insertSubscriptionTransactionSchema = createInsertSchema(subscriptionTransactions);
+export const insertCreditTransactionSchema = createInsertSchema(creditTransactions);
 // =============================================
 // FORUM SYSTEM TABLES
 // =============================================
 // Forum Categories
-exports.forumCategoriesTable = (0, sqlite_core_1.sqliteTable)("forum_categories", {
-    id: (0, sqlite_core_1.text)("id").primaryKey().$defaultFn(() => (0, nanoid_1.nanoid)()),
-    name: (0, sqlite_core_1.text)("name").notNull(),
-    description: (0, sqlite_core_1.text)("description"),
-    icon: (0, sqlite_core_1.text)("icon"),
-    color: (0, sqlite_core_1.text)("color"),
-    isRestricted: (0, sqlite_core_1.integer)("is_restricted", { mode: "boolean" }).default(false),
-    moderators: (0, sqlite_core_1.text)("moderators", { mode: "json" }).$type().default([]),
-    createdAt: (0, sqlite_core_1.integer)("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+export const forumCategoriesTable = sqliteTable("forum_categories", {
+    id: text("id").primaryKey().$defaultFn(() => nanoid()),
+    name: text("name").notNull(),
+    description: text("description"),
+    icon: text("icon"),
+    color: text("color"),
+    isRestricted: integer("is_restricted", { mode: "boolean" }).default(false),
+    moderators: text("moderators", { mode: "json" }).$type().default([]),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 // Forum Topics
-exports.forumTopicsTable = (0, sqlite_core_1.sqliteTable)("forum_topics", {
-    id: (0, sqlite_core_1.text)("id").primaryKey().$defaultFn(() => (0, nanoid_1.nanoid)()),
-    title: (0, sqlite_core_1.text)("title").notNull(),
-    content: (0, sqlite_core_1.text)("content").notNull(),
-    categoryId: (0, sqlite_core_1.text)("category_id").notNull().references(() => exports.forumCategoriesTable.id),
-    authorId: (0, sqlite_core_1.text)("author_id").notNull().references(() => exports.users.id),
-    isPinned: (0, sqlite_core_1.integer)("is_pinned", { mode: "boolean" }).default(false),
-    isLocked: (0, sqlite_core_1.integer)("is_locked", { mode: "boolean" }).default(false),
-    views: (0, sqlite_core_1.integer)("views").default(0),
-    likes: (0, sqlite_core_1.integer)("likes").default(0),
-    dislikes: (0, sqlite_core_1.integer)("dislikes").default(0),
-    tags: (0, sqlite_core_1.text)("tags", { mode: "json" }).$type().default([]),
-    status: (0, sqlite_core_1.text)("status").notNull().default("active"), // active, closed, resolved
-    createdAt: (0, sqlite_core_1.integer)("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
-    updatedAt: (0, sqlite_core_1.integer)("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+export const forumTopicsTable = sqliteTable("forum_topics", {
+    id: text("id").primaryKey().$defaultFn(() => nanoid()),
+    title: text("title").notNull(),
+    content: text("content").notNull(),
+    categoryId: text("category_id").notNull().references(() => forumCategoriesTable.id),
+    authorId: text("author_id").notNull().references(() => users.id),
+    isPinned: integer("is_pinned", { mode: "boolean" }).default(false),
+    isLocked: integer("is_locked", { mode: "boolean" }).default(false),
+    views: integer("views").default(0),
+    likes: integer("likes").default(0),
+    dislikes: integer("dislikes").default(0),
+    tags: text("tags", { mode: "json" }).$type().default([]),
+    status: text("status").notNull().default("active"), // active, closed, resolved
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 // Forum Replies
-exports.forumRepliesTable = (0, sqlite_core_1.sqliteTable)("forum_replies", {
-    id: (0, sqlite_core_1.text)("id").primaryKey().$defaultFn(() => (0, nanoid_1.nanoid)()),
-    topicId: (0, sqlite_core_1.text)("topic_id").notNull().references(() => exports.forumTopicsTable.id),
-    authorId: (0, sqlite_core_1.text)("author_id").notNull().references(() => exports.users.id),
-    content: (0, sqlite_core_1.text)("content").notNull(),
-    parentReplyId: (0, sqlite_core_1.text)("parent_reply_id").references(() => exports.forumRepliesTable.id),
-    likes: (0, sqlite_core_1.integer)("likes").default(0),
-    dislikes: (0, sqlite_core_1.integer)("dislikes").default(0),
-    isModerated: (0, sqlite_core_1.integer)("is_moderated", { mode: "boolean" }).default(false),
-    createdAt: (0, sqlite_core_1.integer)("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
-    updatedAt: (0, sqlite_core_1.integer)("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+export const forumRepliesTable = sqliteTable("forum_replies", {
+    id: text("id").primaryKey().$defaultFn(() => nanoid()),
+    topicId: text("topic_id").notNull().references(() => forumTopicsTable.id),
+    authorId: text("author_id").notNull().references(() => users.id),
+    content: text("content").notNull(),
+    parentReplyId: text("parent_reply_id").references(() => forumRepliesTable.id),
+    likes: integer("likes").default(0),
+    dislikes: integer("dislikes").default(0),
+    isModerated: integer("is_moderated", { mode: "boolean" }).default(false),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 // Forum Likes
-exports.forumLikesTable = (0, sqlite_core_1.sqliteTable)("forum_likes", {
-    id: (0, sqlite_core_1.text)("id").primaryKey().$defaultFn(() => (0, nanoid_1.nanoid)()),
-    userId: (0, sqlite_core_1.text)("user_id").notNull().references(() => exports.users.id),
-    targetId: (0, sqlite_core_1.text)("target_id").notNull(), // topic_id or reply_id
-    targetType: (0, sqlite_core_1.text)("target_type").notNull(), // 'topic' or 'reply'
-    isLike: (0, sqlite_core_1.integer)("is_like", { mode: "boolean" }).notNull(), // true for like, false for dislike
-    createdAt: (0, sqlite_core_1.integer)("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+export const forumLikesTable = sqliteTable("forum_likes", {
+    id: text("id").primaryKey().$defaultFn(() => nanoid()),
+    userId: text("user_id").notNull().references(() => users.id),
+    targetId: text("target_id").notNull(), // topic_id or reply_id
+    targetType: text("target_type").notNull(), // 'topic' or 'reply'
+    isLike: integer("is_like", { mode: "boolean" }).notNull(), // true for like, false for dislike
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 // Forum Zod Schemas
-exports.insertForumCategorySchema = (0, drizzle_zod_1.createInsertSchema)(exports.forumCategoriesTable);
-exports.insertForumTopicSchema = (0, drizzle_zod_1.createInsertSchema)(exports.forumTopicsTable);
-exports.insertForumReplySchema = (0, drizzle_zod_1.createInsertSchema)(exports.forumRepliesTable);
-exports.insertForumLikeSchema = (0, drizzle_zod_1.createInsertSchema)(exports.forumLikesTable);
+export const insertForumCategorySchema = createInsertSchema(forumCategoriesTable);
+export const insertForumTopicSchema = createInsertSchema(forumTopicsTable);
+export const insertForumReplySchema = createInsertSchema(forumRepliesTable);
+export const insertForumLikeSchema = createInsertSchema(forumLikesTable);
 // COURSES ZOD SCHEMAS
-exports.insertCourseSchema = (0, drizzle_zod_1.createInsertSchema)(exports.courses);
-exports.insertLessonSchema = (0, drizzle_zod_1.createInsertSchema)(exports.lessons);
-exports.insertEnrollmentSchema = (0, drizzle_zod_1.createInsertSchema)(exports.enrollments);
-exports.insertLessonProgressSchema = (0, drizzle_zod_1.createInsertSchema)(exports.lessonProgress);
-exports.insertCoursePushSubscriptionSchema = (0, drizzle_zod_1.createInsertSchema)(exports.coursePushSubscriptions);
-exports.insertScheduledCourseNotificationSchema = (0, drizzle_zod_1.createInsertSchema)(exports.scheduledCourseNotifications);
-exports.insertCourseNotificationTemplateSchema = (0, drizzle_zod_1.createInsertSchema)(exports.courseNotificationTemplates);
+export const insertCourseSchema = createInsertSchema(courses);
+export const insertLessonSchema = createInsertSchema(lessons);
+export const insertEnrollmentSchema = createInsertSchema(enrollments);
+export const insertLessonProgressSchema = createInsertSchema(lessonProgress);
+export const insertCoursePushSubscriptionSchema = createInsertSchema(coursePushSubscriptions);
+export const insertScheduledCourseNotificationSchema = createInsertSchema(scheduledCourseNotifications);
+export const insertCourseNotificationTemplateSchema = createInsertSchema(courseNotificationTemplates);
