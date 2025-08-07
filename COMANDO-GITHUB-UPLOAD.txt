@@ -1,7 +1,17 @@
-COMANDO PARA COPIAR E COLAR NO TERMINAL:
-==========================================
+TESTE DE CONEXÃO GIT:
+====================
 
-cd vendzz-railway-ultra-compact && git init && git remote add origin https://github.com/brunoxkz1337/v-platform.git && git add . && git commit -m "Initial commit: Vendzz Platform Enterprise - Sistema completo 200k+ usuarios" && git branch -M main && git push -u origin main
+# 1. TESTE SIMPLES (execute primeiro):
+cd vendzz-railway-ultra-compact && git remote -v
+
+# 2. SE DEU ERRO, LIMPE E RECONFIGURE:
+rm -rf .git && git init && git remote add origin https://github.com/brunoxkz1337/v-platform.git
+
+# 3. TESTE A CONEXÃO:
+git ls-remote origin
+
+# 4. SE CONECTOU, FAÇA O UPLOAD:
+git add . && git commit -m "Vendzz Platform Enterprise" && git branch -M main && git push -u origin main
 
 ==========================================
 
