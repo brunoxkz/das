@@ -5,10 +5,16 @@
   "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
-    "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "start": "NODE_ENV=production node dist/index.js",
+    "build": "npm run build:client && npm run build:server",
+    "start": "node dist/server/index.js",
     "check": "tsc",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "build:client": "vite build",
+    "build:server": "tsc -p server/tsconfig.json",
+    "postbuild": "cp -r public dist/ 2>/dev/null || true",
+    "railway:build": "npm install && npm run build",
+    "railway:start": "NODE_ENV=production node dist/server/index.js",
+    "migrate:postgresql": "node migrate-to-railway.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -157,5 +163,9 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   }
 }
