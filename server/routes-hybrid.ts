@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { registerRoutes } from "./routes";
-import { registerSQLiteRoutes } from "./routes-sqlite";
+import { registerRoutes } from "./routes.js";
+import { registerSQLiteRoutes } from "./routes-sqlite.js";
 
 // Detecta automaticamente qual sistema usar
 const detectRouteSystem = () => {

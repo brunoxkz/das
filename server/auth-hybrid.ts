@@ -1,8 +1,8 @@
 import type { Express, Request, Response, NextFunction, RequestHandler } from "express";
-import { setupJWTAuth, verifyJWT as verifyJWTPostgres } from "./auth";
-import { setupSQLiteAuth, verifyJWT as verifyJWTSQLite } from "./auth-sqlite";
+import { setupJWTAuth, verifyJWT as verifyJWTPostgres } from "./auth.js";
+import { setupSQLiteAuth, verifyJWT as verifyJWTSQLite } from "./auth-sqlite.js";
 import jwt from 'jsonwebtoken';
-import { cache } from './cache';
+import { cache } from './cache.js';
 
 // Detecta automaticamente qual sistema de auth usar baseado no ambiente
 const detectAuthSystem = () => {

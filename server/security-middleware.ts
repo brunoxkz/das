@@ -1,7 +1,7 @@
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { Request, Response, NextFunction } from 'express';
-import { logRateLimitAttempt } from './rate-limiting-monitor';
+import { logRateLimitAttempt } from './rate-limiting-monitor.js';
 
 // Intelligent rate limiting configuration with context awareness
 export const createIntelligentRateLimit = (config: {
