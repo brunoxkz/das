@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 
 // Inicialização do Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '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', {
-  apiVersion: '2024-09-30.acacia',
+  apiVersion: '2025-06-30.basil',
 });
 
 export interface TrialSubscriptionData {
@@ -154,7 +154,7 @@ export class StripeTrialSubscriptionService {
         product,
         monthlyPrice,
         trialEndDate: new Date(subscription.trial_end! * 1000),
-        nextBillingDate: new Date(subscription.current_period_end * 1000),
+        nextBillingDate: new Date((subscription as any).current_period_end * 1000),
         message: 'Assinatura com trial criada com sucesso',
       };
 

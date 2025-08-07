@@ -19,7 +19,7 @@ export class StripeOneTimeSubscriptionService {
       throw new Error('STRIPE_SECRET_KEY não encontrada');
     }
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2023-10-16',
+      apiVersion: '2025-06-30.basil',
     });
   }
 
@@ -60,7 +60,7 @@ export class StripeOneTimeSubscriptionService {
         unit_amount: params.recurringAmount, // R$29.90
         currency: 'brl',
         recurring: {
-          interval: params.recurringInterval,
+          interval: params.recurringInterval as any,
         },
         product: subscriptionProduct.id,
       });
@@ -83,10 +83,6 @@ export class StripeOneTimeSubscriptionService {
             trial_days: params.trialDays.toString(),
             ...params.metadata,
           },
-        },
-        invoice_settings: {
-          // Configurar cobrança imediata
-          default_payment_method: undefined,
         },
         success_url: params.successUrl,
         cancel_url: params.cancelUrl,

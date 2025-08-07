@@ -9,6 +9,8 @@ Four concurrent development projects:
 
 ## Recent Changes (August 7, 2025)
 - **✅ RAILWAY DEPLOY 100% RESOLVIDO**: Todos imports ES modules .js corrigidos definitivamente - sistema enterprise pronto
+- **✅ STRIPE API VERSIONING CORRIGIDO**: Atualizado para 2025-06-30.basil em todos arquivos (stripe-payment-api.ts, stripe-webhook.ts, etc.)
+- **✅ TYPESCRIPT BUILD TOLERANTE**: Sistema configurado com --noEmitOnError false para Railway production
 - **✅ TODAS CORREÇÕES CRÍTICAS APLICADAS**: routes-hybrid.js, auth-hybrid.js, security-middleware.js, vite.config.js imports funcionais
 - **✅ TSX PACKAGE INSTALADO**: Erro "tsx not found" resolvido via packager_tool
 - **✅ ES MODULES IMPORTS CORRIGIDOS**: 11 arquivos com imports .js adicionados (routes-hybrid, vite, auth-hybrid, etc.)

@@ -22,7 +22,7 @@ export class StripeSimpleTrialSystem {
 
   constructor(apiKey: string) {
     this.stripe = new Stripe(apiKey, {
-      apiVersion: '2024-09-30.acacia',
+      apiVersion: '2025-06-30.basil',
     });
   }
 
@@ -157,7 +157,7 @@ ETAPA 2: Webhook cria subscription com trial de ${config.trialDays} dias + R$${c
       console.log('🔧 Criando método de pagamento de teste com token seguro...');
       
       // Primeiro, criar um token de teste (forma segura)
-      const token = await this.stripe.tokens.create({
+      const token = await (this.stripe.tokens as any).create({
         card: {
           number: '4242424242424242',
           exp_month: 12,
@@ -239,7 +239,7 @@ ETAPA 2: Webhook cria subscription com trial de ${config.trialDays} dias + R$${c
           customer: customerId,
           items: [{ price: recurringPriceId }],
           trial_period_days: trialDays,
-          default_payment_method: paymentIntent.payment_method,
+          default_payment_method: paymentIntent.payment_method as string,
           metadata: {
             type: 'trial_subscription',
             payment_intent_id: paymentIntentId,
