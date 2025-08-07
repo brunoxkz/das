@@ -6,11 +6,7 @@ import { cache } from './cache';
 
 // Detecta automaticamente qual sistema de auth usar baseado no ambiente
 const detectAuthSystem = () => {
-  // Se DATABASE_URL estiver presente, usa PostgreSQL (Railway)
-  if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgresql://')) {
-    return 'postgresql';
-  }
-  // Caso contrário, usa SQLite local
+  // Forçar SQLite para desenvolvimento local independente
   return 'sqlite';
 };
 
@@ -38,13 +34,13 @@ export const verifyJWT: RequestHandler = async (req: any, res, next) => {
       // Decodifica e valida o token JWT
       const decoded = jwt.verify(token, JWT_SECRET) as any;
       
-      if (authSystem === 'postgresql') {
-        // Para PostgreSQL, importa storage dinamicamente  
-        const { storage } = await import('./storage');
-        user = await storage.getUser(decoded.id);
-      } else {
+      if (authSystem === 'sqlite') {
         // Para SQLite, importa storage dinamicamente
         const { storage } = await import('./storage-sqlite');
+        user = await storage.getUser(decoded.id);
+      } else {
+        // Para PostgreSQL, importa storage dinamicamente  
+        const { storage } = await import('./storage');
         user = await storage.getUser(decoded.id);
       }
 
@@ -67,10 +63,10 @@ export const verifyJWT: RequestHandler = async (req: any, res, next) => {
 export function setupHybridAuth(app: Express) {
   console.log(`🔐 Configurando sistema de autenticação: ${authSystem.toUpperCase()}`);
   
-  if (authSystem === 'postgresql') {
-    setupJWTAuth(app);
-  } else {
+  if (authSystem === 'sqlite') {
     setupSQLiteAuth(app);
+  } else {
+    setupJWTAuth(app);
   }
   
   // Endpoint para detectar qual sistema está sendo usado
