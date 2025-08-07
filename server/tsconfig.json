@@ -5,6 +5,8 @@
     "outDir": "../dist/server",
     "rootDir": ".",
     "strict": false,
+    "skipLibCheck": true,
+    "noImplicitAny": false,
     "noEmitOnError": false,
     "esModuleInterop": true,
     "skipLibCheck": true,

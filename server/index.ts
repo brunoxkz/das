@@ -30,22 +30,22 @@ import helmet from "helmet";
 import crypto from "crypto";
 import path from "path";
 import fs from "fs";
-import { registerHybridRoutes } from "./routes-hybrid";
-import { setupVite, serveStatic, log } from "./vite";
-import { setupHybridAuth, verifyJWT } from "./auth-hybrid";
+import { registerHybridRoutes } from "./routes-hybrid.js";
+import { setupVite, serveStatic, log } from "./vite.js";
+import { setupHybridAuth, verifyJWT } from "./auth-hybrid.js";
 // Health check removed - now integrated in routes-sqlite.ts
-import { emailService } from "./email-service";
+import { emailService } from "./email-service.js";
 import { 
   initAdvancedSecurity, 
   honeypotMiddleware, 
   timingAttackProtection, 
   attackSignatureAnalyzer, 
   blacklistMiddleware 
-} from "./advanced-security";
-import UltraScaleProcessor from "./ultra-scale-processor";
+} from "./advanced-security.js";
+import UltraScaleProcessor from "./ultra-scale-processor.js";
 // import { quizCacheOptimizer } from "./quiz-cache-optimizer"; // DESABILITADO
-import { unifiedSystem } from "./unified-scale-system";
-import { userSimulator } from "./user-simulator";
+import { unifiedSystem } from "./unified-scale-system.js";
+import { userSimulator } from "./user-simulator.js";
 // 🔒 IMPORTAÇÃO DO NOVO SISTEMA DE SEGURANÇA
 import {
   generalRateLimit,
@@ -59,7 +59,7 @@ import {
   securityHeaders,
   checkBlockedIP,
   detectSQLInjection
-} from "./security-middleware";
+} from "./security-middleware.js";
 
 const app = express();
 
@@ -992,7 +992,7 @@ setupHybridAuth(app);
 // System initialization and routes
 
 // PUSH NOTIFICATIONS ENDPOINTS REGISTRADOS ANTES DE TUDO
-import { getVapidPublicKey, subscribeToPush, getPushStats, sendPushToAll } from "./push-simple";
+import { getVapidPublicKey, subscribeToPush, getPushStats, sendPushToAll } from "./push-simple.js";
 
 // Registrar endpoints de push ANTES do Vite para evitar interceptação
 app.get('/api/push-simple/vapid', (req: any, res: any) => {
@@ -1026,7 +1026,7 @@ app.post('/api/push-simple/test-subscription', async (req: any, res: any) => {
     }
     
     // Importar o service push
-    const { SimplePushService } = await import('./push-simple');
+    const { SimplePushService } = await import('./push-simple.js');
     const pushService = new SimplePushService();
     
     const isValid = await pushService.testSubscription(endpoint);
@@ -1302,7 +1302,7 @@ app.post('/api/quiz-ia/create', verifyJWT, async (req: any, res: any) => {
 console.log('✅ QUIZ I.A. ENDPOINTS REGISTRADOS DIRETAMENTE ANTES DO VITE');
 
 // ENDPOINT DIRETO DE NOTIFICAÇÃO ADMIN - ANTES DO VITE
-import { AdminNotificationSimulator } from './admin-notification-simulator';
+import { AdminNotificationSimulator } from './admin-notification-simulator.js';
 // Sistema de push notifications integrado diretamente no routes-sqlite.ts
 // import { RealPushNotificationService } from './real-push-notification-service';
 
@@ -1365,15 +1365,15 @@ console.log('✅ ENDPOINT DIRETO DE NOTIFICAÇÃO ADMIN REGISTRADO');
 const server = registerHybridRoutes(app);
 
 // Registrar rotas administrativas do rate limiting
-import { registerRateLimitingAdminRoutes } from './admin-rate-limiting-routes';
-import adminPushRoutes from './admin-push-routes';
+import { registerRateLimitingAdminRoutes } from './admin-rate-limiting-routes.js';
+import adminPushRoutes from './admin-push-routes.js';
 registerRateLimitingAdminRoutes(app);
 
 console.log('✅ Rotas administrativas de Push Notifications registradas');
 app.use('/api/admin', adminPushRoutes);
 
 // Registrar endpoints de notificação administrativa  
-import { sendAdminNotification, getAdminNotifications, getAdminNotificationStats } from './admin-notification-simulator';
+import { sendAdminNotification, getAdminNotifications, getAdminNotificationStats } from './admin-notification-simulator.js';
 app.post('/api/admin/notification/send', sendAdminNotification);
 app.get('/api/admin/notification/list', getAdminNotifications);
 app.get('/api/admin/notification/stats', getAdminNotificationStats);
