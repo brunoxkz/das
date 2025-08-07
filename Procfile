@@ -1,1 +1,1 @@
-web: NODE_ENV=production node dist/server/index.js
+web: npm run railway:start

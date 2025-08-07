@@ -1,261 +1,297 @@
 #!/usr/bin/env node
 
 /**
- * 🚀 Railway Auto Deploy Script
- * Sistema Vendzz Platform Enterprise - Deploy Automático
- * Suporta 200k+ usuários simultâneos
+ * 🚀 RAILWAY AUTO DEPLOY - VENDZZ PLATFORM
+ * Script automatizado para deploy completo no Railway
  */
 
 import fs from 'fs';
 import path from 'path';
+import { execSync } from 'child_process';
+import { fileURLToPath } from 'url';
 
-class RailwayDeployer {
-    constructor() {
-        this.projectName = 'vendzz-platform-enterprise';
-        this.repo = 'brunoxkz1337/v-platform';
-        this.requirements = [
-            'Node.js 18+',
-            'PostgreSQL Database',
-            'Redis (opcional)',
-            'GitHub Repository'
-        ];
-    }
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-    checkRequirements() {
-        console.log('🔍 Verificando requisitos do Railway...');
-        
-        // Verifica package.json
-        if (!fs.existsSync('package.json')) {
-            throw new Error('❌ package.json não encontrado');
-        }
+console.log('🚀 RAILWAY AUTO DEPLOY - VENDZZ PLATFORM');
+console.log('==========================================\n');
 
-        // Verifica scripts necessários
-        const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-        const requiredScripts = ['start', 'build'];
-        
-        for (const script of requiredScripts) {
-            if (!pkg.scripts || !pkg.scripts[script]) {
-                throw new Error(`❌ Script "${script}" não encontrado em package.json`);
-            }
-        }
+// Configurações
+const DATABASE_URL = 'postgresql://postgres:DQTpWPNOZbFcLHzomqRDkzwwYFEVjpol@yamanote.proxy.rlwy.net:56203/railway';
+const PROJECT_NAME = 'vendzz-platform';
 
-        console.log('✅ Todos os requisitos atendidos');
+async function checkRailwayCLI() {
+    console.log('📋 1. Verificando Railway CLI...');
+    try {
+        execSync('railway --version', { stdio: 'pipe' });
+        console.log('✅ Railway CLI encontrado\n');
         return true;
-    }
-
-    generateEnvTemplate() {
-        const envContent = `# 🚀 Railway Environment Variables - Vendzz Platform Enterprise
-# Copy estas variáveis para o Railway Dashboard
-
-# === CORE CONFIG ===
-NODE_ENV=production
-PORT=\${{PORT}}
-
-# === DATABASE ===
-DATABASE_URL=\${{DATABASE_URL}}
-
-# === AUTHENTICATION ===
-SESSION_SECRET=\${{RAILWAY_GEN_SECRET}}
-JWT_SECRET=\${{RAILWAY_GEN_SECRET}}
-REFRESH_JWT_SECRET=\${{RAILWAY_GEN_SECRET_2}}
-
-# === FRONTEND ===
-VITE_API_URL=https://your-app-name.up.railway.app
-
-# === PAYMENT GATEWAYS (Opcional) ===
-# STRIPE_SECRET_KEY=sk_live_...
-# STRIPE_WEBHOOK_SECRET=whsec_...
-# PAGARME_API_KEY=ak_live_...
-
-# === MARKETING CHANNELS (Opcional) ===
-# TWILIO_ACCOUNT_SID=AC...
-# TWILIO_AUTH_TOKEN=...
-# TWILIO_PHONE_NUMBER=+1...
-# BREVO_API_KEY=xkeysib-...
-# WHATSAPP_TOKEN=...
-
-# === IA INTEGRATION (Opcional) ===
-# OPENAI_API_KEY=sk-...
-
-# === PERFORMANCE ===
-MAX_CONNECTIONS=1000
-CACHE_TTL=3600
-RATE_LIMIT_WINDOW=900000
-RATE_LIMIT_MAX=100`;
-
-        fs.writeFileSync('.env.railway', envContent);
-        console.log('✅ Template .env.railway criado');
-    }
-
-    generateRailwayConfig() {
-        const config = {
-            $schema: "https://railway.app/railway.schema.json",
-            build: {
-                builder: "NIXPACKS"
-            },
-            deploy: {
-                numReplicas: 1,
-                sleepApplication: false,
-                restartPolicyType: "ON_FAILURE",
-                restartPolicyMaxRetries: 3
-            }
-        };
-
-        fs.writeFileSync('railway.json', JSON.stringify(config, null, 2));
-        console.log('✅ Configuração railway.json criada');
-    }
-
-    generateDocumentation() {
-        const docs = `# 🚀 Deploy Railway - Vendzz Platform Enterprise
-
-## Visão Geral
-Sistema enterprise para 200k+ usuários simultâneos com:
-- 43 tabelas database
-- 5 canais de marketing
-- PWA completo
-- Sistema de créditos
-- Autenticação JWT
-
-## 📋 Pré-requisitos
-${this.requirements.map(req => `- ${req}`).join('\n')}
-
-## 🚀 Deploy Automático
-
-### 1. Conectar Repositório
-1. Acesse: https://railway.app/dashboard
-2. Clique "New Project" → "Deploy from GitHub repo"
-3. Selecione: ${this.repo}
-4. Branch: main
-
-### 2. Configurar Database
-1. Clique "Add Service" → "Database" → "PostgreSQL"
-2. Railway vai gerar DATABASE_URL automaticamente
-
-### 3. Variáveis de Ambiente
-Copie do arquivo .env.railway:
-\`\`\`
-NODE_ENV=production
-DATABASE_URL=\${{DATABASE_URL}}
-SESSION_SECRET=\${{RAILWAY_GEN_SECRET}}
-JWT_SECRET=\${{RAILWAY_GEN_SECRET}}
-REFRESH_JWT_SECRET=\${{RAILWAY_GEN_SECRET_2}}
-\`\`\`
-
-### 4. Domain Personalizado (Opcional)
-1. Vá em Settings → Domains
-2. Adicione seu domínio
-3. Configure DNS CNAME
-
-## 📊 Performance Enterprise
-- **Usuários**: 200,787 simultâneos testados
-- **Throughput**: 20,078 req/s
-- **Resposta**: 49.8ms média
-- **Uptime**: 99.9% validado
-
-## 🔒 Security Headers
-- CSP (Content Security Policy)
-- HSTS (HTTP Strict Transport Security)
-- X-Frame-Options
-- X-Content-Type-Options
-- Referrer-Policy
-
-## 📱 PWA Features
-- Service Worker v3.0
-- Push Notifications (iOS/Android)
-- Offline Support
-- App-like Experience
-
-## 🎯 Marketing Channels
-1. **SMS**: Twilio integration
-2. **Email**: Brevo/SendGrid
-3. **WhatsApp**: Evolution API
-4. **Voice**: Twilio Voice
-5. **Telegram**: Bot API
-
-## 💳 Payment Systems
-- Stripe (Internacional)
-- Pagar.me (Brasil)
-- PayPal (Global)
-- Trial system
-
-## 🤖 IA Integration
-- Quiz generation
-- Conversion optimization
-- Automated campaigns
-- Lead scoring
-
-## 📈 Monitoring
-- Real-time analytics
-- Performance metrics
-- Error tracking
-- User behavior
-
-## 🆘 Suporte
-Documentação completa no repositório GitHub.
-`;
-
-        fs.writeFileSync('RAILWAY-DEPLOY-GUIDE.md', docs);
-        console.log('✅ Documentação RAILWAY-DEPLOY-GUIDE.md criada');
-    }
-
-    showInstructions() {
-        console.log(`
-🚀 RAILWAY DEPLOY - VENDZZ PLATFORM ENTERPRISE
-
-📋 PRÓXIMOS PASSOS:
-
-1. 📤 UPLOAD NO GITHUB
-   - Faça upload do projeto para: ${this.repo}
-   - Use GitHub Codespaces ou download + GitHub Desktop
-
-2. 🚀 RAILWAY DEPLOY
-   - Acesse: https://railway.app/dashboard
-   - New Project → Deploy from GitHub repo
-   - Selecione: ${this.repo}
-
-3. 🗄️ DATABASE
-   - Add Service → Database → PostgreSQL
-   - Railway gera DATABASE_URL automaticamente
-
-4. ⚙️ VARIÁVEIS
-   - Copie do arquivo .env.railway
-   - Adicione no Railway Dashboard → Variables
-
-5. 🌐 DOMAIN
-   - Settings → Domains → Add domain
-   - Configure DNS CNAME
-
-📁 ARQUIVOS CRIADOS:
-✅ railway.toml - Configuração principal
-✅ railway.json - Deploy config
-✅ .env.railway - Template variáveis
-✅ RAILWAY-DEPLOY-GUIDE.md - Documentação completa
-
-💪 SISTEMA PRONTO PARA 200K+ USUÁRIOS!
-        `);
-    }
-
-    deploy() {
+    } catch (error) {
+        console.log('❌ Railway CLI não encontrado');
+        console.log('📥 Instalando Railway CLI...\n');
+        
         try {
-            console.log('🚀 Iniciando preparação para Railway Deploy...\n');
-            
-            this.checkRequirements();
-            this.generateEnvTemplate();
-            this.generateRailwayConfig();
-            this.generateDocumentation();
-            this.showInstructions();
-            
-            console.log('\n✅ Preparação concluída com sucesso!');
-            
-        } catch (error) {
-            console.error('\n❌ Erro na preparação:', error.message);
-            process.exit(1);
+            // Instalar Railway CLI
+            if (process.platform === 'win32') {
+                execSync('npm install -g @railway/cli', { stdio: 'inherit' });
+            } else {
+                execSync('curl -fsSL https://railway.app/install.sh | sh', { stdio: 'inherit' });
+            }
+            console.log('✅ Railway CLI instalado com sucesso\n');
+            return true;
+        } catch (installError) {
+            console.log('❌ Erro ao instalar Railway CLI');
+            console.log('💡 Instale manualmente: npm install -g @railway/cli');
+            return false;
         }
     }
 }
 
-// Executa se chamado diretamente
-const deployer = new RailwayDeployer();
-deployer.deploy();
+function cleanProject() {
+    console.log('🧹 2. Limpando projeto para deploy...');
+    
+    const foldersToDelete = [
+        'node_modules',
+        'dist',
+        '.git',
+        'attached_assets',
+        'b2c2-editor',
+        'b2c2-fixed-static',
+        'b2c2-hospedagem',
+        'b2c2-hospedagem-corrigido',
+        'b2c2-hospedagem-final',
+        'b2c2-hospedagem-novo',
+        'b2c2-original-correto',
+        'b2c2-standalone-fixed',
+        'b2t-standalone',
+        'b2t-static',
+        'chrome-extension',
+        'chrome-extension-rocketzap',
+        'chrome-extension-sidebar',
+        'chrome-extension-v2',
+        'sistema-controle',
+        'sistema-vendas',
+        'sql-project',
+        'quantum-tasks',
+        'railway-deploy',
+        'vendzz-complete',
+        'vendzz-github',
+        'wordpress-template',
+        'xml-viewer'
+    ];
+    
+    const filesToDelete = [
+        '*.db',
+        '*.sqlite',
+        '*.log',
+        'vendzz-*.zip',
+        'vendzz-*.tar.gz'
+    ];
+    
+    let cleaned = 0;
+    
+    // Delete folders
+    foldersToDelete.forEach(folder => {
+        if (fs.existsSync(folder)) {
+            try {
+                fs.rmSync(folder, { recursive: true, force: true });
+                console.log(`   🗑️  Removido: ${folder}`);
+                cleaned++;
+            } catch (error) {
+                console.log(`   ⚠️  Erro ao remover ${folder}: ${error.message}`);
+            }
+        }
+    });
+    
+    // Delete files by pattern
+    filesToDelete.forEach(pattern => {
+        try {
+            const files = execSync(`find . -name "${pattern}" -type f 2>/dev/null || true`, { encoding: 'utf8' });
+            files.split('\n').filter(file => file.trim()).forEach(file => {
+                try {
+                    fs.unlinkSync(file.trim());
+                    console.log(`   🗑️  Removido: ${file.trim()}`);
+                    cleaned++;
+                } catch (error) {
+                    // Ignore errors
+                }
+            });
+        } catch (error) {
+            // Ignore errors
+        }
+    });
+    
+    console.log(`✅ Limpeza concluída: ${cleaned} itens removidos\n`);
+}
 
-export default RailwayDeployer;
+function createProductionEnv() {
+    console.log('⚙️  3. Criando configuração de produção...');
+    
+    const productionEnv = `# ===== RAILWAY PRODUCTION VARIABLES =====
+
+# Database Railway (configurado automaticamente)
+DATABASE_URL=${DATABASE_URL}
+
+# Environment
+NODE_ENV=production
+PORT=5000
+
+# Autenticação (chaves seguras)
+JWT_SECRET=vendzz_jwt_super_secret_key_production_2025_railway
+SESSION_SECRET=vendzz_session_super_secret_key_production_2025_railway
+
+# Performance
+NPM_CONFIG_PRODUCTION=false
+NODE_OPTIONS=--max-old-space-size=1024
+UV_THREADPOOL_SIZE=16
+
+# Segurança
+TRUST_PROXY=true
+
+# ===== INTEGRAÇÕES OPCIONAIS =====
+# Descomente e configure conforme necessário:
+
+# STRIPE_SECRET_KEY=sk_live_seu_stripe_secret_key
+# VITE_STRIPE_PUBLIC_KEY=pk_live_seu_stripe_public_key
+# OPENAI_API_KEY=sk-proj-seu_openai_api_key
+# TWILIO_ACCOUNT_SID=seu_twilio_account_sid
+# TWILIO_AUTH_TOKEN=seu_twilio_auth_token
+# TWILIO_PHONE_NUMBER=+1234567890
+`;
+    
+    fs.writeFileSync('.env.production', productionEnv);
+    console.log('✅ Arquivo .env.production criado\n');
+}
+
+function verifyProjectStructure() {
+    console.log('🔍 4. Verificando estrutura do projeto...');
+    
+    const requiredFiles = [
+        'package.json',
+        'Procfile',
+        'railway.toml',
+        'client',
+        'server',
+        'shared'
+    ];
+    
+    const missing = [];
+    requiredFiles.forEach(file => {
+        if (!fs.existsSync(file)) {
+            missing.push(file);
+        }
+    });
+    
+    if (missing.length > 0) {
+        console.log('❌ Arquivos/pastas obrigatórios ausentes:');
+        missing.forEach(file => console.log(`   - ${file}`));
+        console.log('\n💡 Certifique-se de executar na pasta raiz do projeto');
+        process.exit(1);
+    }
+    
+    console.log('✅ Estrutura do projeto verificada\n');
+}
+
+async function deployToRailway() {
+    console.log('🚀 5. Fazendo deploy no Railway...');
+    
+    try {
+        // Login no Railway (se necessário)
+        console.log('🔐 Verificando login Railway...');
+        try {
+            execSync('railway whoami', { stdio: 'pipe' });
+            console.log('✅ Já logado no Railway\n');
+        } catch (error) {
+            console.log('🔐 Fazendo login no Railway...');
+            console.log('👆 Uma janela do navegador será aberta para login\n');
+            execSync('railway login', { stdio: 'inherit' });
+        }
+        
+        // Criar novo projeto
+        console.log('📦 Criando projeto no Railway...');
+        try {
+            execSync(`railway init ${PROJECT_NAME} --yes`, { stdio: 'inherit' });
+        } catch (error) {
+            console.log('📦 Conectando ao projeto existente...');
+            execSync('railway link', { stdio: 'inherit' });
+        }
+        
+        // Adicionar variáveis de ambiente
+        console.log('⚙️  Configurando variáveis de ambiente...');
+        const envVars = [
+            `DATABASE_URL="${DATABASE_URL}"`,
+            'NODE_ENV=production',
+            'JWT_SECRET=vendzz_jwt_super_secret_key_production_2025_railway',
+            'SESSION_SECRET=vendzz_session_super_secret_key_production_2025_railway',
+            'NPM_CONFIG_PRODUCTION=false',
+            'NODE_OPTIONS=--max-old-space-size=1024'
+        ];
+        
+        envVars.forEach(envVar => {
+            try {
+                execSync(`railway variables set ${envVar}`, { stdio: 'pipe' });
+                console.log(`✅ ${envVar.split('=')[0]}`);
+            } catch (error) {
+                console.log(`⚠️  Erro ao definir ${envVar.split('=')[0]}`);
+            }
+        });
+        
+        // Deploy
+        console.log('\n🚀 Iniciando deploy...');
+        execSync('railway up --yes', { stdio: 'inherit' });
+        
+        console.log('\n✅ Deploy concluído com sucesso!');
+        
+        // Obter URL do projeto
+        try {
+            const url = execSync('railway status --json', { encoding: 'utf8' });
+            const status = JSON.parse(url);
+            if (status.deployment && status.deployment.url) {
+                console.log(`🌐 URL do projeto: ${status.deployment.url}`);
+            }
+        } catch (error) {
+            console.log('🌐 Use "railway status" para ver a URL do projeto');
+        }
+        
+    } catch (error) {
+        console.error('❌ Erro no deploy:', error.message);
+        console.log('\n💡 Soluções:');
+        console.log('   1. Verifique se está logado: railway login');
+        console.log('   2. Verifique a conexão com internet');
+        console.log('   3. Tente novamente em alguns minutos');
+        process.exit(1);
+    }
+}
+
+async function main() {
+    try {
+        const hasRailwayCLI = await checkRailwayCLI();
+        if (!hasRailwayCLI) {
+            console.log('❌ Railway CLI é necessário para continuar');
+            process.exit(1);
+        }
+        
+        verifyProjectStructure();
+        cleanProject();
+        createProductionEnv();
+        await deployToRailway();
+        
+        console.log('\n🎉 DEPLOY CONCLUÍDO COM SUCESSO!');
+        console.log('==========================================');
+        console.log('💡 Próximos passos:');
+        console.log('   1. Acesse o dashboard Railway para monitorar');
+        console.log('   2. Configure domínio personalizado (opcional)');
+        console.log('   3. Configure integrações adicionais (Stripe, OpenAI, etc.)');
+        
+    } catch (error) {
+        console.error('❌ Erro fatal:', error.message);
+        process.exit(1);
+    }
+}
+
+// Executar se chamado diretamente
+if (import.meta.url === `file://${process.argv[1]}`) {
+    main();
+}
+
+export { main };
