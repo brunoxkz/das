@@ -1,17 +1,10 @@
-TESTE DE CONEXÃO GIT:
-====================
+FORÇAR UPLOAD PARA GITHUB:
+=========================
 
-# 1. TESTE SIMPLES (execute primeiro):
-cd vendzz-railway-ultra-compact && git remote -v
+# Os arquivos estão commitados localmente mas não foram enviados
+# Execute este comando para forçar o push:
 
-# 2. SE DEU ERRO, LIMPE E RECONFIGURE:
-rm -rf .git && git init && git remote add origin https://github.com/brunoxkz1337/v-platform.git
-
-# 3. TESTE A CONEXÃO:
-git ls-remote origin
-
-# 4. SE CONECTOU, FAÇA O UPLOAD:
-git add . && git commit -m "Vendzz Platform Enterprise" && git branch -M main && git push -u origin main
+cd vendzz-railway-ultra-compact && git push -f origin main
 
 ==========================================
 
