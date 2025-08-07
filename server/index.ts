@@ -1361,7 +1361,8 @@ app.post('/api/admin-notification-direct', async (req: any, res: any) => {
 });
 console.log('✅ ENDPOINT DIRETO DE NOTIFICAÇÃO ADMIN REGISTRADO');
 
-// Register all routes DEPOIS dos endpoints de push
+// ✅ REGISTRAR TODAS AS ROTAS DE API PRINCIPAIS PRIMEIRO - ANTES DO VITE
+console.log('🚀 REGISTRANDO ROTAS PRINCIPAIS DA API...');
 const server = registerHybridRoutes(app);
 
 // Registrar rotas administrativas do rate limiting
@@ -1378,6 +1379,8 @@ app.post('/api/admin/notification/send', sendAdminNotification);
 app.get('/api/admin/notification/list', getAdminNotifications);
 app.get('/api/admin/notification/stats', getAdminNotificationStats);
 console.log('✅ Rotas administrativas de notificação registradas');
+
+console.log('✅ TODAS AS ROTAS DE API REGISTRADAS ANTES DO VITE');
 
 // INTERCEPTADOR CRÍTICO para arquivos especiais - ANTES do Vite
 app.use((req, res, next) => {
@@ -1430,6 +1433,24 @@ app.use('/api/quiz-ia', (req, res, next) => {
   console.log(`🎯 INTERCEPTANDO QUIZ I.A.: ${req.method} ${req.url}`);
   console.log('🔒 Rota Quiz I.A. interceptada - NÃO deve chegar ao Vite');
   next(); // Permite que continue para as rotas Express
+});
+
+// ✅ MIDDLEWARE CRÍTICO: Garantir que APIs não sejam interceptadas pelo Vite
+app.use('/api/*', (req, res, next) => {
+  // Log para debug
+  console.log(`🔧 API ROUTE INTERCEPTED: ${req.method} ${req.path}`);
+  
+  // Se chegou aqui, é porque a rota não foi encontrada nas rotas registradas
+  if (!res.headersSent) {
+    console.log(`❌ API ROUTE NOT FOUND: ${req.method} ${req.path}`);
+    return res.status(404).json({ 
+      error: 'API endpoint not found',
+      path: req.path,
+      method: req.method 
+    });
+  }
+  
+  next();
 });
 
 // Setup Vite middleware for dev and production APÓS todas as rotas
