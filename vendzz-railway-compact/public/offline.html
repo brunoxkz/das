@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendzz - Offline</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+      color: #ffffff;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    
+    .container {
+      max-width: 400px;
+      padding: 2rem;
+    }
+    
+    .icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 2rem;
+      background: #22c55e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+    }
+    
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: #22c55e;
+    }
+    
+    p {
+      color: #94a3b8;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+    
+    .retry-btn {
+      background: #22c55e;
+      color: white;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .retry-btn:hover {
+      background: #16a34a;
+    }
+    
+    .offline-indicator {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      background: #ef4444;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 2rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+  </style>
+</head>
+<body>
+  <div class="offline-indicator pulse">
+    📡 Offline
+  </div>
+  
+  <div class="container">
+    <div class="icon">
+      📱
+    </div>
+    
+    <h1>Você está offline</h1>
+    
+    <p>
+      Não foi possível conectar com o Vendzz. 
+      Verifique sua conexão e tente novamente.
+    </p>
+    
+    <button class="retry-btn" onclick="window.location.reload()">
+      Tentar Novamente
+    </button>
+  </div>
+
+  <script>
+    // Detectar quando voltar online
+    window.addEventListener('online', () => {
+      window.location.reload();
+    });
+    
+    // Tentar reconectar a cada 30 segundos
+    setInterval(() => {
+      if (navigator.onLine) {
+        window.location.reload();
+      }
+    }, 30000);
+  </script>
+</body>
+</html>
