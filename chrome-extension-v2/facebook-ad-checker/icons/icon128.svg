@@ -1,7 +1,0 @@
-<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="8" y="8" width="112" height="112" rx="16" fill="#1877f2" stroke="#1565c0" stroke-width="4"/>
-  <path d="M70 42H86V52H70V88H54V52H44V42H54V38C54 30 60 24 68 24H86V34H70V42Z" fill="white"/>
-  <circle cx="98" cy="30" r="18" fill="#10b981"/>
-  <path d="M90 26L94 30L106 18" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="64" y="110" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">ADS CHECKER</text>
-</svg>
