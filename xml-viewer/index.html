@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XML Event System Viewer v4002</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            line-height: 1.4;
+            overflow-x: hidden;
+        }
+
+        .terminal-header {
+            background: #1a1a1a;
+            padding: 15px 20px;
+            border-bottom: 2px solid #00ff00;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .compatibility-banner {
+            background: linear-gradient(90deg, #003300, #006600, #003300);
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            animation: pulse 2s infinite;
+            margin-bottom: 10px;
+            border: 1px solid #00ff00;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .system-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .info-item {
+            background: #111;
+            padding: 8px;
+            border: 1px solid #333;
+            border-radius: 3px;
+        }
+
+        .info-label {
+            color: #ffff00;
+            font-size: 12px;
+        }
+
+        .info-value {
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        .broken-data {
+            color: #ff6666;
+            text-decoration: line-through;
+        }
+
+        .main-content {
+            padding: 20px;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+
+        .xml-viewer {
+            background: #0d0d0d;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 15px;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .xml-tag {
+            color: #ff6600;
+        }
+
+        .xml-attr {
+            color: #66ccff;
+        }
+
+        .xml-value {
+            color: #ffff99;
+        }
+
+        .xml-cdata {
+            color: #99ff99;
+        }
+
+        .corrupted-line {
+            background: #330000;
+            color: #ff9999;
+            border-left: 3px solid #ff0000;
+            padding-left: 10px;
+            margin: 2px 0;
+        }
+
+        .event-item {
+            background: #111;
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px solid #333;
+            border-radius: 5px;
+        }
+
+        .event-title {
+            color: #00ffff;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .event-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .meta-item {
+            font-size: 11px;
+        }
+
+        .meta-label {
+            color: #ffff00;
+        }
+
+        .meta-value {
+            color: #cccccc;
+        }
+
+        .glitch {
+            animation: glitch 3s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 98% { transform: translate(0); }
+            1% { transform: translate(-1px, 1px); }
+            2% { transform: translate(1px, -1px); }
+            3% { transform: translate(-1px, -1px); }
+        }
+
+        .loading-bar {
+            width: 100%;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #ffff00, #00ff00);
+            width: 0%;
+            animation: loading 8s infinite;
+        }
+
+        @keyframes loading {
+            0% { width: 0%; }
+            50% { width: 100%; }
+            100% { width: 0%; }
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: blink 1s infinite;
+        }
+
+        .status-active {
+            background: #00ff00;
+        }
+
+        .status-error {
+            background: #ff0000;
+        }
+
+        .status-warning {
+            background: #ffff00;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal-header">
+        <div class="compatibility-banner">
+            🔧 COMPATIBLE WITH EVENTS MODIFIED SYSTEM V4002 🔧
+        </div>
+        
+        <div class="system-info">
+            <div class="info-item">
+                <div class="info-label">SYSTEM STATUS:</div>
+                <div class="info-value">
+                    <span class="status-indicator status-active"></span>OPERATIONAL
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">XML VERSION:</div>
+                <div class="info-value">1.2 <span class="broken-data">(CORRUPTED)</span></div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">EVENTS LOADED:</div>
+                <div class="info-value glitch">136,334 <span class="broken-data">ENTRIES</span></div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">DATABASE:</div>
+                <div class="info-value">
+                    <span class="status-indicator status-warning"></span>PARTIAL <span class="broken-data">SYNC ERROR</span>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">LAST SYNC:</div>
+                <div class="info-value broken-data">2025-08-05 16:33 GMT</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">INTEGRITY:</div>
+                <div class="info-value">
+                    <span class="status-indicator status-error"></span>COMPROMISED
+                </div>
+            </div>
+        </div>
+
+        <div class="loading-bar">
+            <div class="loading-progress"></div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div id="xmlContent"></div>
+    </div>
+
+    <script>
+        // Simulação de dados XML corrompidos
+        const xmlData = `<?xml version="1.0" encoding="UTF-8" ?>
+<!-- WordPress eXtended RSS - MODIFIED SYSTEM V4002 -->
+<!-- WARNING: DATA INTEGRITY COMPROMISED -->
+
+<rss version="2.0" xmlns:wp="http://wordpress.org/export/1.2/">
+<channel>
+    <title><![CDATA[Canal Arte1 - SYSTEM V4002]]></title>
+    <link>https://canalarte1.uol.com.br</link>
+    <description>Onde a arte encontra você</description>
+    <language>pt-BR</language>
+    <wp:base_site_url>https://canalarte1.uol.com.br</wp:base_site_url>
+    
+    <!-- CORRUPTED AUTHOR DATA -->
+    <wp:author>
+        <wp:author_id>3</wp:author_id>
+        <wp:author_login><![CDATA[redacao]]></wp:author_login>
+        <wp:author_email><![CDATA[bruno@zynt.com.br]]></wp:author_email>
+        <wp:author_display_name><![CDATA[###CORRUPTED###]]></wp:author_display_name>
+    </wp:author>
+    
+    <!-- EVENT ENTRY 1 - MODIFIED -->
+    <item>
+        <title><![CDATA[Viola Avançada - SYSTEM ERROR]]></title>
+        <link>https://canalarte1.uol.com.br/evento/viola-avancada/</link>
+        <pubDate>Thu, 22 Aug 2024 15:14:56 +0000</pubDate>
+        <wp:post_id>753</wp:post_id>
+        <wp:post_type><![CDATA[tribe_events]]></wp:post_type>
+        
+        <!-- CORRUPTED METADATA -->
+        <wp:postmeta>
+            <wp:meta_key><![CDATA[_EventStartDate]]></wp:meta_key>
+            <wp:meta_value><![CDATA[2024-08-23 19:00:00]]></wp:meta_value>
+        </wp:postmeta>
+        <wp:postmeta>
+            <wp:meta_key><![CDATA[_system_v4002_flag]]></wp:meta_key>
+            <wp:meta_value><![CDATA[MODIFIED]]></wp:meta_value>
+        </wp:postmeta>
+    </item>
+    
+    <!-- BROKEN DATA ENTRY -->
+    <item class="corrupted">
+        <title><![CDATA[%%ERROR%% - Data corruption detected]]></title>
+        <wp:post_id>###NULL###</wp:post_id>
+        <content:encoded><![CDATA[
+            SYSTEM MESSAGE: This entry contains corrupted data
+            Original content has been modified by Events System V4002
+            Integrity check: FAILED
+        ]]></content:encoded>
+    </item>
+    
+</channel>
+</rss>`;
+
+        function displayXML() {
+            const container = document.getElementById('xmlContent');
+            
+            // Criar visualização de eventos
+            const events = [
+                {
+                    title: "Viola Avançada [MODIFIED]",
+                    id: "753",
+                    date: "2024-08-23 19:00:00",
+                    status: "CORRUPTED",
+                    director: "Mário de Almeida",
+                    country: "Brasil"
+                },
+                {
+                    title: "Figuras da dança - Maria Pia Finócchio",
+                    id: "760",
+                    date: "2024-08-27 ###ERROR###",
+                    status: "PARTIAL",
+                    director: "Inês Bogéa [BROKEN]",
+                    country: "Brasil"
+                },
+                {
+                    title: "###SYSTEM_ERROR### - Data Recovery Failed",
+                    id: "NULL",
+                    date: "TIMESTAMP_CORRUPTED",
+                    status: "FAILED",
+                    director: "UNKNOWN",
+                    country: "N/A"
+                }
+            ];
+
+            let html = '<div class="xml-viewer">';
+            
+            // Cabeçalho XML
+            html += '<div class="corrupted-line">// WARNING: MODIFIED XML STRUCTURE DETECTED</div>';
+            html += '<div class="corrupted-line">// EVENTS SYSTEM V4002 MODIFICATIONS ACTIVE</div>';
+            html += '<div class="corrupted-line">// INTEGRITY STATUS: COMPROMISED</div><br>';
+            
+            html += '<span class="xml-tag">&lt;?xml</span> <span class="xml-attr">version=</span><span class="xml-value">"1.0"</span> <span class="xml-attr">encoding=</span><span class="xml-value">"UTF-8"</span><span class="xml-tag">?&gt;</span><br>';
+            html += '<span class="xml-tag">&lt;rss</span> <span class="xml-attr">version=</span><span class="xml-value">"2.0"</span><span class="xml-tag">&gt;</span><br>';
+            html += '<span class="xml-tag">&lt;channel&gt;</span><br>';
+            html += '  <span class="xml-tag">&lt;title&gt;</span><span class="xml-cdata">Canal Arte1 - SYSTEM V4002</span><span class="xml-tag">&lt;/title&gt;</span><br>';
+            html += '  <span class="xml-tag">&lt;description&gt;</span><span class="xml-cdata">Onde a arte encontra você</span><span class="xml-tag">&lt;/description&gt;</span><br><br>';
+            
+            html += '</div>';
+
+            // Adicionar eventos processados
+            events.forEach((event, index) => {
+                const statusClass = event.status === 'CORRUPTED' ? 'status-error' : 
+                                  event.status === 'PARTIAL' ? 'status-warning' : 'status-error';
+                
+                html += `<div class="event-item ${event.status === 'FAILED' ? 'glitch' : ''}">`;
+                html += `<div class="event-title">${event.title}</div>`;
+                html += `<div class="event-meta">`;
+                html += `  <div class="meta-item"><span class="meta-label">ID:</span> <span class="meta-value">${event.id}</span></div>`;
+                html += `  <div class="meta-item"><span class="meta-label">Date:</span> <span class="meta-value ${event.date.includes('ERROR') ? 'broken-data' : ''}">${event.date}</span></div>`;
+                html += `  <div class="meta-item"><span class="meta-label">Status:</span> <span class="status-indicator ${statusClass}"></span><span class="meta-value">${event.status}</span></div>`;
+                html += `  <div class="meta-item"><span class="meta-label">Director:</span> <span class="meta-value ${event.director.includes('BROKEN') ? 'broken-data' : ''}">${event.director}</span></div>`;
+                html += `  <div class="meta-item"><span class="meta-label">Country:</span> <span class="meta-value">${event.country}</span></div>`;
+                html += `  <div class="meta-item"><span class="meta-label">V4002 Flag:</span> <span class="meta-value broken-data">MODIFIED</span></div>`;
+                html += `</div>`;
+                html += `</div>`;
+            });
+
+            // Adicionar dados corrompidos simulados
+            html += '<div class="xml-viewer">';
+            html += '<div class="corrupted-line">// CRITICAL: Multiple data corruption instances detected</div>';
+            html += '<div class="corrupted-line">// System attempting automatic recovery...</div>';
+            html += '<div class="corrupted-line">// Recovery status: FAILED - Manual intervention required</div>';
+            html += '<br><span class="xml-tag">&lt;/channel&gt;</span><br>';
+            html += '<span class="xml-tag">&lt;/rss&gt;</span>';
+            html += '</div>';
+
+            container.innerHTML = html;
+        }
+
+        // Efeito de carregamento
+        window.addEventListener('load', function() {
+            setTimeout(displayXML, 2000);
+        });
+
+        // Adicionar efeitos de glitch periódicos
+        setInterval(() => {
+            const glitchElements = document.querySelectorAll('.glitch');
+            glitchElements.forEach(el => {
+                if (Math.random() > 0.7) {
+                    el.style.transform = `translate(${Math.random() * 4 - 2}px, ${Math.random() * 4 - 2}px)`;
+                    setTimeout(() => {
+                        el.style.transform = 'translate(0, 0)';
+                    }, 100);
+                }
+            });
+        }, 3000);
+    </script>
+</body>
+</html>

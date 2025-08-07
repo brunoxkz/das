@@ -1,0 +1,556 @@
+/* Estilos para a extensão Vendzz WhatsApp Automation v2.0 */
+
+.vendzz-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 320px;
+  height: 100vh;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  border-left: 2px solid #00ff88;
+  box-shadow: -4px 0 20px rgba(0, 255, 136, 0.1);
+  z-index: 999999;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #ffffff;
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+}
+
+.vendzz-sidebar.minimized {
+  transform: translateX(280px);
+}
+
+.vendzz-sidebar.minimized .vendzz-content {
+  display: none;
+}
+
+.vendzz-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(0, 255, 136, 0.1);
+  border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.vendzz-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vendzz-icon {
+  font-size: 20px;
+}
+
+.vendzz-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #00ff88;
+}
+
+.vendzz-btn-icon {
+  background: rgba(0, 255, 136, 0.2);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 4px;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 8px;
+  transition: all 0.2s ease;
+}
+
+.vendzz-btn-icon:hover {
+  background: rgba(0, 255, 136, 0.3);
+}
+
+.vendzz-content {
+  padding: 16px;
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+}
+
+.vendzz-section {
+  margin-bottom: 20px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vendzz-section h3 {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #00ff88;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vendzz-config {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vendzz-input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 12px;
+  padding: 8px 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.vendzz-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.vendzz-input:focus {
+  outline: none;
+  border-color: #00ff88;
+  box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
+}
+
+.vendzz-btn {
+  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+  border: none;
+  border-radius: 4px;
+  color: #000000;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 12px;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+.vendzz-btn:hover {
+  background: linear-gradient(135deg, #00cc6a 0%, #00ff88 100%);
+  transform: translateY(-1px);
+}
+
+.vendzz-btn-small {
+  background: rgba(0, 255, 136, 0.2);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 4px;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 6px 8px;
+  transition: all 0.2s ease;
+}
+
+.vendzz-btn-small:hover {
+  background: rgba(0, 255, 136, 0.3);
+}
+
+.vendzz-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.vendzz-section-header h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #00ff88;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vendzz-file-selector {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.vendzz-select {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 12px;
+  padding: 6px 8px;
+  flex: 1;
+}
+
+.vendzz-select option {
+  background: #2d2d2d;
+  color: #ffffff;
+}
+
+.vendzz-contact-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.vendzz-contact-item {
+  padding: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.vendzz-contact-item:hover {
+  background: rgba(0, 255, 136, 0.05);
+  border-color: rgba(0, 255, 136, 0.2);
+}
+
+.vendzz-contact-item:last-child {
+  border-bottom: none;
+}
+
+.vendzz-contact-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.vendzz-contact-phone {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: #ffffff;
+  font-size: 13px;
+}
+
+.vendzz-contact-status {
+  font-size: 9px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  display: inline-block;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.vendzz-contact-status.completed {
+  background: rgba(0, 255, 136, 0.2);
+  color: #00ff88;
+  border: 1px solid rgba(0, 255, 136, 0.3);
+}
+
+.vendzz-contact-status.abandoned {
+  background: rgba(255, 165, 0, 0.2);
+  color: #ffa500;
+  border: 1px solid rgba(255, 165, 0, 0.3);
+}
+
+.vendzz-contact-details {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.4;
+}
+
+.vendzz-contact-details div {
+  margin-bottom: 3px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.vendzz-contact-details strong {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  min-width: 50px;
+}
+
+.vendzz-status {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vendzz-status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.vendzz-status-label {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.vendzz-status-value {
+  font-weight: 600;
+}
+
+.vendzz-status-value.connected {
+  color: #00ff88;
+}
+
+.vendzz-status-value.error {
+  color: #ff4444;
+}
+
+/* Mensagens rotativas anti-spam */
+.vendzz-message-rotation {
+  margin-top: 8px;
+}
+
+.vendzz-message-rotation .vendzz-textarea {
+  margin-bottom: 8px;
+  border-left: 3px solid #00d26a;
+  font-size: 12px;
+  min-height: 60px;
+}
+
+.vendzz-message-rotation .vendzz-textarea:nth-child(1) { border-left-color: #00d26a; }
+.vendzz-message-rotation .vendzz-textarea:nth-child(2) { border-left-color: #0088ff; }
+.vendzz-message-rotation .vendzz-textarea:nth-child(3) { border-left-color: #ff6600; }
+.vendzz-message-rotation .vendzz-textarea:nth-child(4) { border-left-color: #9333ea; }
+
+/* Avisos anti-ban */
+.vendzz-anti-ban-warning {
+  background: linear-gradient(45deg, #ff4444, #ff6666);
+  color: white;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: bold;
+  margin: 10px 0;
+  text-align: center;
+  border: 1px solid #ff2222;
+}
+
+.vendzz-log {
+  max-height: 120px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vendzz-log-item {
+  padding: 4px 8px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-family: 'Courier New', monospace;
+}
+
+.vendzz-log-item:last-child {
+  border-bottom: none;
+}
+
+/* Responsividade */
+@media (max-width: 1200px) {
+  .vendzz-sidebar {
+    width: 280px;
+  }
+}
+
+@media (max-width: 900px) {
+  .vendzz-sidebar {
+    width: 260px;
+    font-size: 11px;
+  }
+  
+  .vendzz-content {
+    padding: 12px;
+  }
+  
+  .vendzz-section {
+    padding: 8px;
+  }
+}
+
+/* Scrollbar customizada */
+.vendzz-sidebar::-webkit-scrollbar,
+.vendzz-contact-list::-webkit-scrollbar,
+.vendzz-log::-webkit-scrollbar {
+  width: 6px;
+}
+
+.vendzz-sidebar::-webkit-scrollbar-track,
+.vendzz-contact-list::-webkit-scrollbar-track,
+.vendzz-log::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.vendzz-sidebar::-webkit-scrollbar-thumb,
+.vendzz-contact-list::-webkit-scrollbar-thumb,
+.vendzz-log::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 136, 0.3);
+  border-radius: 3px;
+}
+
+.vendzz-sidebar::-webkit-scrollbar-thumb:hover,
+.vendzz-contact-list::-webkit-scrollbar-thumb:hover,
+.vendzz-log::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 136, 0.5);
+}
+
+/* Estilos para automação de mensagens */
+.vendzz-automation-config {
+  margin-bottom: 16px;
+}
+
+.vendzz-config-group {
+  margin-bottom: 12px;
+}
+
+.vendzz-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #cccccc;
+}
+
+.vendzz-help {
+  display: block;
+  font-size: 10px;
+  color: #888888;
+  margin-top: 2px;
+}
+
+.vendzz-textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 11px;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.2s ease;
+}
+
+.vendzz-textarea:focus {
+  outline: none;
+  border-color: #00ff88;
+  background: rgba(0, 255, 136, 0.05);
+}
+
+.vendzz-textarea::placeholder {
+  color: #888888;
+}
+
+.vendzz-checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.vendzz-checkbox-label input[type="checkbox"] {
+  display: none;
+}
+
+.vendzz-checkmark {
+  width: 16px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+  margin-right: 8px;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.vendzz-checkbox-label input[type="checkbox"]:checked + .vendzz-checkmark {
+  background: #00ff88;
+  border-color: #00ff88;
+}
+
+.vendzz-checkbox-label input[type="checkbox"]:checked + .vendzz-checkmark::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #000000;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.vendzz-automation-controls {
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vendzz-btn-primary {
+  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+  color: #000000;
+  font-weight: 600;
+}
+
+.vendzz-btn-primary:hover {
+  background: linear-gradient(135deg, #00cc6a 0%, #00aa55 100%);
+  transform: translateY(-1px);
+}
+
+.vendzz-btn-danger {
+  background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.vendzz-btn-danger:hover {
+  background: linear-gradient(135deg, #ff3742 0%, #ff2635 100%);
+  transform: translateY(-1px);
+}
+
+.vendzz-automation-stats {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(0, 255, 136, 0.05);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 8px;
+}
+
+.vendzz-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.vendzz-stat-item {
+  text-align: center;
+}
+
+.vendzz-stat-number {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  color: #00ff88;
+  line-height: 1;
+}
+
+.vendzz-stat-label {
+  display: block;
+  font-size: 10px;
+  color: #cccccc;
+  margin-top: 2px;
+}
+
+/* Animações para status de automação */
+.vendzz-automation-running .vendzz-btn-text::before {
+  content: "🔄 ";
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

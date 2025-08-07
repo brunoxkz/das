@@ -1,0 +1,70 @@
+COMPARAÇÃO: Elementos de Peso e Altura - Antes vs Depois
+
+=== ANTES (Versão Simples) ===
+• Elementos básicos com input simples
+• Sem indicadores visuais
+• Sem alertas sobre sincronização IMC
+• Propriedades limitadas
+• Aparência padrão sem diferenciação
+
+[Peso Atual]
+- Input numérico básico
+- Apenas checkbox para IMC
+- Sem feedback visual
+
+[Peso Objetivo] 
+- Input numérico simples
+- Sem cálculo de diferença
+- Sem indicadores de progresso
+
+[Altura]
+- Input básico cm/m
+- Sem contexto sobre IMC
+- Aparência padrão
+
+=== DEPOIS (Versão Aprimorada) ===
+• Design visual distintivo com cores temáticas
+• Ícones específicos para cada elemento
+• Cards informativos com bordas e backgrounds
+• Alertas contextuais sobre sincronização
+• Propriedades expandidas e descritivas
+
+[Peso Atual - Azul] 🔵
+- Input estilizado com fonte maior
+- Indicador visual do IMC em círculo
+- Alerta informativo sobre sincronização
+- Propriedades expandidas com descrições
+- Ícone Scale e badge "Peso Atual"
+
+[Peso Objetivo - Laranja] 🟠
+- Input estilizado com ícone Target
+- Calculadora visual de diferença
+- Cards de progresso (diferença/%)
+- Alerta sobre dependência do peso atual
+- Badge "META" com ícone Target
+
+[Altura - Roxo] 🟣
+- Input melhorado com ícone ArrowUpDown
+- Indicador visual da unidade (CM/M)
+- Alerta sobre importância para IMC
+- Design consistente com outros elementos
+- Badge informativo sobre range
+
+=== MELHORIAS IMPLEMENTADAS ===
+✓ Ícones visuais distintos (Scale, Target, ArrowUpDown)
+✓ Esquema de cores diferenciado (azul, laranja, roxo)
+✓ Alertas informativos sobre sincronização IMC
+✓ Propriedades expandidas com descrições detalhadas
+✓ Design consistente com cards e bordas
+✓ Indicadores visuais de cálculo automático
+✓ Melhor experiência do usuário no editor
+✓ Feedback contextual sobre dependências entre elementos
+
+=== FUNCIONALIDADES ADICIONADAS ===
+• Sincronização automática entre altura e peso para IMC
+• Cálculo de diferença entre peso atual e objetivo
+• Alertas visuais quando elementos dependentes estão ausentes
+• Propriedades de descrição personalizável
+• Field IDs específicos para captura de leads
+• Design responsivo e acessível
+• Indicadores de range de valores válidos

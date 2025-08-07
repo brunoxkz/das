@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Completo - Notificações PWA</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid #22c55e;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            color: #22c55e;
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #888;
+            font-size: 1.2em;
+        }
+        .status-container {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid #22c55e;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .test-button {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .test-button:hover {
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            transform: translateY(-2px);
+        }
+        .test-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .log-container {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .log-success { color: #22c55e; }
+        .log-error { color: #ef4444; }
+        .log-warning { color: #f59e0b; }
+        .log-info { color: #3b82f6; }
+        .log-debug { color: #8b5cf6; }
+        .clear-button {
+            background: #ef4444;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .device-info {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid #3b82f6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .device-info h3 {
+            color: #3b82f6;
+            margin: 0 0 10px 0;
+        }
+        .permission-status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .status-granted { background: #22c55e; color: white; }
+        .status-denied { background: #ef4444; color: white; }
+        .status-default { background: #f59e0b; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🔔 VENDZZ</div>
+            <div class="subtitle">Sistema de Teste de Notificações PWA</div>
+        </div>
+
+        <div class="device-info">
+            <h3>📱 Informações do Dispositivo</h3>
+            <div id="deviceInfo">Carregando...</div>
+        </div>
+
+        <div class="status-container">
+            <h3>🔔 Status das Notificações</h3>
+            <div>
+                <strong>Suporte:</strong> <span id="notificationSupport">Verificando...</span><br>
+                <strong>Permissão:</strong> <span id="permissionStatus">Verificando...</span><br>
+                <strong>PWA Mode:</strong> <span id="pwaMode">Verificando...</span><br>
+                <strong>Service Worker:</strong> <span id="swStatus">Verificando...</span>
+            </div>
+        </div>
+
+        <div class="status-container">
+            <h3>🧪 Testes de Notificação</h3>
+            <button class="test-button" onclick="requestPermission()">📋 Solicitar Permissão</button>
+            <button class="test-button" onclick="sendTestNotification()">🔔 Enviar Teste</button>
+            <button class="test-button" onclick="sendWelcomeNotification()">👋 Notificação de Boas-Vindas</button>
+            <button class="test-button" onclick="testMultipleNotifications()">📢 Múltiplas Notificações</button>
+            <button class="test-button" onclick="testPersistentNotification()">📌 Notificação Persistente</button>
+            <button class="test-button" onclick="runFullTest()">🚀 Teste Completo</button>
+        </div>
+
+        <div class="status-container">
+            <h3>📊 Log de Debug</h3>
+            <button class="clear-button" onclick="clearLogs()">🗑️ Limpar Logs</button>
+            <div class="log-container" id="logContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        // Sistema de logs com cores
+        function addLog(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function clearLogs() {
+            document.getElementById('logContainer').innerHTML = '';
+            addLog('Logs limpos', 'info');
+        }
+
+        // Inicialização
+        window.addEventListener('load', () => {
+            addLog('🚀 Sistema de teste inicializado', 'success');
+            updateDeviceInfo();
+            updateNotificationStatus();
+            
+            // Registrar Service Worker se disponível
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(() => {
+                        addLog('✅ Service Worker registrado', 'success');
+                        updateNotificationStatus();
+                    })
+                    .catch(err => {
+                        addLog(`❌ Erro ao registrar Service Worker: ${err.message}`, 'error');
+                    });
+            }
+        });
+
+        function updateDeviceInfo() {
+            const deviceInfo = document.getElementById('deviceInfo');
+            const info = [
+                `<strong>User Agent:</strong> ${navigator.userAgent}`,
+                `<strong>Platform:</strong> ${navigator.platform}`,
+                `<strong>Linguagem:</strong> ${navigator.language}`,
+                `<strong>Cookies Habilitados:</strong> ${navigator.cookieEnabled ? 'Sim' : 'Não'}`,
+                `<strong>Online:</strong> ${navigator.onLine ? 'Sim' : 'Não'}`,
+                `<strong>Tela:</strong> ${screen.width}x${screen.height}`,
+                `<strong>Viewport:</strong> ${window.innerWidth}x${window.innerHeight}`
+            ];
+            deviceInfo.innerHTML = info.join('<br>');
+            
+            addLog(`📱 Dispositivo detectado: ${navigator.platform}`, 'info');
+            addLog(`📐 Resolução: ${screen.width}x${screen.height}`, 'debug');
+        }
+
+        function updateNotificationStatus() {
+            // Verificar suporte
+            const supportElement = document.getElementById('notificationSupport');
+            const permissionElement = document.getElementById('permissionStatus');
+            const pwaElement = document.getElementById('pwaMode');
+            const swElement = document.getElementById('swStatus');
+
+            if ('Notification' in window) {
+                supportElement.innerHTML = '<span style="color: #22c55e;">✅ Suportado</span>';
+                addLog('✅ Notificações são suportadas', 'success');
+            } else {
+                supportElement.innerHTML = '<span style="color: #ef4444;">❌ Não Suportado</span>';
+                addLog('❌ Notificações NÃO são suportadas', 'error');
+                return;
+            }
+
+            // Verificar permissão
+            const permission = Notification.permission;
+            let permissionClass = '';
+            let permissionIcon = '';
+            
+            switch(permission) {
+                case 'granted':
+                    permissionClass = 'status-granted';
+                    permissionIcon = '✅';
+                    addLog('✅ Permissão concedida', 'success');
+                    break;
+                case 'denied':
+                    permissionClass = 'status-denied';
+                    permissionIcon = '❌';
+                    addLog('❌ Permissão negada', 'error');
+                    break;
+                case 'default':
+                    permissionClass = 'status-default';
+                    permissionIcon = '⚠️';
+                    addLog('⚠️ Permissão pendente', 'warning');
+                    break;
+            }
+            
+            permissionElement.innerHTML = `<span class="permission-status ${permissionClass}">${permissionIcon} ${permission.toUpperCase()}</span>`;
+
+            // Verificar PWA mode
+            const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+            pwaElement.innerHTML = isPWA ? 
+                '<span style="color: #22c55e;">✅ PWA Ativo</span>' : 
+                '<span style="color: #f59e0b;">⚠️ Navegador</span>';
+            
+            addLog(`📱 Modo PWA: ${isPWA ? 'Ativo' : 'Inativo'}`, isPWA ? 'success' : 'warning');
+
+            // Verificar Service Worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.ready.then(() => {
+                    swElement.innerHTML = '<span style="color: #22c55e;">✅ Ativo</span>';
+                    addLog('✅ Service Worker ativo', 'success');
+                }).catch(() => {
+                    swElement.innerHTML = '<span style="color: #ef4444;">❌ Erro</span>';
+                    addLog('❌ Service Worker com erro', 'error');
+                });
+            } else {
+                swElement.innerHTML = '<span style="color: #ef4444;">❌ Não Suportado</span>';
+                addLog('❌ Service Worker não suportado', 'error');
+            }
+        }
+
+        async function requestPermission() {
+            addLog('🔔 Solicitando permissão de notificação...', 'info');
+            
+            if (!('Notification' in window)) {
+                addLog('❌ Notificações não suportadas', 'error');
+                return;
+            }
+
+            if (Notification.permission === 'granted') {
+                addLog('✅ Permissão já concedida', 'success');
+                return;
+            }
+
+            try {
+                let permission;
+                
+                addLog(`🔧 Método requestPermission: ${typeof Notification.requestPermission}`, 'debug');
+                addLog(`🔧 Length: ${Notification.requestPermission.length}`, 'debug');
+                
+                if (Notification.requestPermission.length) {
+                    // Método callback (iOS)
+                    addLog('📱 Usando método callback (iOS)', 'debug');
+                    permission = await new Promise((resolve) => {
+                        Notification.requestPermission((result) => {
+                            addLog(`📱 Callback result: ${result}`, 'debug');
+                            resolve(result);
+                        });
+                    });
+                } else {
+                    // Método Promise (navegadores modernos)
+                    addLog('🖥️ Usando método Promise (moderno)', 'debug');
+                    permission = await Notification.requestPermission();
+                }
+
+                addLog(`🔔 Resultado da permissão: ${permission}`, 'info');
+
+                if (permission === 'granted') {
+                    addLog('✅ Permissão concedida com sucesso!', 'success');
+                } else if (permission === 'denied') {
+                    addLog('❌ Permissão negada pelo usuário', 'error');
+                } else {
+                    addLog('⚠️ Permissão não definida', 'warning');
+                }
+
+                updateNotificationStatus();
+            } catch (error) {
+                addLog(`❌ Erro ao solicitar permissão: ${error.message}`, 'error');
+                addLog(`❌ Stack: ${error.stack}`, 'debug');
+            }
+        }
+
+        function sendTestNotification() {
+            addLog('🧪 Enviando notificação de teste...', 'info');
+            
+            if (Notification.permission !== 'granted') {
+                addLog('❌ Permissão não concedida', 'error');
+                return;
+            }
+
+            try {
+                const notification = new Notification('🧪 Teste Vendzz', {
+                    body: 'Esta é uma notificação de teste do sistema Vendzz.',
+                    icon: '/vendzz-logo-official.png',
+                    badge: '/vendzz-logo-official.png',
+                    tag: 'test',
+                    requireInteraction: false
+                });
+
+                notification.onclick = () => {
+                    addLog('👆 Notificação clicada', 'info');
+                    notification.close();
+                };
+
+                notification.onshow = () => {
+                    addLog('✅ Notificação exibida', 'success');
+                };
+
+                notification.onerror = (error) => {
+                    addLog(`❌ Erro na notificação: ${error}`, 'error');
+                };
+
+                // Fechar após 5 segundos
+                setTimeout(() => {
+                    notification.close();
+                    addLog('🔕 Notificação fechada automaticamente', 'info');
+                }, 5000);
+
+            } catch (error) {
+                addLog(`❌ Erro ao criar notificação: ${error.message}`, 'error');
+            }
+        }
+
+        function sendWelcomeNotification() {
+            addLog('👋 Enviando notificação de boas-vindas...', 'info');
+            
+            if (Notification.permission !== 'granted') {
+                addLog('❌ Permissão não concedida', 'error');
+                return;
+            }
+
+            try {
+                const notification = new Notification('👋 Vendzz - Bem-vindo!', {
+                    body: 'Notificações ativadas com sucesso. Você receberá updates importantes.',
+                    icon: '/vendzz-logo-official.png',
+                    badge: '/vendzz-logo-official.png',
+                    tag: 'welcome',
+                    requireInteraction: false,
+                    actions: [
+                        { action: 'view', title: 'Ver Dashboard' },
+                        { action: 'dismiss', title: 'Dispensar' }
+                    ]
+                });
+
+                notification.onclick = () => {
+                    addLog('👆 Notificação de boas-vindas clicada', 'info');
+                    notification.close();
+                };
+
+                addLog('✅ Notificação de boas-vindas enviada', 'success');
+
+            } catch (error) {
+                addLog(`❌ Erro ao criar notificação de boas-vindas: ${error.message}`, 'error');
+            }
+        }
+
+        function testMultipleNotifications() {
+            addLog('📢 Testando múltiplas notificações...', 'info');
+            
+            if (Notification.permission !== 'granted') {
+                addLog('❌ Permissão não concedida', 'error');
+                return;
+            }
+
+            const notifications = [
+                { title: '📊 Nova campanha criada', body: 'Sua campanha SMS foi criada com sucesso.' },
+                { title: '📈 Relatório disponível', body: 'Relatório mensal de conversões pronto.' },
+                { title: '🎯 Meta atingida', body: 'Parabéns! Você atingiu 100 leads hoje.' }
+            ];
+
+            notifications.forEach((notif, index) => {
+                setTimeout(() => {
+                    try {
+                        const notification = new Notification(notif.title, {
+                            body: notif.body,
+                            icon: '/vendzz-logo-official.png',
+                            tag: `multi-${index}`
+                        });
+                        
+                        addLog(`✅ Notificação ${index + 1}/3 enviada`, 'success');
+                    } catch (error) {
+                        addLog(`❌ Erro na notificação ${index + 1}: ${error.message}`, 'error');
+                    }
+                }, index * 2000);
+            });
+        }
+
+        function testPersistentNotification() {
+            addLog('📌 Testando notificação persistente...', 'info');
+            
+            if (Notification.permission !== 'granted') {
+                addLog('❌ Permissão não concedida', 'error');
+                return;
+            }
+
+            try {
+                const notification = new Notification('📌 Notificação Persistente', {
+                    body: 'Esta notificação não será fechada automaticamente.',
+                    icon: '/vendzz-logo-official.png',
+                    tag: 'persistent',
+                    requireInteraction: true,
+                    actions: [
+                        { action: 'close', title: 'Fechar' },
+                        { action: 'snooze', title: 'Adiar' }
+                    ]
+                });
+
+                notification.onclick = () => {
+                    addLog('👆 Notificação persistente clicada', 'info');
+                };
+
+                addLog('✅ Notificação persistente criada', 'success');
+
+            } catch (error) {
+                addLog(`❌ Erro ao criar notificação persistente: ${error.message}`, 'error');
+            }
+        }
+
+        async function runFullTest() {
+            addLog('🚀 Iniciando teste completo...', 'info');
+            clearLogs();
+            
+            // Atualizar status
+            updateNotificationStatus();
+            
+            // Solicitar permissão se necessário
+            if (Notification.permission === 'default') {
+                await requestPermission();
+            }
+            
+            if (Notification.permission === 'granted') {
+                addLog('✅ Permissão OK - Executando testes...', 'success');
+                
+                // Teste básico
+                setTimeout(() => sendTestNotification(), 1000);
+                
+                // Teste de boas-vindas
+                setTimeout(() => sendWelcomeNotification(), 3000);
+                
+                // Múltiplas notificações
+                setTimeout(() => testMultipleNotifications(), 6000);
+                
+                addLog('🎉 Teste completo agendado', 'success');
+            } else {
+                addLog('❌ Não é possível executar teste completo sem permissão', 'error');
+            }
+        }
+
+        // Monitorar mudanças de permissão
+        if ('permissions' in navigator) {
+            navigator.permissions.query({name: 'notifications'}).then((permission) => {
+                permission.addEventListener('change', () => {
+                    addLog(`🔄 Permissão alterada para: ${permission.state}`, 'info');
+                    updateNotificationStatus();
+                });
+            });
+        }
+
+        // Monitorar visibilidade da página
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                addLog('👀 Página ficou visível', 'debug');
+                updateNotificationStatus();
+            } else {
+                addLog('🙈 Página ficou oculta', 'debug');
+            }
+        });
+
+        // Adicionar log inicial
+        addLog('🔔 Sistema de teste de notificações carregado', 'success');
+    </script>
+</body>
+</html>

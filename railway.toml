@@ -1,0 +1,19 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "npm run start"
+healthcheckPath = "/"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+
+[environments.production]
+DATABASE_URL = { $generate = "postgresql" }
+NODE_ENV = "production"
+PORT = { $generate = "port" }
+
+[environments.production.variables]
+# Variáveis que serão configuradas via CLI
+# STRIPE_SECRET_KEY = ""
+# VITE_STRIPE_PUBLIC_KEY = ""
+# OPENAI_API_KEY = ""

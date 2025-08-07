@@ -1,0 +1,69 @@
+O exemplo que você quer é esse fluxo:
+
+🔹 Cobra R$1 imediatamente
+🔹 Salva o cartão
+🔹 Cria assinatura com trial de 3 dias
+🔹 Cobra R$29,90/mês automaticamente após o trial
+
+Isso não existe pronto em um único repositório oficial, mas é exatamente o que a Stripe recomenda montar combinando três recursos:
+
+invoice_items para o R$1
+
+payment_method salvo
+
+subscription com trial_period_days
+
+✅ Exemplo funcional que você pode usar como base:
+🔗 GitHub oficial da Stripe: subscription-use-cases
+📍 https://github.com/stripe-samples/subscription-use-cases
+
+Esse repositório tem tudo o que você precisa — mas espalhado em partes.
+Você vai usar o exemplo one-time-and-subscription dentro dele.
+
+Diretório exato:
+bash
+Copiar
+Editar
+subscription-use-cases/one-time-and-subscription/server/node/
+📎 Link direto:
+👉 https://github.com/stripe-samples/subscription-use-cases/tree/main/one-time-and-subscription/server/node
+
+📂 O que esse exemplo cobre:
+Etapa	Presente?	Arquivo
+Cobrança de valor avulso (R$1)	✅	create-invoice-item.js ou dentro do fluxo principal
+Criação de customer + cartão salvo	✅	stripe.customers.create + setupIntent
+Assinatura com trial (R$29/mês)	✅	stripe.subscriptions.create()
+Uso de Stripe Elements (frontend)	✅	/client com campo de cartão
+
+✅ O que você precisa adaptar:
+1. Criar item avulso de R$1:
+js
+Copiar
+Editar
+await stripe.invoiceItems.create({
+  customer: customerId,
+  amount: 100, // R$1 em centavos
+  currency: 'brl',
+  description: 'Cobrança de ativação',
+});
+2. Criar assinatura com trial de 3 dias:
+js
+Copiar
+Editar
+await stripe.subscriptions.create({
+  customer: customerId,
+  items: [{ price: 'price_29_mensal_id' }],
+  trial_period_days: 3,
+  default_payment_method: paymentMethodId,
+});
+✅ Estrutura do repositório:
+pgsql
+Copiar
+Editar
+subscription-use-cases/
+├── one-time-and-subscription/
+│   ├── client/               → HTML com Stripe Elements
+│   └── server/node/          → Express backend
+│       ├── .env
+│       ├── server.js         → Toda a lógica Stripe
+│       └── package.json

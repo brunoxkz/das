@@ -1,0 +1,216 @@
+Usar períodos de avaliação em assinaturas
+Adie os pagamentos em assinaturas ativas usando períodos de avaliação.
+Pergunte sobre esta página
+Cópia para LLM
+
+Exibir como markdown
+Você pode iniciar a assinatura do cliente com um período de avaliação gratuita informando o argumento trial_end ao criar a assinatura:
+
+Command Line
+Selecione um idioma
+
+
+
+
+curl https://api.stripe.com/v1/subscriptions \
+  -u "sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA:" \
+  -d customer={{CUSTOMER_ID}} \
+  -d "items[0][price]"={{PRICE_ID}} \
+  -d trial_end=1610403705
+O parâmetro trial_end aceita um carimbo de data e hora indicando o momento exato do término da avaliação. Ao criar uma assinatura, você pode usar o parâmetro trial_period_days: um número inteiro que representa o número de dias de duração da avaliação, a partir do momento atual. O período de avaliação deve ser de 730 dias (2 anos) ou menos.
+
+Ao criar uma assinatura com um período de avaliação, você não precisa adicionar uma forma de pagamento. Uma fatura imediata ainda é criada, mas o valor é 0 e as descrições das linhas da fatura incluem os termos"Avaliação gratuita".
+
+Avaliações durante a assinatura
+Normalmente, os períodos de avaliação são aplicados no início da assinatura, mas também é possível usar um período de avaliação em uma assinatura existente para alterar seu ciclo de faturamento.
+
+Quando a avaliação termina, se o status da assinatura não for paused, geramos uma fatura e enviamos uma notificação de evento invoice.created. Aproximadamente 1 hora depois, tentamos cobrar essa fatura. Um novo ciclo de faturamento também começa para o cliente quando a avaliação termina.
+
+Para encerrar antecipadamente uma avaliação, chame a API de atualização de assinatura e defina o valor trial_end como um novo carimbo de data e hora ou now para encerrar imediatamente a fatura:
+
+Command Line
+Selecione um idioma
+
+
+
+
+curl https://api.stripe.com/v1/subscriptions/{{SUBSCRIPTION_ID}} \
+  -u "sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA:" \
+  -d trial_end=now
+Avaliações com cobrança por uso
+Você pode usar períodos de avaliação para assinaturas com cobrança por uso. Durante o período de avaliação, o uso acumulado não é considerado no total cobrado do cliente no final do ciclo de cobrança. Após o término do período de avaliação, o uso é acumulado e cobrado no final do próximo ciclo de cobrança.
+
+Verifique se a integração monitora e gerencia adequadamente eventos de webhook relacionados a alterações no status de avaliações. Alguns dias antes do término da avaliação e da mudança da assinatura de trialing para active, você recebe um evento customer.subscription.trial_will_end. Quando você receber esse evento, verifique se você tem uma forma de pagamento na conta do cliente para cobrá-lo. Opcionalmente, notifique o cliente com antecedência sobre a próxima cobrança.
+
+Combinar avaliações com a âncora de ciclo de faturamento
+A partir da API versão 2018-02-05, também é possível combinar avaliações com billing_cycle_anchor para obter um período gratuito, seguido por um período proporcional que leva a um ciclo de faturamento fixo.
+
+Por exemplo: hoje é dia 15 e você quer oferecer ao cliente uma avaliação gratuita de 7 dias (até o dia 22) para iniciar o faturamento normal no dia 1º. Use a API para combinar avaliações com billing_cycle_anchor (no momento, esse recurso não está disponível no Dashboard).
+
+Neste exemplo, o cliente recebe uma fatura de um valor proporcional no dia 22 (para o período até o dia 1º). No dia 1º, o valor total é faturado novamente, depois no dia 1º do mês seguinte e assim por diante.
+
+Command Line
+Selecione um idioma
+
+
+
+
+curl https://api.stripe.com/v1/subscriptions \
+  -u "sk_test_51RjvV9HK6al3veW1FPD5bTV1on2NQLlm9ud45AJDggFHdsGA9UAo5jfbSRvWF83W3uTp5cpZYa8tJBvm4ttefrk800mUs47pFA:" \
+  -d customer={{CUSTOMER_ID}} \
+  -d "items[0][price]"={{PRICE_ID}} \
+  -d trial_end=1610403705 \
+  -d billing_cycle_anchor=1611008505
+Cobrança por uso com assinaturas suspensas
+Você pode enviar eventos de medição associados a um preço em uma assinatura mesmo quando ela estiver suspensa. No entanto, após o reinício da assinatura, a fatura não incluirá nenhum evento de medição enviado durante o estado de suspensão. As faturas futuras só incluem eventos do consumo que ocorrerem após a data de reinício. Se você usa registros de uso herdados, não é possível criar registros de uso enquanto uma assinatura estiver suspensa.
+
+Adicionar uma nova avaliação a uma assinatura anteriormente em uma avaliação
+Você pode adicionar uma nova avaliação a uma assinatura que não esteja em período de avaliação atualizando a assinatura especificando trial_end ou atualizando o cronograma de assinatura associado. Você precisa especificar phases.trial_end para assinaturas.
+
+Para a maioria das assinaturas que entram em uma nova avaliação após o término de uma avaliação anterior, o campo trial_start permanece definido para o início da primeira avaliação. A partir da versão API 2025-04-30, para assinaturas com billing_mode definido como flexible, trial_start reflete o início da avaliação mais recente.
+
+Atualizar uma assinatura em uma avaliação
+Normalmente, é possível atualizar assinaturas em uma avaliação. Quando itens são adicionados a uma assinatura billing_mode=flexible ou billing_mode=classic em uma avaliação, uma fatura é gerada para esses itens com um valor de 0. Para billing_mode=classic, a fatura de 0 valor pode incluir itens que foram faturados anteriormente.
+
+Combinar avaliações com add_invoice_items
+Os períodos de avaliação de assinaturas podem ser combinados com preços avulsos e add_invoice_items. Isso pode acontecer quando você quer cobrar uma tarifa ou valor adicional avulso no início da avaliação. Nesse caso, uma fatura será gerada imediatamente com o valor do item avulso no início da avaliação.
+
+Requisitos de conformidade para avaliações e promoções
+Você deve cumprir os requisitos das bandeiras de cartão quando oferece avaliações (gratuitas ou não). Isso inclui cenários como avaliações gratuitas ou cobrança de preço reduzido nos primeiros meses para depois cobrar automaticamente as tarifas normais. Quando usa nossos recursos de avaliação, você pode ativar configurações de mensagens no Stripe Dashboard como ajuda para cumprir os requisitos.
+
+Quando você avisa os usuários sobre pagamentos bem-sucedidos, a Stripe exibe automaticamente nessas notificações informações sobre a avaliação e o URL de cancelamento.
+
+Se você não usar essas configurações, continuará responsável pelo cumprimento dos requisitos.
+
+Quando os e-mails para clientes estão ativados, é enviado um lembrete sete dias antes do término da avaliação. Se a avaliação durar menos de sete dias, esse e-mail será enviado assim que a avaliação começar. Se as avaliações forem renovadas, esse e-mail será enviado a cada renovação.
+
+Quando os lembretes de avaliação e de renovação de assinatura estão ativados durante a avaliação, os clientes recebem apenas o lembrete de término da avaliação. Os e-mails de renovação são enviados nos períodos de faturamento subsequentes.
+
+O link da política de cancelamento é um URL exibido nos recibos dos clientes juntamente com outras informações da avaliação. Essas informações são incluídas em todos os pagamentos com cartão. O URL de cancelamento também é incluído no e-mail de lembrete enviado aos clientes sete dias antes do final da avaliação.
+
+Nas descrições no extrato definidas manualmente na fatura, o texto da avaliação não é incluído e você precisa acrescentá-lo. Se você usar as descrições no extrato dos produtos, o texto da avaliação será acrescentado automaticamente. Se a descrição no extrato tiver mais de 10 caracteres, verifique se ela continua fazendo sentido para os clientes com o acréscimo do texto da avaliação. Há um limite de 22 caracteres. Isso significa que qualquer texto após o 10º caractere é substituído por * TERM.AVAL..
+
+Se você não definir manualmente a descrição no extrato ou usar as descrições no extrato dos produtos, o texto da avaliação será acrescentado à descrição no extrato da sua conta. Se necessário, você pode configurar uma descrição resumida para garantir a exibição correta do texto da avaliação.
+
+Cumprir requisitos sem usar os recursos da Stripe
+Mesmo que você ofereça avaliações ou promoções sem usar nossos recursos de avaliação, continua responsável pelo cumprimento dos requisitos. Você pode escutar o evento invoice.upcoming para determinar quando enviar notificações por e-mail. Para adicionar texto a uma descrição no extrato indicando que a promoção acabou:
+
+Escute o evento customer.subscription.updated
+Verifique se uma avaliação ou promoção terminou
+Atualize a descrição no extrato em latest_invoice da assinatura
+Você precisa atualizar a fatura mais recente até uma hora após sua criação, enquanto ela ainda está no status de rascunho.
+
+Criar avaliações gratuitas sem coletar forma de pagamento
+Dica de segurança
+Iniciar uma avaliação gratuita sem uma forma de pagamento permite que os clientes em potencial experimentem seu produto ou serviço mais rápido, mas também pode permitir que emissores de spam criem muitos clientes, usos e assinaturas falsos. Recomendamos que você considere cuidadosamente o fluxo de inscrição aqui para facilitar o uso pelos clientes reais e dificultar os abusos por bots de spam – por exemplo, exigindo que os clientes criem uma conta de usuário e preencham um captcha antes de iniciar a assinatura de teste gratuita.
+
+Você pode inscrever clientes em uma avaliação gratuita de uma assinatura sem coletar os dados de pagamento no Dashboard, na API e no Checkout. Quando você cria a assinatura, pode especificar se deseja cancelar ou suspender a assinatura se o cliente não tiver fornecido uma forma de pagamento durante o período de avaliação. Para cancelar ou pausar a assinatura, defina o parâmetro trial_settings.end_behavior.missing_payment_method ao criar ou atualizar a assinatura:
+
+Cancelar assinatura - Se a assinatura de avaliação gratuita terminar sem uma forma de pagamento, será cancelada imediatamente. Você pode criar outra assinatura se o cliente decidir assinar um plano pago no futuro. Defina missing_payment_method=cancel para cancelar a assinatura quando chegar ao final de uma avaliação sem uma forma de pagamento disponível.
+Suspender assinatura – se a assinatura de avaliação gratuita terminar sem uma forma de pagamento, ela é suspensa e não reinicia o ciclo até ser retomada. Quando uma assinatura é suspensa, ela não gera faturas (ao contrário de quando a cobrança de pagamentos de uma assinatura é suspensa). Quando seu cliente adiciona a forma de pagamento após a suspensão da assinatura, você pode retomar a mesma assinatura. A assinatura pode permanecer suspensa indefinidamente. Defina missing_payment_method=pause para suspender a assinatura quando ela atingir o final de uma avaliação sem uma forma de pagamento disponível.
+Como opção, defina missing_payment_method=create_invoice como emitir uma fatura ao final da avaliação se nenhuma forma de pagamento estiver presente. Se uma forma de pagamento não for informada quando a fatura for finalizada, a assinatura será movida para past_due.
+
+Crie e-mails de lembrete para coletar os dados de pagamento do cliente nas configurações de mensagem do teste gratuito.
+
+Configure avaliações gratuitas sem formas de pagamento para cancelar
+Use o Dashboard, a API ou o Checkout para criar avaliações gratuitas de uma assinatura sem coletar dados de pagamento dos clientes e para configurar o cancelamento da assinatura se a avaliação terminar sem uma forma de pagamento.
+
+
+Dashboard
+
+API
+
+Checkout
+Você pode usar o Dashboard para registrar clientes para uma avaliação gratuita de uma assinatura sem coletar os dados de pagamento:
+
+Nas configurações de assinatura do Dashboard, selecione +Criar assinatura.
+Após adicionar dados do seu cliente e do produto, selecione +Adicionar avaliação gratuita, em seguida, insira a duração da avaliação gratuita.
+Selecione a opção Suspender ou cancelar se a avaliação gratuita terminar sem uma forma de pagamento e selecione Cancelar imediatamente. Se estiver usando clocks de teste, avance até o final da avaliação. Você não verá uma próxima fatura para a assinatura.
+Ouça o evento customer.subscription.deleted, que informa quando uma assinatura é cancelada ao final das avaliações sem uma forma de pagamento.
+Se você informar uma forma de pagamento ou selecionar a opção Enviar fatura por e-mail ao cliente com link para a página de pagamento, a opção Suspender ou cancelar se a avaliação gratuita terminar sem uma forma de pagamento não ficará visível.
+
+Configure avaliações gratuitas sem formas de pagamento para suspender
+Use o Dashboard, a API ou o Checkout para criar avaliações gratuitas de uma assinatura sem coletar dados de pagamento dos clientes e para configurar sua assinatura para ser suspensa se a avaliação terminar sem uma forma de pagamento.
+
+
+Dashboard
+
+API
+
+Checkout
+Você pode usar o Dashboard para registrar clientes para uma avaliação gratuita de uma assinatura sem coletar os dados de pagamento:
+
+Nas configurações de assinatura do Dashboard, selecione +Criar assinatura.
+Após adicionar dados do seu cliente e do produto, selecione +Adicionar avaliação gratuita, em seguida, insira a duração da avaliação gratuita.
+Selecione a opção Suspender ou cancelar se a avaliação gratuita terminar sem uma forma de pagamento e selecione Suspender. Se estiver usando clocks de teste, avance para o final da avaliação. Você não verá uma próxima fatura para a assinatura.
+Ouça o evento customer.subscription.paused, que informa quando uma assinatura é suspensa no final das avaliações sem uma forma de pagamento.
+Se você informar uma forma de pagamento ou selecionar a opção Enviar fatura por e-mail ao cliente com link para a página de pagamento, a opção Suspender ou cancelar se a avaliação gratuita terminar sem uma forma de pagamento não ficará visível.
+
+Coletar dados de pagamento do cliente antes do fim da avaliação
+Configure sua assinatura para enviar automaticamente um e-mail de lembrete quando a avaliação do cliente estiver prestes a expirar. Você deverá cumprir os requisitos da bandeira de cartão quando a oferta da avaliação terminar. Saiba mais sobre requisitos para avaliações e promoções.
+
+Eventos
+Os eventos são acionados sempre que uma avaliação gratuita é alterada. Verifique se a integração gerencia adequadamente os eventos. Por exemplo, talvez você queira enviar um e-mail para um cliente antes do final de uma avaliação gratuita. Saiba mais sobre como gerenciar eventos de assinatura.
+
+A tabela a seguir descreve os eventos que são acionados antes do término de uma avaliação gratuita, quando uma assinatura de avaliação é suspensa ou cancelada e quando uma assinatura é reiniciada e se torna ativa.
+
+Evento	Descrição	Caso de uso
+customer.subscription.deleted	Enviado quando uma assinatura termina.	Pare de fornecer acesso ao seu produto em resposta a este evento. A assinatura muda para o status canceled e envia este evento quando uma avaliação gratuita termina sem forma de pagamento e se o comportamento final de missing_payment_method da assinatura estiver definido como cancel.
+customer.subscription.resumed	Enviado quando uma assinatura não está mais suspensa. Quando você receber esse evento, conceda ao cliente acesso ao produto se o acesso tiver sido revogado durante a suspensão da assinatura.	As assinaturas suspensas são convertidas em assinaturas ativas após serem retomadas. A retomada de uma assinatura pode gerar uma fatura e o Payment Intent correspondente que devem ser pagos antes que a assinatura saia do status paused.
+customer.subscription.paused	Enviado quando uma assinatura é totalmente suspensa. O faturamento também fica suspenso até o reinício da assinatura. Quando você recebe esse evento, pode revogar o acesso do cliente ao produto até que uma forma de pagamento seja adicionada e a assinatura seja reiniciada.	Pare de fornecer acesso ao seu produto em resposta a este evento. A assinatura muda para o status paused e envia este evento quando uma avaliação gratuita termina sem forma de pagamento e se o comportamento final de missing_payment_method da assinatura estiver definido como pause. A assinatura permanece paused até que seja explicitamente retomada.
+customer.subscription.trial_will_end	Este evento é enviado três dias antes do final do período de avaliação. O evento é acionado quando o período de avaliação é inferior a três dias.	Configure a assinatura para enviar automaticamente um e-mail ao seu cliente 3 dias antes do final do período de avaliação.
+Use o portal do cliente para coletar pagamentos
+Depois de criar uma assinatura para um cliente sem coletar uma forma de pagamento, redirecione-o para o portal do cliente do Billing para adicionar os dados de pagamento.
+
+Primeiro, configure o portal do cliente do Billing para permitir que os clientes gerenciem suas assinaturas.
+
+Em seguida, colete dados de cobrança dos seus clientes:
+
+Escute a customer.subscription.trial_will_end event.
+Se a assinatura não tiver uma forma de pagamento padrão, obtenha o e-mail do cliente usando a API Customers e envie uma mensagem com um link para o seu site. Também é útil inserir o ID do cliente no e-mail: https://example.com?...&customer={{CUSTOMER_ID}}.
+Quando o cliente entrar no seu site, crie uma sessão no portal do cliente usando o ID do cliente da etapa anterior.
+Redirecione o cliente para o portal do cliente, onde ele poderá atualizar a assinatura com os dados de pagamento.
+Permita que os clientes reativem suas assinaturas no portal do cliente
+Para habilitar a assinatura de um cliente cuja avaliação terminou em assinatura paused por meio do portal do cliente, habilite a avaliação gratuita sem o recurso de forma de pagamento quando criar uma assinatura no Dashboard.
+
+Enviar um e-mail de lembrete antes do fim da avaliação
+Para enviar um e-mail de lembrete antes do final da avaliação, selecione a opção Link para uma página hospedada pela Stripe na configuração de assinaturas e e-mails. O e-mail de lembrete contém um link para o cliente adicionar ou atualizar os dados de pagamento. Não enviamos e-mails de lembrete de avaliação gratuita em uma área restrita. Saiba mais sobre como configurar lembretes de avaliação gratuita.
+
+Use o evento customer.subscription.trial_will_end para enviar seus próprios e-mails hospedados aos clientes. Após ver o evento no Dashboard, é confirmado que seu e-mail foi enviado.
+
+Converter uma avaliação se os clientes fornecerem dados de pagamento antes do término da avaliação
+Assinaturas e faturas futuras são criadas no início da avaliação e se tornam ativas no final da avaliação se o cliente informar uma forma de pagamento.
+
+Configurar a suspensão quando uma forma de pagamento não for fornecida
+Após o término de uma avaliação gratuita, você pode configurar assinaturas para serem suspensas se nenhuma forma de pagamento padrão estiver disponível para uma assinatura considerando cada assinatura.
+
+Você pode atualizar as assinaturas enquanto elas estão suspensas. Atualizações que normalmente geram cobranças proporcionais (adição de itens, alteração de preço ou plano, alteração da quantidade etc.) não geram itens de linha proporcionais porque o cliente não é cobrado enquanto a assinatura está suspensa. Se quiser estender uma avaliação após a transição de uma assinatura para o status paused, é preciso retomar a assinatura antes de configurar uma avaliação.
+
+Nós verificamos default_source e default_payment_method na assinatura e no cliente para determinar se falta uma forma de pagamento em uma assinatura no final de uma avaliação.
+
+Retomar uma assinatura suspensa
+Use o Dashboard, a API, o portal do cliente ou a página da fatura hospedada para retomar uma assinatura suspensa.
+
+
+Dashboard
+
+API
+
+Portal de clientes
+
+Página de fatura hospedada
+Para reiniciar uma assinatura suspensa no Dashboard, navegue até a assinatura e selecione Reiniciar assinatura no menu Ações. Selecione Redefinir ciclo de faturamento ou Sempre faturar (se não estiver redefinindo o ciclo de faturamento) no modal Reiniciar assinatura para cobrar o cliente imediatamente.
+
+Faturamento de uma assinatura
+Enquanto estiver suspensa, uma assinatura não criará uma fatura. Se você quiser continuar criando faturas, use pause_collection para parar de receber pagamentos enquanto continua a faturar e adiantar períodos de faturamento.
+
+Para ver uma prévia da fatura gerada quando uma assinatura suspensa é retomada, especifique subscription_details.resume_at.
+
+Veja também
+Produtos e preços
+Prices
+Subscriptions
+Gerenciar ciclos de faturamento de assinaturas
+Esta página foi útil?
+Sim
+Não

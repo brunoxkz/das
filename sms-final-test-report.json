@@ -1,0 +1,159 @@
+{
+  "timestamp": "2025-07-20T18:10:16.070Z",
+  "summary": {
+    "total": 11,
+    "passed": 11,
+    "failed": 0,
+    "successRate": 100,
+    "status": "✅ SISTEMA EXCELENTE"
+  },
+  "performance": {
+    "totalTime": 2655,
+    "averageDuration": 241.36363636363637
+  },
+  "categories": {
+    "🕐 Campanhas com Delay": [
+      {
+        "name": "1.1 - Campanha com delay 30 segundos",
+        "status": "PASSED",
+        "duration": 505,
+        "message": "Sucesso"
+      },
+      {
+        "name": "1.2 - Campanha com delay 5 minutos",
+        "status": "PASSED",
+        "duration": 135,
+        "message": "Sucesso"
+      },
+      {
+        "name": "1.3 - Verificar delays foram aplicados",
+        "status": "PASSED",
+        "duration": 127,
+        "message": "Sucesso"
+      }
+    ],
+    "👤 Campanhas Personalizadas": [
+      {
+        "name": "2.1 - Campanha com variáveis personalizadas",
+        "status": "PASSED",
+        "duration": 226,
+        "message": "Sucesso"
+      },
+      {
+        "name": "2.2 - Campanha com condições específicas",
+        "status": "PASSED",
+        "duration": 198,
+        "message": "Sucesso"
+      }
+    ],
+    "📅 Campanhas Agendadas": [
+      {
+        "name": "3.1 - Campanha agendada para 1 hora",
+        "status": "PASSED",
+        "duration": 154,
+        "message": "Sucesso"
+      },
+      {
+        "name": "3.2 - Campanha agendada para próxima semana",
+        "status": "PASSED",
+        "duration": 128,
+        "message": "Sucesso"
+      }
+    ],
+    "⚙️ Operações e Validações": [
+      {
+        "name": "4.1 - Listar campanhas após criações",
+        "status": "PASSED",
+        "duration": 136,
+        "message": "Sucesso"
+      },
+      {
+        "name": "4.2 - Pausar primeira campanha encontrada",
+        "status": "PASSED",
+        "duration": 237,
+        "message": "Sucesso"
+      },
+      {
+        "name": "4.3 - Retomar campanha pausada",
+        "status": "PASSED",
+        "duration": 284,
+        "message": "Sucesso"
+      },
+      {
+        "name": "4.4 - Validação de campos obrigatórios",
+        "status": "PASSED",
+        "duration": 141,
+        "message": "Sucesso"
+      }
+    ]
+  },
+  "validQuizId": "OruYT3gLYlXAlb8Vmc_rt",
+  "details": [
+    {
+      "name": "1.1 - Campanha com delay 30 segundos",
+      "status": "PASSED",
+      "duration": 505,
+      "message": "Sucesso"
+    },
+    {
+      "name": "1.2 - Campanha com delay 5 minutos",
+      "status": "PASSED",
+      "duration": 135,
+      "message": "Sucesso"
+    },
+    {
+      "name": "1.3 - Verificar delays foram aplicados",
+      "status": "PASSED",
+      "duration": 127,
+      "message": "Sucesso"
+    },
+    {
+      "name": "2.1 - Campanha com variáveis personalizadas",
+      "status": "PASSED",
+      "duration": 226,
+      "message": "Sucesso"
+    },
+    {
+      "name": "2.2 - Campanha com condições específicas",
+      "status": "PASSED",
+      "duration": 198,
+      "message": "Sucesso"
+    },
+    {
+      "name": "3.1 - Campanha agendada para 1 hora",
+      "status": "PASSED",
+      "duration": 154,
+      "message": "Sucesso"
+    },
+    {
+      "name": "3.2 - Campanha agendada para próxima semana",
+      "status": "PASSED",
+      "duration": 128,
+      "message": "Sucesso"
+    },
+    {
+      "name": "4.1 - Listar campanhas após criações",
+      "status": "PASSED",
+      "duration": 136,
+      "message": "Sucesso"
+    },
+    {
+      "name": "4.2 - Pausar primeira campanha encontrada",
+      "status": "PASSED",
+      "duration": 237,
+      "message": "Sucesso"
+    },
+    {
+      "name": "4.3 - Retomar campanha pausada",
+      "status": "PASSED",
+      "duration": 284,
+      "message": "Sucesso"
+    },
+    {
+      "name": "4.4 - Validação de campos obrigatórios",
+      "status": "PASSED",
+      "duration": 141,
+      "message": "Sucesso"
+    }
+  ]
+}

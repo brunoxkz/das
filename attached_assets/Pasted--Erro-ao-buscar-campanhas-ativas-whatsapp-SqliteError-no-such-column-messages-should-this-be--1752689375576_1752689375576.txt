@@ -1,0 +1,88 @@
+ Erro ao buscar campanhas ativas whatsapp: SqliteError: no such column: "messages" - should this be a string literal in single-quotes?
+    at Database.prepare (/home/runner/workspace/node_modules/better-sqlite3/lib/methods/wrappers.js:5:21)
+    at BetterSQLiteSession.prepareQuery (/home/runner/workspace/node_modules/src/better-sqlite3/session.ts:50:28)
+    at BetterSQLiteSession.prepareOneTimeQuery (/home/runner/workspace/node_modules/src/sqlite-core/session.ts:135:15)
+    at SQLiteSelectBase._prepare (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/select.ts:865:85)
+    at SQLiteSelectBase.all (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/select.ts:884:15)
+    at SQLiteSelectBase.execute (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/select.ts:896:15)
+    at SQLiteSelectBase.then (/home/runner/workspace/node_modules/src/query-promise.ts:31:15) {
+  code: 'SQLITE_ERROR'
+}
+❌ Erro ao buscar campanhas ativas whatsapp: SqliteError: no such column: "messages" - should this be a string literal in single-quotes?
+    at Database.prepare (/home/runner/workspace/node_modules/better-sqlite3/lib/methods/wrappers.js:5:21)
+    at BetterSQLiteSession.prepareQuery (/home/runner/workspace/node_modules/src/better-sqlite3/session.ts:50:28)
+    at BetterSQLiteSession.prepareOneTimeQuery (/home/runner/workspace/node_modules/src/sqlite-core/session.ts:135:15)
+    at SQLiteSelectBase._prepare (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/select.ts:865:85)
+    at SQLiteSelectBase.all (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/select.ts:884:15)
+    at SQLiteSelectBase.execute (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/select.ts:896:15)
+    at SQLiteSelectBase.then (/home/runner/workspace/node_modules/src/query-promise.ts:31:15) {
+  code: 'SQLITE_ERROR'
+}
+❌ Erro ao buscar campanhas pausadas whatsapp: SqliteError: no such column: "messages" - should this be a string literal in single-quotes?
+    at Database.prepare (/home/runner/workspace/node_modules/better-sqlite3/lib/methods/wrappers.js:5:21)
+    at BetterSQLiteSession.prepareQuery (/home/runner/workspace/node_modules/src/better-sqlite3/session.ts:50:28)
+    at BetterSQLiteSession.prepareOneTimeQuery (/home/runner/workspace/node_modules/src/sqlite-core/session.ts:135:15)
+    at SQLiteSelectBase._prepare (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/select.ts:865:85)
+    at SQLiteSelectBase.all (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/select.ts:884:15)
+    at SQLiteSelectBase.execute (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/select.ts:896:15)
+    at SQLiteSelectBase.then (/home/runner/workspace/node_modules/src/query-promise.ts:31:15) {
+  code: 'SQLITE_ERROR'
+}
+6:05:28 PM [express] 🚀 Server running on port 5000
+6:05:28 PM [express] 🚀 SISTEMA UNIFICADO OTIMIZADO: 100 ciclos/hora, intervalo 60s
+6:05:28 PM [express] ⚡ REDUÇÃO DE 70% NO USO DE RECURSOS - SUPORTE 100.000+ USUÁRIOS
+6:05:28 PM [express] 🔥 Sistema inteligente: 25 campanhas/ciclo + 100 telefones/campanha + delay 200ms
+6:05:28 PM [express] ✅ Sistema Otimizado Inicializado - Performance Massivamente Melhorada
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+[BABEL] Note: The code generator has deoptimised the styling of /home/runner/workspace/client/src/components/page-editor-horizontal.tsx as it exceeds the max of 500KB.
+✅ JWT REFRESH SUCCESS - Response structure: {
+  "success": true,
+  "message": "Token refreshed successfully",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjFFYVk2dkUwcllBa1RYdjV2SENsbSIsImVtYWlsIjoiYWRtaW5AdmVuZHp6LmNvbSIsInJvbGUiOiJhZG1pbiIsInBsYW4iOiJlbnRlcnByaXNlIiwiaWF0IjoxNzUyNjg5MTQ1LCJub25jZSI6IjY3dHY1NSIsImV4cCI6MTc1MjY5MDA0NX0.GO01vJIPM4fV7XL3ToD1meNPrnCr3ZCMaKZidulZlEg",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjFFYVk2dkUwcllBa1RYdjV2SENsbSIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzUyNjg5MTQ1LCJ0aW1lc3RhbXAiOjE3NTI2ODkxNDUwOTksIm5vbmNlIjoiNjd0djU1IiwiZXhwIjoxNzUzMjkzOTQ1fQ.iiJ_k07ozO8oqvDJCn0d_axMelm3ShS-r3gRU0oV7dg",
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjFFYVk2dkUwcllBa1RYdjV2SENsbSIsImVtYWlsIjoiYWRtaW5AdmVuZHp6LmNvbSIsInJvbGUiOiJhZG1pbiIsInBsYW4iOiJlbnRlcnByaXNlIiwiaWF0IjoxNzUyNjg5MTQ1LCJub25jZSI6IjY3dHY1NSIsImV4cCI6MTc1MjY5MDA0NX0.GO01vJIPM4fV7XL3ToD1meNPrnCr3ZCMaKZidulZlEg",
+  "user": {
+    "id": "1EaY6vE0rYAkTXv5vHClm",
+    "email": "admin@vendzz.com",
+    "role": "admin",
+    "plan": "enterprise"
+  },
+  "expiresIn": 3600,
+  "tokenType": "Bearer",
+  "valid": true
+}
+🔍 VERIFICANDO CAMPANHAS PARA PAUSE/RESUME AUTOMÁTICO
+👥 Verificando 2 usuários com campanhas ativas
+❌ Erro ao buscar campanhas ativas whatsapp: SqliteError: no such column: "messages" - should this be a string literal in single-quotes?
+    at Database.prepare (/home/runner/workspace/node_modules/better-sqlite3/lib/methods/wrappers.js:5:21)
+    at BetterSQLiteSession.prepareQuery (/home/runner/workspace/node_modules/src/better-sqlite3/session.ts:50:28)
+    at BetterSQLiteSession.prepareOneTimeQuery (/home/runner/workspace/node_modules/src/sqlite-core/session.ts:135:15)
+    at SQLiteSelectBase._prepare (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/select.ts:865:85)
+    at SQLiteSelectBase.all (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/select.ts:884:15)
+    at SQLiteSelectBase.execute (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/select.ts:896:15)
+    at SQLiteSelectBase.then (/home/runner/workspace/node_modules/src/query-promise.ts:31:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  code: 'SQLITE_ERROR'
+}
+❌ Erro ao buscar campanhas ativas whatsapp: SqliteError: no such column: "messages" - should this be a string literal in single-quotes?
+    at Database.prepare (/home/runner/workspace/node_modules/better-sqlite3/lib/methods/wrappers.js:5:21)
+    at BetterSQLiteSession.prepareQuery (/home/runner/workspace/node_modules/src/better-sqlite3/session.ts:50:28)
+    at BetterSQLiteSession.prepareOneTimeQuery (/home/runner/workspace/node_modules/src/sqlite-core/session.ts:135:15)
+    at SQLiteSelectBase._prepare (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/select.ts:865:85)
+    at SQLiteSelectBase.all (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/select.ts:884:15)
+    at SQLiteSelectBase.execute (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/select.ts:896:15)
+    at SQLiteSelectBase.then (/home/runner/workspace/node_modules/src/query-promise.ts:31:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  code: 'SQLITE_ERROR'
+}
+❌ Erro ao buscar campanhas pausadas whatsapp: SqliteError: no such column: "messages" - should this be a string literal in single-quotes?
+    at Database.prepare (/home/runner/workspace/node_modules/better-sqlite3/lib/methods/wrappers.js:5:21)
+    at BetterSQLiteSession.prepareQuery (/home/runner/workspace/node_modules/src/better-sqlite3/session.ts:50:28)
+    at BetterSQLiteSession.prepareOneTimeQuery (/home/runner/workspace/node_modules/src/sqlite-core/session.ts:135:15)
+    at SQLiteSelectBase._prepare (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/select.ts:865:85)
+    at SQLiteSelectBase.all (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/select.ts:884:15)
+    at SQLiteSelectBase.execute (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/select.ts:896:15)
+    at SQLiteSelectBase.then (/home/runner/workspace/node_modules/src/query-promise.ts:31:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {

@@ -1,0 +1,17 @@
+{
+  "timestamp": "2025-07-21T23:13:09.224Z",
+  "testType": "rate-limiting-inteligente",
+  "summary": {
+    "totalTests": 5,
+    "passed": 5,
+    "failed": 0,
+    "successRate": 100,
+    "totalTime": 17560
+  },
+  "details": {
+    "assetRequests": 50,
+    "apiRequests": 30,
+    "rateLimited": 0
+  },
+  "status": "APROVADO"
+}

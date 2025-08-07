@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B2T Admin Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .menu-item {
+            display: block;
+            padding: 1rem 2rem;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .menu-item:hover,
+        .menu-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-left: 4px solid white;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 2rem;
+        }
+
+        .content-section {
+            display: none;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e5e5;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .success-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            z-index: 10000;
+            font-weight: 600;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .success-toast.show {
+            transform: translateX(0);
+        }
+
+        .preview-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .preview-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 2px solid #e5e5e5;
+        }
+
+        .home-link {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background: #6366f1;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .home-link:hover {
+            background: #5856eb;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: static;
+                height: auto;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .admin-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <h1>🎯 B2T Admin</h1>
+            <a href="#" class="menu-item active" data-section="hero">🎬 Hero Section</a>
+            <a href="#" class="menu-item" data-section="stats">📊 Estatísticas</a>
+            <a href="#" class="menu-item" data-section="carousel">🎠 Carousel</a>
+            <a href="#" class="menu-item" data-section="solutions">🛠 Solutions</a>
+            <a href="#" class="menu-item" data-section="news">📰 News</a>
+            <a href="#" class="menu-item" data-section="branding">🎨 Branding</a>
+            <a href="#" class="menu-item" data-section="settings">⚙️ Settings</a>
+            <a href="#" class="menu-item" data-section="preview">👁 Preview</a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Hero Section -->
+            <section id="hero" class="content-section active">
+                <h2 class="section-title">🎬 Hero Section</h2>
+                <div class="form-group">
+                    <label for="hero-title">Título Principal</label>
+                    <input type="text" id="hero-title" placeholder="Institutional Digital Asset Trading">
+                </div>
+                <div class="form-group">
+                    <label for="hero-subtitle">Subtítulo</label>
+                    <textarea id="hero-subtitle" rows="3" placeholder="Advanced trading technology and deep liquidity for institutional clients across digital assets."></textarea>
+                </div>
+                <button class="btn" onclick="saveSection('hero')">💾 Salvar Hero</button>
+                <a href="index.html" class="home-link" target="_blank">🏠 Ver Site</a>
+            </section>
+
+            <!-- Stats Section -->
+            <section id="stats" class="content-section">
+                <h2 class="section-title">📊 Estatísticas</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <label>Volume Diário</label>
+                        <input type="text" id="stats-volume" placeholder="$2.5B+">
+                    </div>
+                    <div class="stat-card">
+                        <label>Clientes</label>
+                        <input type="text" id="stats-clients" placeholder="600+">
+                    </div>
+                    <div class="stat-card">
+                        <label>Uptime</label>
+                        <input type="text" id="stats-uptime" placeholder="99.9%">
+                    </div>
+                    <div class="stat-card">
+                        <label>Assets</label>
+                        <input type="text" id="stats-assets" placeholder="50+">
+                    </div>
+                </div>
+                <button class="btn" onclick="saveSection('stats')">💾 Salvar Estatísticas</button>
+            </section>
+
+            <!-- Carousel Section -->
+            <section id="carousel" class="content-section">
+                <h2 class="section-title">🎠 Carousel de Empresas</h2>
+                <p>O carousel rotativo com 12 empresas já está configurado automaticamente:</p>
+                <div class="preview-section">
+                    <div class="preview-title">Empresas no Carousel:</div>
+                    <p>Goldman Sachs, JPMorgan, Citadel, Binance, Coinbase, Kraken, Fidelity, BlackRock, Vanguard, State Street, BNY Mellon, Deutsche Bank</p>
+                </div>
+                <p style="margin-top: 1rem; color: #666;">✅ Carousel configurado automaticamente com rotação contínua de 30 segundos</p>
+            </section>
+
+            <!-- Solutions Section -->
+            <section id="solutions" class="content-section">
+                <h2 class="section-title">🛠 Solutions</h2>
+                <div class="form-group">
+                    <label for="solutions-title">Título da Seção</label>
+                    <input type="text" id="solutions-title" placeholder="Institutional Solutions">
+                </div>
+                <div class="form-group">
+                    <label for="solutions-subtitle">Subtítulo</label>
+                    <textarea id="solutions-subtitle" rows="2" placeholder="Comprehensive digital asset trading solutions built for institutional needs"></textarea>
+                </div>
+                <button class="btn" onclick="saveSection('solutions')">💾 Salvar Solutions</button>
+            </section>
+
+            <!-- News Section -->
+            <section id="news" class="content-section">
+                <h2 class="section-title">📰 Latest News</h2>
+                <div class="form-group">
+                    <label for="news-title">Título</label>
+                    <input type="text" id="news-title" placeholder="Latest News">
+                </div>
+                <div class="form-group">
+                    <label for="news-subtitle">Subtítulo</label>
+                    <textarea id="news-subtitle" rows="2" placeholder="Stay updated with our latest developments and market insights"></textarea>
+                </div>
+                <button class="btn" onclick="saveSection('news')">💾 Salvar News</button>
+            </section>
+
+            <!-- Branding Section -->
+            <section id="branding" class="content-section">
+                <h2 class="section-title">🎨 Branding</h2>
+                <div class="preview-section">
+                    <div class="preview-title">Logo B2T Exchange:</div>
+                    <p>✅ Logo com 4 círculos coloridos: B2T + E</p>
+                    <p>✅ Cores: #6366f1, #8b5cf6, #a855f7, #f59e0b</p>
+                    <p>✅ Gradiente principal: #d946ef → #7c3aed → #3b82f6</p>
+                </div>
+                <p style="margin-top: 1rem; color: #666;">As cores e branding estão otimizados conforme o design B2C2 original</p>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="content-section">
+                <h2 class="section-title">⚙️ Configurações Gerais</h2>
+                <div class="form-group">
+                    <label>🎯 Modo de Edição</label>
+                    <p>No site principal, pressione <strong>Ctrl + E</strong> para habilitar o modo de edição inline</p>
+                </div>
+                <div class="form-group">
+                    <label>💾 Armazenamento</label>
+                    <p>Todos os dados são salvos no localStorage do navegador</p>
+                </div>
+                <div class="form-group">
+                    <button class="btn" onclick="exportData()">📤 Exportar Dados</button>
+                    <button class="btn" onclick="clearData()" style="background: #ef4444; margin-left: 1rem;">🗑 Limpar Dados</button>
+                </div>
+            </section>
+
+            <!-- Preview Section -->
+            <section id="preview" class="content-section">
+                <h2 class="section-title">👁 Preview do Site</h2>
+                <div class="preview-section">
+                    <div class="preview-title">Status do Site B2T:</div>
+                    <p>✅ Design 100% idêntico ao B2C2.com</p>
+                    <p>✅ Gradientes roxos autênticos</p>
+                    <p>✅ Carousel com 12 empresas rotativas</p>
+                    <p>✅ Sistema de edição inline (Ctrl+E)</p>
+                    <p>✅ Responsivo mobile-first</p>
+                    <p>✅ LocalStorage para persistência</p>
+                </div>
+                <a href="index.html" class="home-link" target="_blank" style="display: inline-block; margin-top: 1rem;">🚀 Abrir Site Principal</a>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Gerenciamento de dados no localStorage
+        const contentKey = 'b2t-content';
+        let contentData = JSON.parse(localStorage.getItem(contentKey) || '{}');
+
+        // Navegação do menu
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active de todos
+                document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                
+                // Adiciona active no clicado
+                this.classList.add('active');
+                const sectionId = this.dataset.section;
+                document.getElementById(sectionId).classList.add('active');
+            });
+        });
+
+        // Carregar dados salvos
+        function loadSavedData() {
+            Object.keys(contentData).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.value = contentData[key];
+                }
+            });
+        }
+
+        // Salvar seção
+        function saveSection(section) {
+            const fields = document.querySelectorAll(`#${section} input, #${section} textarea`);
+            
+            fields.forEach(field => {
+                if (field.value.trim()) {
+                    contentData[field.id] = field.value.trim();
+                }
+            });
+            
+            localStorage.setItem(contentKey, JSON.stringify(contentData));
+            showToast('✅ Seção salva com sucesso!');
+        }
+
+        // Mostrar toast
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'success-toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Exportar dados
+        function exportData() {
+            const dataStr = JSON.stringify(contentData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'b2t-content-backup.json';
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            showToast('📤 Dados exportados!');
+        }
+
+        // Limpar dados
+        function clearData() {
+            if (confirm('⚠️ Tem certeza que deseja limpar todos os dados?')) {
+                localStorage.removeItem(contentKey);
+                contentData = {};
+                location.reload();
+            }
+        }
+
+        // Auto-salvar a cada 10 segundos
+        setInterval(() => {
+            const currentInputs = document.querySelectorAll('input, textarea');
+            let hasChanges = false;
+            
+            currentInputs.forEach(input => {
+                if (input.value && contentData[input.id] !== input.value) {
+                    contentData[input.id] = input.value;
+                    hasChanges = true;
+                }
+            });
+            
+            if (hasChanges) {
+                localStorage.setItem(contentKey, JSON.stringify(contentData));
+            }
+        }, 10000);
+
+        // Carregar dados na inicialização
+        loadSavedData();
+    </script>
+</body>
+</html>

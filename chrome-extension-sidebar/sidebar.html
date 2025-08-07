@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sidebar To-Do + Pomodoro</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Botão de fechar sidebar -->
+        <button class="close-sidebar" onclick="closeSidebar()" title="Fechar Sidebar">×</button>
+        
+        <!-- Header -->
+        <div class="header">
+            <h1>📋 To-Do + Pomodoro</h1>
+        </div>
+        
+        <!-- Sistema Pomodoro -->
+        <div class="pomodoro-section">
+            <div class="motivation-text">ELEVE SUA ENERGIA</div>
+            
+            <div class="pomodoro-timer">
+                <div class="timer-display" id="timerDisplay">25:00</div>
+                <div class="timer-phase" id="timerPhase">Foco - Sessão 1 de 4</div>
+                
+                <div class="timer-controls">
+                    <button id="startPauseBtn" class="timer-btn primary">▶ Iniciar</button>
+                    <button id="resetBtn" class="timer-btn">⏹ Reset</button>
+                    <button id="soundBtn" class="timer-btn">🔊 Sons</button>
+                </div>
+            </div>
+            
+            <div class="ambient-controls" id="ambientControls" style="display: none;">
+                <button class="ambient-btn" data-sound="rain">🌧️ Chuva</button>
+                <button class="ambient-btn" data-sound="ocean">🌊 Oceano</button>
+                <button class="ambient-btn" data-sound="forest">🌲 Floresta</button>
+                <button class="ambient-btn" data-sound="cafe">☕ Café</button>
+                <button class="ambient-btn" data-sound="white">📡 Ruído</button>
+            </div>
+        </div>
+        
+        <!-- Conteúdo principal -->
+        <div class="main-content">
+            <!-- Seção Todo -->
+            <div class="todo-section">
+                <div class="todo-header">
+                    <h2>📝 Listas de Tarefas</h2>
+                    <button id="addColumnBtn" class="add-column-btn">+ Nova Lista</button>
+                </div>
+                
+                <!-- Container de colunas (layout vertical) -->
+                <div class="columns-container" id="columnsContainer">
+                    <!-- Colunas serão inseridas dinamicamente aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para adicionar/editar tarefa -->
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle">Adicionar Tarefa</h2>
+            <input type="text" id="taskInput" placeholder="Digite o nome da tarefa..." autocomplete="off">
+            <div class="modal-actions">
+                <button id="saveTaskBtn" class="modal-btn primary">Salvar</button>
+                <button id="cancelTaskBtn" class="modal-btn secondary">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para adicionar/editar coluna -->
+    <div id="columnModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="columnModalTitle">Nova Lista</h2>
+            <input type="text" id="columnInput" placeholder="Digite o nome da lista..." autocomplete="off">
+            <div class="modal-actions">
+                <button id="saveColumnBtn" class="modal-btn primary">Salvar</button>
+                <button id="cancelColumnBtn" class="modal-btn secondary">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="sidebar.js"></script>
+</body>
+</html>

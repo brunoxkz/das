@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    
+    <!-- Force PWA Cache Clear - HD Icons Version -->
+    <meta name="pwa-version" content="2025.01.21.hd" />
+    <script>
+      // Força limpeza completa do cache para ícones HD
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+            registration.unregister();
+          }
+        });
+      }
+      // Clear all caches for HD icons
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (let name of names) {
+            caches.delete(name);
+          }
+        });
+      }
+      // Force reload favicon
+      const link = document.querySelector("link[rel~='icon']");
+      if (link) {
+        link.href = link.href.split('?')[0] + '?v=hd' + Date.now();
+      }
+    </script>
+    <title>VENDZZ - Plataforma de Marketing Digital e Quiz Funnels</title>
+    
+    <!-- Meta Description -->
+    <meta name="description" content="VENDZZ - Plataforma completa de marketing digital com funis, quizzes interativos e campanhas automatizadas. Crie conversões de alta qualidade." />
+    <meta name="keywords" content="quiz funnel, marketing digital, conversão, leads, campanhas, whatsapp, email marketing" />
+    <meta name="author" content="VENDZZ" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Theme Colors -->
+    <meta name="theme-color" content="#10b981" />
+    <meta name="msapplication-navbutton-color" content="#10b981" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="format-detection" content="telephone=no" />
+    
+    <!-- Favicon VENDZZ - Alta Qualidade -->
+    <link rel="icon" href="/favicon.ico?v=hd2025" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=hd2025" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=hd2025" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png?v=hd2025" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512x512.png?v=hd2025" />
+    <link rel="shortcut icon" href="/favicon.ico?v=hd2025" />
+    
+    <!-- Apple Touch Icons VENDZZ HD para iOS -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=hd2025" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=hd2025" />
+    <link rel="apple-touch-icon" sizes="40x40" href="/images/icons/ios/Icon-Light-40x40.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="58x58" href="/images/icons/ios/Icon-Light-58x58.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="60x60" href="/images/icons/ios/Icon-Light-60x60.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="76x76" href="/images/icons/ios/Icon-Light-76x76.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="80x80" href="/images/icons/ios/Icon-Light-80x80.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="87x87" href="/images/icons/ios/Icon-Light-87x87.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="114x114" href="/images/icons/ios/Icon-Light-114x114.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/images/icons/ios/Icon-Light-120x120.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="128x128" href="/images/icons/ios/Icon-Light-128x128.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="136x136" href="/images/icons/ios/Icon-Light-136x136.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/images/icons/ios/Icon-Light-152x152.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/images/icons/ios/Icon-Light-167x167.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/icons/ios/Icon-Light-180x180.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/images/icons/ios/Icon-Light-192x192.png?v=2025" />
+    <link rel="apple-touch-icon" sizes="1024x1024" href="/images/icons/ios/Icon-Light-1024x1024.png?v=2025" />
+    
+    <!-- Android Chrome Icons VENDZZ com cache busting -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/images/icons/maskable/maskable_icon_x192.png?v=vendzz2025" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/images/icons/maskable/maskable_icon_x512.png?v=vendzz2025" />
+    
+    <!-- Microsoft Tiles VENDZZ -->
+    <meta name="msapplication-TileImage" content="/images/icons/maskable/maskable_icon_x192.png?v=vendzz2025" />
+    <meta name="msapplication-TileColor" content="#10b981" />
+    <meta name="msapplication-config" content="none" />
+    <meta name="msapplication-square70x70logo" content="/images/icons/maskable/maskable_icon_x96.png?v=vendzz2025" />
+    <meta name="msapplication-square150x150logo" content="/images/icons/maskable/maskable_icon_x192.png?v=vendzz2025" />
+    <meta name="msapplication-square310x310logo" content="/images/icons/maskable/maskable_icon_x512.png?v=vendzz2025" />
+    
+    <!-- Forçar ícones Android VENDZZ -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="VENDZZ" />
+    <link rel="mask-icon" href="/images/icons/maskable/maskable_icon_x192.png?v=vendzz2025" color="#10b981" />
+    
+    <!-- Meta tags específicas para iOS PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="VENDZZ" />
+    
+    <!-- Open Graph Tags com Logo VENDZZ -->
+    <meta property="og:title" content="VENDZZ - Plataforma de Marketing Digital" />
+    <meta property="og:description" content="Crie quizzes interativos e campanhas de alta conversão com VENDZZ" />
+    <meta property="og:image" content="/images/icons/maskable/maskable_icon_x512.png?v=vendzz2025" />
+    <meta property="og:url" content="https://vendzz.app" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="VENDZZ" />
+    
+    <!-- Twitter Cards com Logo VENDZZ -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="VENDZZ - Marketing Digital" />
+    <meta name="twitter:description" content="Plataforma completa para quiz funnels e campanhas automatizadas" />
+    <meta name="twitter:image" content="/images/icons/maskable/maskable_icon_x512.png?v=vendzz2025" />
+    <meta name="twitter:image:alt" content="Logo VENDZZ - Plataforma de Marketing Digital" />
+
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Service Worker Registration com PWA Update -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', async () => {
+          try {
+            // Forçar atualização do Service Worker e PWA
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let registration of registrations) {
+              await registration.unregister();
+              console.log('🔄 Service Worker anterior removido');
+            }
+            
+            const registration = await navigator.serviceWorker.register('/sw.js?' + Date.now(), {
+              scope: '/',
+              updateViaCache: 'none'
+            });
+            console.log('🔧 Service Worker registrado com sucesso:', registration.scope);
+            
+            // Forçar atualização do manifest PWA
+            if (registration.waiting) {
+              registration.waiting.postMessage({ command: 'skipWaiting' });
+            }
+            
+          } catch (error) {
+            console.error('❌ Erro ao registrar Service Worker:', error);
+          }
+        });
+        
+        // Forçar refresh do cache de ícones PWA
+        if (window.caches) {
+          window.caches.keys().then(names => {
+            names.forEach(name => {
+              if (name.includes('icon') || name.includes('manifest')) {
+                caches.delete(name);
+                console.log('🗑️ Cache PWA limpo:', name);
+              }
+            });
+          });
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,38 @@
+COMANDO PARA COPIAR E COLAR NO TERMINAL:
+==========================================
+
+MÉTODO 1 - COM TOKEN (RECOMENDADO):
+=====================================
+
+cd vendzz-railway-ultra-compact && git init && git remote add origin https://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@github.com/brunoxkz1337/v-platform.git && git add . && git commit -m "Initial commit: Vendzz Platform Enterprise - Sistema completo 200k+ usuarios" && git branch -M main && git push -u origin main
+
+MÉTODO 2 - SSH (ALTERNATIVO):
+=============================
+
+cd vendzz-railway-ultra-compact && git init && git remote add origin git@github.com:brunoxkz1337/v-platform.git && git add . && git commit -m "Initial commit: Vendzz Platform Enterprise - Sistema completo 200k+ usuarios" && git branch -M main && git push -u origin main
+
+==========================================
+
+EXPLICAÇÃO:
+1. Entra na pasta do projeto
+2. Faz commit de todos os arquivos
+3. Faz push para o GitHub
+
+RESULTADO:
+✅ Todo o sistema Vendzz Platform será enviado para:
+   https://github.com/brunoxkz1337/v-platform
+
+✅ Incluindo:
+   - 371 arquivos do sistema enterprise
+   - Quiz Builder completo
+   - 5-Channel Marketing
+   - Sistema de autenticação JWT
+   - PWA com push notifications
+   - Scripts de deploy Railway
+   - Documentação profissional
+
+APÓS O UPLOAD:
+O repositório estará público e pronto para:
+- Deploy automático no Railway
+- Clone por outros desenvolvedores
+- Contribuições da comunidade

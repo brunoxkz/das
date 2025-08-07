@@ -1,0 +1,11 @@
+{
+  "summary": {
+    "passed": 12,
+    "failed": 4,
+    "duration": 2117,
+    "successRate": "75.0",
+    "timestamp": "2025-07-18T21:01:49.273Z",
+    "type": "advanced_test_with_credits"
+  },
+  "errors": []
+}

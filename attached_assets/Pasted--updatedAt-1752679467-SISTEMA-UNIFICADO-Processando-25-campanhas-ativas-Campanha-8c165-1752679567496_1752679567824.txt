@@ -1,0 +1,50 @@
+  updatedAt: 1752679467
+}
+🔥 SISTEMA UNIFICADO: Processando 25 campanhas ativas
+📱 Campanha 8c165275-34a5-4121-81cd-4fd916927171: 4 telefones para processar
+📱 Campanha 0dfe6df5-a99c-495d-a4d5-168e4f2f2f5e: 4 telefones para processar
+📱 Campanha 93452fed-1dc2-4673-979b-5badf7a5d9f9: 1 telefones para processar
+❌ ERRO ao atualizar projeto de vídeo: SqliteError: no such column: video_url
+    at Database.prepare (/home/runner/workspace/node_modules/better-sqlite3/lib/methods/wrappers.js:5:21)
+    at BetterSQLiteSession.prepareQuery (/home/runner/workspace/node_modules/src/better-sqlite3/session.ts:50:28)
+    at BetterSQLiteSession.prepareOneTimeQuery (/home/runner/workspace/node_modules/src/sqlite-core/session.ts:135:15)
+    at QueryPromise._prepare (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/update.ts:424:78)
+    at QueryPromise.all (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/update.ts:441:15)
+    at QueryPromise.execute (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/update.ts:453:40)
+    at QueryPromise.then (/home/runner/workspace/node_modules/src/query-promise.ts:31:15) {
+  code: 'SQLITE_ERROR'
+}
+❌ Erro no processamento: SqliteError: no such column: video_url
+    at Database.prepare (/home/runner/workspace/node_modules/better-sqlite3/lib/methods/wrappers.js:5:21)
+    at BetterSQLiteSession.prepareQuery (/home/runner/workspace/node_modules/src/better-sqlite3/session.ts:50:28)
+    at BetterSQLiteSession.prepareOneTimeQuery (/home/runner/workspace/node_modules/src/sqlite-core/session.ts:135:15)
+    at QueryPromise._prepare (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/update.ts:424:78)
+    at QueryPromise.all (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/update.ts:441:15)
+    at QueryPromise.execute (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/update.ts:453:40)
+    at QueryPromise.then (/home/runner/workspace/node_modules/src/query-promise.ts:31:15) {
+  code: 'SQLITE_ERROR'
+}
+❌ ERRO ao atualizar projeto de vídeo: SqliteError: no such column: "user_id" - should this be a string literal in single-quotes?
+    at Database.prepare (/home/runner/workspace/node_modules/better-sqlite3/lib/methods/wrappers.js:5:21)
+    at BetterSQLiteSession.prepareQuery (/home/runner/workspace/node_modules/src/better-sqlite3/session.ts:50:28)
+    at BetterSQLiteSession.prepareOneTimeQuery (/home/runner/workspace/node_modules/src/sqlite-core/session.ts:135:15)
+    at QueryPromise._prepare (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/update.ts:424:78)
+    at QueryPromise.all (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/update.ts:441:15)
+    at QueryPromise.execute (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/update.ts:453:40)
+    at QueryPromise.then (/home/runner/workspace/node_modules/src/query-promise.ts:31:15) {
+  code: 'SQLITE_ERROR'
+}
+
+node:internal/process/promises:391
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+SqliteError: no such column: "user_id" - should this be a string literal in single-quotes?
+    at Database.prepare (/home/runner/workspace/node_modules/better-sqlite3/lib/methods/wrappers.js:5:21)
+    at BetterSQLiteSession.prepareQuery (/home/runner/workspace/node_modules/src/better-sqlite3/session.ts:50:28)
+    at BetterSQLiteSession.prepareOneTimeQuery (/home/runner/workspace/node_modules/src/sqlite-core/session.ts:135:15)
+    at QueryPromise._prepare (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/update.ts:424:78)
+    at QueryPromise.all (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/update.ts:441:15)
+    at QueryPromise.execute (/home/runner/workspace/node_modules/src/sqlite-core/query-builders/update.ts:453:40)
+    at QueryPromise.then (/home/runner/workspace/node_modules/src/query-promise.ts:31:15) {
+  code: 'SQLITE_ERROR'
+}

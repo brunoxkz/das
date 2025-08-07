@@ -1,0 +1,224 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 350px;
+      height: 400px;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+    }
+
+    .header {
+      padding: 20px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    .logo {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    .status-card {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 15px;
+      backdrop-filter: blur(10px);
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .status-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .status-label {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .status-value {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    .status-connected {
+      background: #22c55e;
+    }
+
+    .status-disconnected {
+      background: #ef4444;
+    }
+
+    .button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 10px;
+    }
+
+    .button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .stat-item {
+      text-align: center;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .stat-number {
+      font-size: 18px;
+      font-weight: bold;
+      display: block;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+
+    .footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 15px;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .footer-text {
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top: 2px solid white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">Vendzz WhatsApp Bot</div>
+    <div class="subtitle">Remarketing Automático</div>
+  </div>
+
+  <div class="content">
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <div>Carregando status...</div>
+    </div>
+
+    <div id="main-content" style="display: none;">
+      <div class="status-card">
+        <div class="status-row">
+          <span class="status-label">
+            <span id="connection-indicator" class="status-indicator"></span>
+            WhatsApp Web
+          </span>
+          <span id="connection-status" class="status-value">-</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Telefone</span>
+          <span id="phone-number" class="status-value">-</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Última Atividade</span>
+          <span id="last-activity" class="status-value">-</span>
+        </div>
+      </div>
+
+      <button id="open-whatsapp" class="button">
+        📱 Abrir WhatsApp Web
+      </button>
+
+      <button id="open-vendzz" class="button">
+        🚀 Abrir Vendzz Dashboard
+      </button>
+
+      <div class="stats">
+        <div class="stat-item">
+          <span id="messages-sent" class="stat-number">0</span>
+          <div class="stat-label">Mensagens Enviadas</div>
+        </div>
+        <div class="stat-item">
+          <span id="queue-length" class="stat-number">0</span>
+          <div class="stat-label">Na Fila</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-text">
+      Versão 1.0.0 • vendzz.com.br
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

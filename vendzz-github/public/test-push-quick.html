@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔔 Teste Push - Acesso Direto</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #10B981, #34D399);
+            margin: 0;
+            padding: 20px;
+            color: white;
+            text-align: center;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        button {
+            background: #059669;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background: #047857;
+        }
+        .status {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Teste Push Notifications</h1>
+        <p>Acesso direto via arquivo HTML público</p>
+        
+        <div id="status" class="status">
+            Verificando suporte...
+        </div>
+        
+        <button onclick="requestPermission()">
+            🔔 Solicitar Permissão
+        </button>
+        
+        <button onclick="testLocal()">
+            📢 Teste Local
+        </button>
+        
+        <button onclick="testServer()">
+            🚀 Teste Servidor
+        </button>
+        
+        <a href="/test-push-real" style="color: white; text-decoration: underline;">
+            🔗 Ir para /test-push-real
+        </a>
+    </div>
+
+    <script>
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+
+        function requestPermission() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    updateStatus('Permissão: ' + permission);
+                });
+            } else {
+                updateStatus('Notificações não suportadas');
+            }
+        }
+
+        function testLocal() {
+            if (Notification.permission === 'granted') {
+                new Notification('🔔 Teste Local Vendzz', {
+                    body: 'Esta é uma notificação local de teste!',
+                    icon: '/logo-vendzz-white.png'
+                });
+                updateStatus('Notificação local enviada!');
+            } else {
+                updateStatus('Permissão necessária primeiro');
+            }
+        }
+
+        async function testServer() {
+            try {
+                // Login primeiro
+                const loginResponse = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'admin@admin.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                const loginData = await loginResponse.json();
+                
+                if (loginData.accessToken) {
+                    // Enviar notificação teste
+                    const pushResponse = await fetch('/api/push-notifications/test', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + loginData.accessToken
+                        },
+                        body: JSON.stringify({
+                            title: '🚀 VENDZZ - Teste Servidor!',
+                            body: 'Notificação enviada via servidor!'
+                        })
+                    });
+                    
+                    const pushData = await pushResponse.json();
+                    updateStatus('Resposta servidor: ' + JSON.stringify(pushData));
+                } else {
+                    updateStatus('Erro no login: ' + JSON.stringify(loginData));
+                }
+            } catch (error) {
+                updateStatus('Erro: ' + error.message);
+            }
+        }
+
+        // Verificar suporte inicial
+        window.addEventListener('load', () => {
+            if ('Notification' in window && 'serviceWorker' in navigator) {
+                updateStatus('✅ Suporte completo - Permissão: ' + Notification.permission);
+            } else {
+                updateStatus('❌ Suporte limitado');
+            }
+        });
+    </script>
+</body>
+</html>
