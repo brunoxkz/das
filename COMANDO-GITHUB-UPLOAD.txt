@@ -1,7 +1,7 @@
 COMANDO PARA COPIAR E COLAR NO TERMINAL:
 ==========================================
 
-cd vendzz-railway-ultra-compact && git add . && git commit -m "Initial commit: Vendzz Platform Enterprise - Sistema completo 200k+ usuarios" && git push -u origin master
+cd vendzz-railway-ultra-compact && git remote remove origin && git remote add origin https://github.com/brunoxkz1337/v-platform.git && git add . && git commit -m "Initial commit: Vendzz Platform Enterprise - Sistema completo 200k+ usuarios" && git push -u origin master
 
 ==========================================
 
