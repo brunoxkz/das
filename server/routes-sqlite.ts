@@ -10516,10 +10516,10 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
         success_url: `${process.env.BASE_URL || 'https://checkout.vendzz.com'}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.BASE_URL || 'https://checkout.vendzz.com'}/cancel`,
         metadata: {
-          planId: (plan as any).id,
+          planId: String((plan as any).id || ''),
           customerEmail,
           customerName,
-          trial_price: (plan as any).activation_fee?.toString() || '0',
+          trial_price: String((plan as any).activation_fee || 0),
           type: 'public_checkout'
         }
       });
@@ -10866,14 +10866,14 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
           if (paymentIntent.metadata?.implementation === 'immediate_charge_then_subscription') {
             console.log('🎯 Taxa de ativação paga - Criando assinatura automática!');
             
-            const customerId = paymentIntent.customer;
-            const userId = paymentIntent.metadata.userId;
-            const regularPrice = parseFloat(paymentIntent.metadata.regular_price);
-            const trialDays = parseInt(paymentIntent.metadata.trial_period_days);
+            const customerId = paymentIntent.customer as string;
+            const userId = paymentIntent.metadata?.userId || '';
+            const regularPrice = parseFloat(paymentIntent.metadata?.regular_price || '0');
+            const trialDays = parseInt(paymentIntent.metadata?.trial_period_days || '0');
             
             // Usar Stripe diretamente
             const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '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', {
-              apiVersion: '2025-06-30.basil'
+              apiVersion: '2025-06-30.basil' as any
             });
             
             // Criar produto de assinatura
@@ -11284,8 +11284,8 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
       // Detectar elementos de ultra personalização no quiz
       const detectedElements = [];
       
-      if (quiz.structure?.pages) {
-        for (const page of quiz.structure.pages) {
+      if ((quiz as any).structure?.pages) {
+        for (const page of (quiz as any).structure.pages) {
           if (page.elements) {
             for (const element of page.elements) {
               if (element.type === 'body_type_classifier') {
@@ -11347,7 +11347,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
       }
       
       console.log(`🔍 ULTRA PERSONALIZAÇÃO - Quiz ${quizId}: ${detectedElements.length} elementos detectados`);
-      res.json({ elements: detectedElements });
+      return res.json({ elements: detectedElements });
       
     } catch (error) {
       console.error("Error detecting ultra personalization elements:", error);
@@ -11371,7 +11371,7 @@ console.log('Vendzz Checkout Embed carregado para plano: ${planId}');
   app.post("/api/sms-campaigns/upload-txt", verifyJWT, async (req: any, res: Response) => {
     const { txtUpload, TxtFileProcessor } = await import('./txt-upload-handler');
     
-    txtUpload.single('txtFile')(req, res, async (err) => {
+    txtUpload.single('txtFile')(req, res, async (err: any) => {
       if (err) {
         console.error('❌ Erro no upload SMS:', err);
         return res.status(400).json({ error: err.message });

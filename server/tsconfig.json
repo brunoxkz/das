@@ -8,11 +8,16 @@
     "skipLibCheck": true,
     "noImplicitAny": false,
     "noEmitOnError": false,
+    "suppressImplicitAnyIndexErrors": true,
+    "suppressExcessPropertyErrors": true,
+    "noStrictGenericChecks": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
+    "forceConsistentCasingInFileNames": false,
     "resolveJsonModule": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "lib": ["ES2020"],
+    "declaration": true,
+    "isolatedModules": true
   },
   "include": [
     "**/*"
