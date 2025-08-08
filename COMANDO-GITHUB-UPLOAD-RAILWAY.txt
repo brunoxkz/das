@@ -1,30 +1,27 @@
-🚀 COMANDOS PARA ATUALIZAR GITHUB - RAILWAY DEPLOY READY
+🚀 COMANDOS GIT PARA ATUALIZAR GITHUB - RAILWAY DEPLOY READY
 
-Execute os seguintes comandos no terminal para atualizar o repositório:
+Execute estes comandos no terminal do Replit:
 
 ```bash
 # 1. Adicionar todas as mudanças
-git add -A
+git add .
 
-# 2. Commit com as correções do Railway
-git commit -m "🚀 RAILWAY DEPLOY 100% READY - ES modules imports .js corrigidos
+# 2. Commit com mensagem das correções
+git commit -m "Railway deploy ready - Stripe API + ES modules fixed"
 
-✅ Correções críticas aplicadas:
-- routes-hybrid.ts: imports auth.js e auth-sqlite.js
-- auth-hybrid.ts: imports auth.js, auth-sqlite.js, cache.js  
-- security-middleware.ts: import rate-limiting-monitor.js
-- railway.toml: comando build otimizado com sed automático
-- vite.config: correção automática via script
+# 3. Push para o repositório GitHub
+git push https://github.com/brunoxkz/das main
+```
 
-✅ Sistema enterprise validado:
-- Build client: 2748 módulos, 20.98s, 2.8MB
-- Build server: TypeScript --noEmitOnError false
-- Sistema funcional para 200,787+ usuários simultâneos
+🎯 COMANDOS ALTERNATIVOS (se necessário):
 
-PRONTO PARA DEPLOY RAILWAY DIRETO DO GITHUB"
-
-# 3. Push para o repositório
+```bash
+# Se der erro de autenticação, use:
+git remote set-url origin https://github.com/brunoxkz/das.git
 git push origin main
+
+# Ou forçar push se necessário:
+git push -f origin main
 ```
 
 🎯 APÓS O PUSH:
