@@ -3,7 +3,7 @@ import path from 'path';
 
 // Conectar ao banco SQLite principal do Vendzz
 const dbPath = path.join(process.cwd(), 'vendzz-database.db');
-const db = new Database(dbPath);
+const db: any = new Database(dbPath);
 
 // Função para inicializar as tabelas do Sistema Controle
 function initializeControleDatabase() {

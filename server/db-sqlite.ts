@@ -5,7 +5,7 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import path from 'path';
 
 // OTIMIZAÇÕES CRÍTICAS PARA 100.000 USUÁRIOS SIMULTÂNEOS
-const sqlite = new Database('./vendzz-database.db');
+const sqlite: any = new Database('./vendzz-database.db');
 
 // 1. WAL Mode para máxima concorrência
 sqlite.pragma('journal_mode = WAL');
